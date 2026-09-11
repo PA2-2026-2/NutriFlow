@@ -1,0 +1,35 @@
+{
+  "name": "nutriflow",
+  "version": "1.0.0",
+  "description": "NutriFlow é uma plataforma digital de acompanhamento nutricional que conecta pacientes a nutricionistas",
+  "keywords": [],
+  "homepage": "https://github.com/PA2-2026-2/NutriFlow#readme",
+  "bugs": {
+    "url": "https://github.com/PA2-2026-2/NutriFlow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PA2-2026-2/NutriFlow.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "db:push": "prisma db push",
+    "prisma:generate": "prisma generate",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "prisma": "^6.19.3",
+    "supertest": "^7.2.2"
+  }
+}
