@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Demais models (PatientProfile, NutritionistProfile, MealPlan, Assessment,
+// BodyMeasurement, PatientMessage, MealEntry, Food, FoodLog, Appointment,
+// NutritionChallenge, ChallengeParticipant, ProgressSnapshot, WeightEntry,
+// Goal, MealEntryItem...) entram nas proximas sprints, junto com as
+// respectivas relations no model User abaixo.
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  profile      String
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
