@@ -29,6 +29,7 @@ const state = {
   lastConversationSignature: '',
   isSendingChatMessage: false,
   isLoadingConversation: false,
+  patientSearch: '',
 };
 
 const APPOINTMENT_STATUS_LABELS = {
@@ -46,6 +47,7 @@ const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
 const chatSubmitButton = document.getElementById('chatSubmitBtn');
 const chatPatientSelect = document.getElementById('chatPatientSelect');
+const nutritionistPatientSearch = document.getElementById('nutritionistPatientSearch');
 let nutritionistChatSyncIntervalId = null;
 let nutritionistChatSyncInFlight = false;
 
@@ -182,6 +184,7 @@ function renderHeader() {
   const currentUser = state.currentUser || session.getUser() || { name: 'Nutricionista' };
   document.querySelectorAll('[data-nutritionist-name]').forEach(el => el.textContent = currentUser.name);
   document.querySelectorAll('[data-nutritionist-initial]').forEach(el => el.textContent = getInitials(currentUser.name));
+  document.querySelectorAll('[data-nutritionist-email]').forEach(el => el.textContent = currentUser.email || '--');
   document.querySelector('[data-sidebar-date]').textContent = formatCoreSidebarDate();
   document.querySelector('[data-header-greeting]').textContent = `Olá, ${currentUser.name}`;
 }
@@ -190,13 +193,25 @@ function renderPatientsList() {
   const list = document.getElementById('patientsList');
   if (!list) return;
   list.innerHTML = '';
-  
-  if (state.patients.length === 0) {
-    document.getElementById('emptyPatientsState').classList.remove('hidden');
-    return;
-  } else { document.getElementById('emptyPatientsState').classList.add('hidden'); }
 
-  state.patients.forEach((patient) => {
+  const search = state.patientSearch.trim().toLocaleLowerCase('pt-BR');
+  const patients = state.patients.filter((patient) =>
+    [patient.name, patient.email, patient.objective].some((value) =>
+      String(value || '').toLocaleLowerCase('pt-BR').includes(search),
+    ),
+  );
+  const emptyState = document.getElementById('emptyPatientsState');
+
+  if (patients.length === 0) {
+    emptyState.textContent = state.patients.length && search
+      ? 'Nenhum paciente corresponde à busca.'
+      : 'Nenhum paciente vinculado. Adicione um clicando em "Vincular Paciente".';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  patients.forEach((patient) => {
     const patientName = patient.name || 'Paciente';
     const isSelected = patient.id === state.selectedPatientId;
     const isFiltered = patient.id === state.activeFilterId;
@@ -943,6 +958,58 @@ function closeModal(modalId) {
   document.body.classList.remove('modal-open');
 }
 
+async function openNutritionistSettings() {
+  const profileName = document.getElementById('nutriProfileName');
+  const profileEmail = document.getElementById('nutriProfileEmail');
+  const profilePhone = document.getElementById('nutriProfilePhone');
+  let user = state.currentUser || session.getUser() || {};
+
+  try {
+    const response = await apiRequest('/api/users/me');
+    user = response.user || user;
+    state.currentUser = session.persistUser(user);
+    renderHeader();
+  } catch (error) {
+    showToast(error.message || 'Não foi possível carregar o perfil.');
+  }
+
+  profileName.value = user.name || '';
+  profileEmail.value = user.email || '';
+  profilePhone.value = user.phone || '';
+  openModal('settings');
+}
+
+async function handleNutritionistProfileSubmit(event) {
+  event.preventDefault();
+
+  const submitButton = document.getElementById('nutritionistProfileSubmit');
+  submitButton.disabled = true;
+  submitButton.textContent = 'Salvando...';
+
+  try {
+    const response = await apiRequest('/api/users/me', {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: document.getElementById('nutriProfileName').value,
+        phone: document.getElementById('nutriProfilePhone').value,
+      }),
+    });
+
+    state.currentUser = session.persistUser({
+      ...state.currentUser,
+      ...(response.user || {}),
+    });
+    renderHeader();
+    showToast(response.message || 'Perfil atualizado com sucesso.');
+    closeModal('settings');
+  } catch (error) {
+    showToast(error.message || 'Não foi possível atualizar o perfil.');
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = 'Salvar alterações';
+  }
+}
+
 window.openPatientProfile = function(patientId) {
   state.selectedPatientId = patientId;
   state.chatPatientId = patientId;
@@ -952,49 +1019,134 @@ window.openPatientProfile = function(patientId) {
 };
 
 function bindButtons() {
-  document.getElementById('btnOpenLinkPatient')?.addEventListener('click', () => openModal('linkPatient'));
-  document.getElementById('btnOpenMealPlan')?.addEventListener('click', () => {
-    document.getElementById('mealPlanForm').reset();
-    if (state.selectedPatientId) document.getElementById('mealPlanPatient').value = state.selectedPatientId;
-    resetMealPlanBuilder();
-    openModal('mealPlan');
-  });
-  document.getElementById('btnOpenAssessment')?.addEventListener('click', () => { resetAssessmentForm(); openModal('assessment'); });
-  document.getElementById('btnOpenAppointment')?.addEventListener('click', () => { document.getElementById('appointmentForm').reset(); openModal('appointment'); });
-  document.getElementById('btnOpenChallenge')?.addEventListener('click', () => { document.getElementById('challengeForm').reset(); openModal('challenge'); });
-  
-  document.getElementById('btnProfileNewPlan')?.addEventListener('click', () => {
-    document.getElementById('mealPlanForm').reset();
-    if (state.selectedPatientId) document.getElementById('mealPlanPatient').value = state.selectedPatientId;
-    resetMealPlanBuilder();
-    openModal('mealPlan');
-  });
-  document.getElementById('btnAddMealPlanItem')?.addEventListener('click', () => addMealPlanItemRow());
-  document.getElementById('btnAddAssessmentMeasurement')?.addEventListener('click', () => addAssessmentMeasurementRow());
-  document.getElementById('btnProfileNewAssessment')?.addEventListener('click', () => { resetAssessmentForm(); openModal('assessment'); });
 
-  document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', (e) => { e.preventDefault(); closeModal(e.target.dataset.close); });
+  document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
+    void openNutritionistSettings();
   });
-  document.getElementById('logoutButton')?.addEventListener('click', () => { session.clear(); window.location.href = 'index.html'; });
+
+  nutritionistPatientSearch?.addEventListener('input', (event) => {
+    state.patientSearch = event.target.value;
+    renderPatientsList();
+  });
+
+  document.getElementById('settingsForm')?.addEventListener('submit', handleNutritionistProfileSubmit);
+
+  document.getElementById('btnOpenLinkPatient')?.addEventListener('click', () => {
+    openModal('linkPatient');
+  });
+
+  document.getElementById('btnOpenMealPlan')?.addEventListener('click', () => {
+    document.getElementById('mealPlanForm')?.reset();
+
+    if (state.selectedPatientId) {
+      const patientSelect = document.getElementById('mealPlanPatient');
+
+      if (patientSelect) {
+        patientSelect.value = state.selectedPatientId;
+      }
+    }
+
+    resetMealPlanBuilder();
+    openModal('mealPlan');
+  });
+
+  document.getElementById('btnOpenAssessment')?.addEventListener('click', () => {
+    resetAssessmentForm();
+    openModal('assessment');
+  });
+
+  document.getElementById('btnOpenAppointment')?.addEventListener('click', () => {
+    document.getElementById('appointmentForm')?.reset();
+    openModal('appointment');
+  });
+
+  document.getElementById('btnOpenChallenge')?.addEventListener('click', () => {
+    document.getElementById('challengeForm')?.reset();
+    openModal('challenge');
+  });
+
+  document.getElementById('btnProfileNewPlan')?.addEventListener('click', () => {
+    document.getElementById('mealPlanForm')?.reset();
+
+    if (state.selectedPatientId) {
+      const patientSelect = document.getElementById('mealPlanPatient');
+
+      if (patientSelect) {
+        patientSelect.value = state.selectedPatientId;
+      }
+    }
+
+    resetMealPlanBuilder();
+    openModal('mealPlan');
+  });
+
+  document.getElementById('btnAddMealPlanItem')?.addEventListener('click', () => {
+    addMealPlanItemRow();
+  });
+
+  document.getElementById('btnAddAssessmentMeasurement')?.addEventListener('click', () => {
+    addAssessmentMeasurementRow();
+  });
+
+  document.getElementById('btnProfileNewAssessment')?.addEventListener('click', () => {
+    resetAssessmentForm();
+    openModal('assessment');
+  });
+
+  document.querySelectorAll('[data-close]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      const modalId = e.currentTarget.dataset.close;
+
+      if (modalId) {
+        closeModal(modalId);
+      }
+    });
+  });
+
+
+  document.getElementById('logoutButton')?.addEventListener('click', () => {
+    session.clear();
+    window.location.href = 'index.html';
+  });
 
   chatPatientSelect?.addEventListener('change', (event) => {
     state.chatPatientId = event.target.value || null;
+
     clearActiveConversation();
     renderChatPanel();
 
     if (state.chatPatientId) {
-      void syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
+      void syncNutritionistRealtimeChat({
+        forceRender: true,
+        allowHidden: true,
+        silent: true,
+      });
     }
   });
 
-  chatForm?.addEventListener('submit', handleNutritionistChatSubmit);
+
+  chatForm?.addEventListener(
+    'submit',
+    handleNutritionistChatSubmit
+  );
+
+
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      void syncNutritionistRealtimeChat({ forceRender: true, silent: true });
+      void syncNutritionistRealtimeChat({
+        forceRender: true,
+        silent: true,
+      });
     }
   });
-  window.addEventListener('beforeunload', stopNutritionistRealtimeChat);
+
+
+  window.addEventListener(
+    'beforeunload',
+    stopNutritionistRealtimeChat
+  );
 }
 
 
@@ -1131,6 +1283,7 @@ document.getElementById('btnCloseChat')?.addEventListener('click', closeChatModa
 
 async function init() {
   if (!ensureNutritionistAccess()) return;
+  renderHeader();
   bindButtons();
   syncNutritionistRealtimeAvailability();
   await fetchDatabaseData();

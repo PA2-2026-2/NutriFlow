@@ -33,16 +33,36 @@
     </aside>
 
     <div class="min-w-0 flex-1">
-      <header class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-3 flex items-center justify-between">
-        <div><p class="text-[10px] font-bold uppercase tracking-[0.2em] text-nutriflow-600">Workspace Premium</p><h1 class="text-2xl font-extrabold tracking-[-0.06em]" data-header-greeting>Carregando...</h1></div>
-        <div class="flex items-center gap-3">
-          <div id="btnOpenSettings" class="flex items-center gap-2 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 shadow-sm cursor-pointer hover:bg-nutriflow-50 transition" title="Ver Meu Perfil">
-            <div class="grid h-8 w-8 place-items-center rounded-[12px] bg-nutriflow-500 text-xs font-bold text-white" data-nutritionist-initial>--</div>
-            <div class="min-w-0 pr-2"><p class="truncate text-sm font-bold text-nutriflow-950" data-nutritionist-name>Nutricionista</p><p class="text-[10px] text-nutriflow-500 font-bold uppercase">Ver Perfil</p></div>
-          </div>
-          <button id="logoutButton" class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 text-red-600 hover:bg-red-100 font-bold transition shadow-sm">[ -></button>
-        </div>
-      </header>
+<header class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6">
+  <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-nutriflow-600">Painel da nutricionista</p>
+      <h1 class="mt-2 text-2xl font-extrabold tracking-[-0.06em]" data-header-greeting>Carregando...</h1>
+      <p class="mt-2 text-sm text-nutriflow-700">Gerencie seus pacientes e acompanhe a operação clínica.</p>
+    </div>
+
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+      <label class="dashboard-search flex min-w-[220px] items-center gap-3 rounded-2xl border border-nutriflow-100 bg-white px-4 py-3 text-sm text-nutriflow-700">
+        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-nutriflow-500" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <input id="nutritionistPatientSearch" type="search" class="w-full bg-transparent outline-none placeholder:text-nutriflow-400" placeholder="Buscar paciente" autocomplete="off" />
+      </label>
+
+      <button id="btnOpenSettings" type="button" class="flex items-center gap-3 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-nutriflow-50" title="Meu perfil" aria-label="Abrir meu perfil">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-nutriflow-500 to-nutriflow-700 text-sm font-bold text-white" data-nutritionist-initial>--</span>
+        <span class="min-w-0 pr-2">
+          <span class="block max-w-[180px] truncate text-sm font-bold text-nutriflow-950" data-nutritionist-name>Nutricionista</span>
+          <span class="block max-w-[180px] truncate text-xs text-nutriflow-600" data-nutritionist-email>--</span>
+          <span class="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-nutriflow-500">Meu perfil</span>
+        </span>
+      </button>
+
+      <button id="logoutButton" type="button" class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-3 font-bold text-red-600 shadow-sm transition hover:bg-red-100" title="Sair" aria-label="Sair">Sair</button>
+    </div>
+  </div>
+</header>
 
       <main class="mt-6 space-y-6 pb-6">
         <section id="pacientes" class="grid gap-6 2xl:grid-cols-[1.3fr_.7fr]">
@@ -274,15 +294,12 @@
     <div class="nf-modal-card !max-w-lg">
       <div class="flex justify-between gap-4"><div><h3 class="text-xl font-bold">Meu Perfil Profissional</h3></div><button class="nf-modal-close" data-close="settings">x</button></div>
       <form id="settingsForm" class="mt-4 grid gap-3">
-        <label class="nf-field"><span>Nome Completo</span><input id="nutriProfileName" type="text" class="font-bold" required/></label>
-        <label class="nf-field"><span>E-mail</span><input id="nutriProfileEmail" type="email" class="font-bold" required/></label>
-        <div class="grid grid-cols-2 gap-3">
-           <label class="nf-field"><span>Idade</span><input id="nutriProfileAge" type="number" class="font-bold"/></label>
-           <label class="nf-field"><span>Foco Nutricional / Clínica</span><input id="nutriProfileClinic" type="text" class="font-bold"/></label>
-        </div>
+        <label class="nf-field"><span>Nome completo</span><input id="nutriProfileName" type="text" maxlength="100" class="font-bold" required/></label>
+        <label class="nf-field"><span>E-mail</span><input id="nutriProfileEmail" type="email" class="font-bold" readonly aria-readonly="true"/></label>
+        <label class="nf-field"><span>Telefone</span><input id="nutriProfilePhone" type="tel" maxlength="30" autocomplete="tel" class="font-bold" placeholder="DDD + número"/></label>
         <div class="flex justify-end gap-4 mt-4">
           <button class="rounded-lg border px-4 py-2 text-sm font-bold" type="button" data-close="settings">Cancelar</button>
-          <button class="rounded-lg bg-nutriflow-950 px-4 py-2 text-sm font-bold text-white" type="submit">Atualizar Perfil</button>
+          <button id="nutritionistProfileSubmit" class="rounded-lg bg-nutriflow-950 px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit">Salvar alterações</button>
         </div>
       </form>
     </div>

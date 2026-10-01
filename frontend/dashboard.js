@@ -23,6 +23,8 @@ const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
 const logoutButton = document.getElementById('logoutButton');
+const patientProfileButton = document.getElementById('patientProfileButton');
+const patientGlobalSearch = document.getElementById('patientGlobalSearch');
 const addMealButton = document.getElementById('addMealButton');
 const quickAddMealButton = document.getElementById('quickAddMealButton');
 const toast = document.getElementById('patientToast');
@@ -873,6 +875,10 @@ function renderHeader() {
     element.textContent = patientInitials;
   });
 
+  document.querySelectorAll('[data-user-email]').forEach((element) => {
+    element.textContent = state.currentUser?.email || '--';
+  });
+
   document.querySelectorAll('[data-linked-nutritionist-name]').forEach((element) => {
     element.textContent = nutritionistName;
   });
@@ -1146,6 +1152,7 @@ function renderMeals() {
         Nenhuma refeicao registrada hoje. Use o botao "Nova refeicao" para registrar o proximo horario.
       </article>
     `;
+    applyPatientGlobalSearch();
     return;
   }
 
@@ -1168,6 +1175,16 @@ function renderMeals() {
       </div>
     </article>
   `).join('');
+  applyPatientGlobalSearch();
+}
+
+function applyPatientGlobalSearch() {
+  const query = String(patientGlobalSearch?.value || '').trim().toLocaleLowerCase('pt-BR');
+
+  document.querySelectorAll('#mealList .meal-item, #historyList .history-row').forEach((item) => {
+    const matches = item.textContent.toLocaleLowerCase('pt-BR').includes(query);
+    item.classList.toggle('hidden', Boolean(query) && !matches);
+  });
 }
 
 function getHistoryPillClass(label) {
@@ -1198,6 +1215,7 @@ function renderHistory() {
         Ainda nao ha historico suficiente para comparar seus dias alimentares.
       </div>
     `;
+    applyPatientGlobalSearch();
     return;
   }
 
@@ -1209,6 +1227,7 @@ function renderHistory() {
       <span><span class="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${getHistoryPillClass(item.checkInLabel)}">${escapeHtml(item.checkInLabel)}</span></span>
     </div>
   `).join('');
+  applyPatientGlobalSearch();
 }
 
 function renderPlan() {
@@ -1871,6 +1890,8 @@ function bindWeightModalEvents() {
 
 function bindEvents() {
   logoutButton?.addEventListener('click', clearSessionAndRedirect);
+  patientProfileButton?.addEventListener('click', openPatientSettingsModal);
+  patientGlobalSearch?.addEventListener('input', applyPatientGlobalSearch);
   addMealButton?.addEventListener('click', () => handleAddMeal());
   quickAddMealButton?.addEventListener('click', () => handleAddMeal({ templateKey: 'lanche-rapido' }));
   addWeeklyWeightButton?.addEventListener('click', handleAddWeeklyWeight);
