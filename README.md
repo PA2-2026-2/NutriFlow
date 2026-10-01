@@ -1,71 +1,80 @@
-# NutriFlow — Backend
+# NutriFlow
 
-Backend da plataforma NutriFlow: acompanhamento nutricional para pacientes, nutricionistas e administradores.
+Plataforma de acompanhamento nutricional para pacientes, nutricionistas e administradores. O repositório contém a aplicação web, uma API Express e persistência SQLite com Prisma.
 
 ## Requisitos
 
-* Node.js 20 ou superior
-* npm
+- Node.js 20 ou superior
+- npm
 
-## Como rodar
+## Início rápido
 
 ```bash
 npm install
-cp .env.example .env
 npm run prisma:generate
 npm run db:push
 npm run dev
 ```
 
-Depois acesse:
-
-```
-http://127.0.0.1:3000
-```
-
-Você deve ver `{"status":"ok","service":"nutriflow-backend"}`.
+O servidor inicia por padrão em `http://127.0.0.1:3000`. A raiz exibe a aplicação web; `GET /health` verifica a API e a conexão com o banco. Para executar a suíte de testes, use `npm test`.
 
 ## Configuração
 
-As variáveis de ambiente ficam no arquivo `.env` (copie de `.env.example`):
+As configurações podem ser fornecidas por variáveis de ambiente em um arquivo `.env` na raiz. Todas têm valores padrão para desenvolvimento.
 
 | Variável | Descrição | Padrão |
 |---|---|---|
 | `NODE_ENV` | Ambiente de execução | `development` |
-| `HOST` | Host do servidor | `127.0.0.1` |
-| `PORT` | Porta do servidor | `3000` |
-| `DATABASE_URL` | Caminho do banco SQLite (relativo à pasta `prisma/`) | `file:./dev.db` |
-| `TOKEN_SECRET` | Chave usada para assinar os tokens JWT — **troque em produção** | — |
+| `HOST` | Interface de rede do servidor | `127.0.0.1` |
+| `PORT` | Porta HTTP | `3000` |
+| `DATABASE_URL` | URL de conexão do SQLite (caminho relativo ao schema Prisma) | `file:./dev.db` |
+| `TOKEN_SECRET` | Segredo de assinatura dos tokens; defina um valor forte em produção | `nutriflow-dev-secret-change-me` |
+| `UPLOADS_DIR` | Diretório para fotos de perfil | `uploads/` na raiz |
 
-## Estrutura de pastas
+As fotos aceitas são JPG e PNG, limitadas a 2 MB, e são servidas sob `/uploads`. O diretório `uploads/`, assim como o banco local e `.env`, não deve ser versionado.
 
-```
+## Estrutura
+
+```text
+index.js                 Inicialização HTTP e encerramento gracioso
 src/
-├── app.js              # Configuração do Express (middlewares e rotas globais)
-├── server.js            # Ponto de entrada — sobe o servidor HTTP
-├── config/
-│   └── env.js           # Carrega e valida as variáveis de ambiente
-├── routes/               # Definição das rotas HTTP, uma por módulo (auth, patients, ...)
-│   └── index.js          # Agregador de todas as rotas
-├── controllers/          # Recebem a requisição, chamam os services e devolvem a resposta
-├── services/             # Regras de negócio e acesso ao banco (via Prisma)
-├── middlewares/          # Autenticação, autorização, validação, tratamento de erros
-└── models/               # Tipos, DTOs e helpers relacionados às entidades do domínio
+	app.js                 Configuração do Express, dependências e rotas
+	config.js              Configuração por variáveis de ambiente
+	constants/             Perfis e matriz de permissões
+	controllers/           Adaptadores HTTP
+	errors/                Erros da aplicação
+	http/                  Parser e respostas HTTP
+	infra/                 Prisma e armazenamento de fotos
+	middlewares/           Autenticação, autorização e tratamento de erros
+	repositories/          Acesso a dados
+	routes/                Rotas da API
+	services/              Regras de negócio
+	utils/                 Validadores e formatadores
+frontend/                Aplicação web servida pelo backend
+prisma/schema.prisma     Modelos e configuração do banco
+prisma/seed.js           Dados iniciais
+tests/                   Testes automatizados com Jest e Supertest
+docs/                    Documentação, incluindo a matriz de permissões
 ```
 
-Cada módulo (autenticação, pacientes, nutricionistas, admin...) segue o fluxo:
-`routes → controllers → services → (Prisma) banco de dados`.
+O fluxo da API é `routes → controllers → services → repositories → Prisma`.
 
-## Scripts disponíveis
+## API
 
-| Comando | O que faz |
+Autenticação: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` e `GET /api/auth/me`.
+
+Perfil autenticado: `GET /api/users/me`, `PUT /api/users/me` e `POST /api/users/me/photo`.
+
+Administração (perfil ADMIN): `GET /api/admin/users`, `PUT /api/admin/users/:userId`, `PATCH /api/admin/users/:userId/status` e `DELETE /api/admin/users/:userId`.
+
+Os detalhes dos perfis autorizados por rota estão em [docs/PERMISSIONS.md](docs/PERMISSIONS.md).
+
+## Scripts
+
+| Comando | Descrição |
 |---|---|
-| `npm start` | Sobe o servidor em modo produção |
-| `npm run dev` | Sobe o servidor com reload automático (`node --watch`) |
-| `npm run prisma:generate` | Gera o client do Prisma a partir do schema |
-| `npm run db:push` | Sincroniza o schema do Prisma com o banco de dados |
-| `npm test` | Roda a suíte de testes (configuração completa em issue própria) |
-
-## Status do projeto
-
-Backend em construção, organizado por sprints. Este README será atualizado conforme cada módulo for implementado.
+| `npm start` | Inicia o servidor |
+| `npm run dev` | Inicia o servidor com reinicialização ao alterar arquivos |
+| `npm run prisma:generate` | Gera o Prisma Client |
+| `npm run db:push` | Sincroniza o schema com o banco configurado |
+| `npm test` | Executa os testes com Jest |

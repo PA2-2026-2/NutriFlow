@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -7,19 +8,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Demais models (PatientProfile, NutritionistProfile, MealPlan, Assessment,
-// BodyMeasurement, PatientMessage, MealEntry, Food, FoodLog, Appointment,
-// NutritionChallenge, ChallengeParticipant, ProgressSnapshot, WeightEntry,
-// Goal, MealEntryItem...) entram nas proximas sprints, junto com as
-// respectivas relations no model User abaixo.
-
 model User {
+  id              String          @id @default(uuid())
+  name            String
+  email           String          @unique
+  phone           String?
+  profile         String
+  passwordHash    String
+  isActive        Boolean         @default(true)
+  profilePhotoUrl String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  patientProfile  PatientProfile?
+
+  patients PatientProfile[] @relation("NutritionistPatients")
+}
+
+model PatientProfile {
   id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  profile      String
-  passwordHash String
-  isActive     Boolean  @default(true)
+  userId       String   @unique
+  age          Int?
+  weight       Float?
+  height       Float?
+  objective    String?
+  restrictions String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  nutritionistId String?
+  nutritionist   User?   @relation("NutritionistPatients", fields: [nutritionistId], references: [id])
 }

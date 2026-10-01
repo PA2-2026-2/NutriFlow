@@ -21,8 +21,8 @@ const state = {
   currentUser: session.getUser(),
   patients: [],
   selectedPatientId: null,
-  activeFilterId: null, // Novo: Guarda se estamos filtrando a tela por um paciente
-  activeChallengeId: null, // Para adicionar pacientes a desafios
+  activeFilterId: null, 
+  activeChallengeId: null, 
   mealPlans: [], assessments: [], appointments: [], challenges: [], messages: [], foods: [], reminders: [],
   chatPatientId: null,
   activeConversation: null,
@@ -150,7 +150,7 @@ async function sendNutritionistChatMessage(payload) {
   });
 }
 
-// BUSCANDO DADOS 
+
 async function fetchDatabaseData() {
   try {
     const data = await apiRequest('/api/nutritionist/dashboard');
@@ -226,10 +226,10 @@ function renderPatientsList() {
     row.addEventListener('click', (e) => {
       if (!e.target.closest('button')) {
         state.selectedPatientId = patient.id;
-        state.activeFilterId = patient.id; // Ativa o filtro para este paciente!
+        state.activeFilterId = patient.id; 
         state.chatPatientId = patient.id;
         clearActiveConversation();
-        renderAll(); // Re-renderiza a tela para aplicar o filtro
+        renderAll(); 
         void syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
       }
     });
@@ -334,7 +334,7 @@ function renderPatientProfileModal(patient) {
   }
 }
 
-// RENDERIZAÇÃO DAS LISTAS COM FILTRO E BOTÕES DE AÇÃO
+
 const MEAL_PLAN_MEAL_TIMES = [
   'Cafe da manha',
   'Lanche da manha',
@@ -772,7 +772,7 @@ async function handleNutritionistChatSubmit(event) {
 function renderGeneralLists() {
   const pId = state.activeFilterId;
 
-  // Filtra as listas se um paciente estiver selecionado
+  
   const plans = pId ? state.mealPlans.filter(p => p.patientId === pId) : state.mealPlans;
   const asss = pId ? state.assessments.filter(a => a.patientId === pId) : state.assessments;
   const apps = pId ? state.appointments.filter(a => a.patientId === pId) : state.appointments;
@@ -875,7 +875,7 @@ function populatePatientSelects() {
   });
 }
 
-// FUNÇÕES GLOBAIS DE AÇÃO (Excluir, Duplicar, Adicionar Participante)
+
 window.deleteResource = async function(resourceType, id) {
   if(!confirm('Tem certeza que deseja excluir este item permanentemente?')) return;
   try {
@@ -931,7 +931,7 @@ window.rescheduleAppointment = async function(appointmentId) {
   }
 };
 
-// MODAIS
+
 function openModal(modalId) {
   document.querySelectorAll('.nf-modal-overlay').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); });
   const modal = document.getElementById(`${modalId}Modal`);
@@ -997,7 +997,7 @@ function bindButtons() {
   window.addEventListener('beforeunload', stopNutritionistRealtimeChat);
 }
 
-// INTEGRAÇÕES REAIS
+
 document.getElementById('linkPatientForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('linkPatientEmail').value;
@@ -1053,7 +1053,7 @@ document.getElementById('assessmentForm')?.addEventListener('submit', async (e) 
   } catch(err) { showToast('Erro ao salvar avaliação.'); }
 });
 
-// AQUI É A AGENDA SALVANDO DE VERDADE
+
 document.getElementById('appointmentForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const payload = {
@@ -1082,7 +1082,7 @@ document.getElementById('challengeForm')?.addEventListener('submit', async (e) =
   } catch(err) { showToast('Erro ao criar desafio.'); }
 });
 
-// ADICIONAR PACIENTE A DESAFIO EXISTENTE
+
 document.getElementById('addParticipantForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const patientId = document.getElementById('addPartPatient').value;
@@ -1092,7 +1092,7 @@ document.getElementById('addParticipantForm')?.addEventListener('submit', async 
   } catch(err) { showToast('Erro ao adicionar paciente.'); }
 });
 
-// LOGIC PARA O CHAT FLUTUANTE
+
 function openChatModal() {
   if (!chatModal) {
     return;
@@ -1128,7 +1128,7 @@ document.getElementById('btnToggleChat')?.addEventListener('click', () => {
 
 document.getElementById('btnCloseChat')?.addEventListener('click', closeChatModal);
 
-// START
+
 async function init() {
   if (!ensureNutritionistAccess()) return;
   bindButtons();

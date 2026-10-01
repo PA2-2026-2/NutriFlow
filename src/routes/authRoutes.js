@@ -1,7 +1,8 @@
 const express = require('express');
 const { asyncHandler } = require('../middlewares/asyncHandler');
+const { authorize } = require('../middlewares/authMiddleware');
 
-function createAuthRoutes(authController) {
+function createAuthRoutes(authController, authenticate) {
 	const router = express.Router();
 
 	router.post(
@@ -17,6 +18,13 @@ function createAuthRoutes(authController) {
 	router.post(
 		'/logout',
 		asyncHandler(authController.logout.bind(authController)),
+	);
+
+	router.get(
+		'/me',
+		authenticate,
+		authorize('GET /api/auth/me'),
+		asyncHandler(authController.me.bind(authController)),
 	);
 
 	return router;

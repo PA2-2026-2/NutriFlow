@@ -4,15 +4,29 @@ const path = require('path');
 const { config } = require('./config');
 const { createPrismaClient } = require('./infra/database');
 const { errorHandler } = require('./middlewares/errorHandler');
+const { createAuthMiddleware } = require('./middlewares/authMiddleware');
 
 const { AuthController } = require('./controllers/authController');
+const { AdminController } = require('./controllers/adminController');
+const { UserController } = require('./controllers/userController');
+const { PatientController } = require('./controllers/patientController');
 const { UserRepository } = require('./repositories/userRepository');
+const { AdminRepository } = require('./repositories/adminRepository');
+const { ProfileRepository } = require('./repositories/profileRepository');
 
 const { AuthService } = require('./services/authService');
+const { AdminService } = require('./services/adminService');
+const { UserService } = require('./services/userService');
+const { PatientService } = require('./services/patientService');
+const { SessionService } = require('./services/sessionService');
 const { PasswordService } = require('./services/passwordService');
 const { TokenService } = require('./services/tokenService');
 
 const { createAuthRoutes } = require('./routes/authRoutes');
+const { createAdminRoutes } = require('./routes/adminRoutes');
+const { createUserRoutes } = require('./routes/userRoutes');
+const { createPatientRoutes } = require('./routes/patientRoutes');
+const { PhotoStorage } = require('./infra/photoStorage');
 
 const FRONTEND_ROUTE_ALIASES = new Map([
   ['/home', '/index.html'],
@@ -42,7 +56,7 @@ function cors(request, response, next) {
 
   response.setHeader(
     'Access-Control-Allow-Methods',
-    'GET,POST,PATCH,DELETE,OPTIONS'
+    'GET,POST,PUT,PATCH,DELETE,OPTIONS'
   );
 
   response.setHeader(
@@ -83,18 +97,44 @@ function createDependencies(appConfig, overrides = {}) {
     createPrismaClient(appConfig.databaseUrl);
 
   const repository = new UserRepository(prisma);
+  const profileRepository = new ProfileRepository(prisma);
   const passwordService = new PasswordService();
   const tokenService = new TokenService(appConfig.tokenSecret);
+
+  const sessionService = new SessionService();
 
   const authService = new AuthService(
     repository,
     passwordService,
-    tokenService
+    tokenService,
+    sessionService
   );
+
+  const photoStorage = new PhotoStorage({ uploadsDir: appConfig.uploadsDir });
+
+  const adminService = new AdminService(
+    new AdminRepository(prisma),
+    photoStorage
+  );
+
+  const userService = new UserService(repository, photoStorage, {
+    maxPhotoBytes: appConfig.maxPhotoSizeBytes,
+    profileRepository,
+  });
+
+  const patientService = new PatientService(profileRepository, repository);
 
   return {
     prisma,
     authController: new AuthController(authService),
+    adminController: new AdminController(adminService),
+    userController: new UserController(userService),
+    patientController: new PatientController(patientService),
+    authenticate: createAuthMiddleware(
+      tokenService,
+      sessionService,
+      repository
+    ),
   };
 }
 
@@ -104,8 +144,14 @@ function createApp(options = {}) {
     ...(options.config || {}),
   };
 
-  const { prisma, authController } =
-    createDependencies(appConfig, options);
+  const {
+    prisma,
+    authController,
+    adminController,
+    userController,
+    patientController,
+    authenticate,
+  } = createDependencies(appConfig, options);
 
   const app = express();
   const frontendDir = appConfig.frontendDir;
@@ -134,7 +180,34 @@ function createApp(options = {}) {
 
   app.use(
     '/api/auth',
-    createAuthRoutes(authController)
+    createAuthRoutes(authController, authenticate)
+  );
+
+  app.use(
+    '/api/admin',
+    createAdminRoutes(adminController, authenticate)
+  );
+
+  app.use(
+    '/api/users',
+    createUserRoutes(userController, authenticate, {
+      maxPhotoBytes: appConfig.maxPhotoSizeBytes,
+    })
+  );
+
+  app.use(
+    '/api/patients',
+    createPatientRoutes(patientController, authenticate)
+  );
+
+  app.use(
+    '/uploads',
+    express.static(appConfig.uploadsDir, {
+      index: false,
+      setHeaders: (response) => {
+        response.setHeader('X-Content-Type-Options', 'nosniff');
+      },
+    })
   );
 
   app.use(frontendAliases);

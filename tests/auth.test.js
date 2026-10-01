@@ -16,7 +16,7 @@ describe('POST /api/auth/register', () => {
         name: 'Usuario Teste',
         email,
         password: 'senha1234',
-        role: 'admin',
+        role: 'patient',
       });
 
     expect(response.statusCode).toBe(201);
@@ -24,7 +24,7 @@ describe('POST /api/auth/register', () => {
     expect(response.body.user).toMatchObject({
       name: 'Usuario Teste',
       email,
-      role: 'ADMIN',
+      role: 'PATIENT',
     });
   });
 
@@ -35,7 +35,7 @@ describe('POST /api/auth/register', () => {
       name: 'Usuario Duplicado',
       email,
       password: 'senha1234',
-      role: 'admin',
+      role: 'patient',
     };
 
     await request(app).post('/api/auth/register').send(payload);
@@ -55,6 +55,42 @@ describe('POST /api/auth/register', () => {
   });
 });
 
+describe('POST /api/auth/register - perfis permitidos', () => {
+  it('deve cadastrar nutricionista', async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Nutri Teste',
+        email: uniqueEmail(),
+        password: 'senha1234',
+        role: 'nutricionista',
+      });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.body.user.role).toBe('NUTRITIONIST');
+  });
+
+  it('deve recusar cadastro publico de administrador', async () => {
+    const app = createApp();
+
+    for (const role of ['admin', 'ADMIN', 'Administrador']) {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          name: 'Quero Ser Admin',
+          email: uniqueEmail(),
+          password: 'senha1234',
+          role,
+        });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.body).not.toHaveProperty('token');
+    }
+  });
+});
+
 describe('POST /api/auth/login', () => {
   it('deve autenticar com credenciais validas', async () => {
     const app = createApp();
@@ -64,7 +100,7 @@ describe('POST /api/auth/login', () => {
       name: 'Usuario Login',
       email,
       password: 'senha1234',
-      role: 'admin',
+      role: 'patient',
     });
 
     const response = await request(app)
@@ -83,7 +119,7 @@ describe('POST /api/auth/login', () => {
       name: 'Usuario Senha Errada',
       email,
       password: 'senha1234',
-      role: 'admin',
+      role: 'patient',
     });
 
     const response = await request(app)
@@ -113,7 +149,7 @@ describe('POST /api/auth/logout', () => {
       name: 'Usuario Logout',
       email,
       password: 'senha1234',
-      role: 'admin',
+      role: 'patient',
     });
 
     const { token } = registerResponse.body;
