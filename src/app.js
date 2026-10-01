@@ -9,20 +9,23 @@ const { createAuthMiddleware } = require('./middlewares/authMiddleware');
 const { AuthController } = require('./controllers/authController');
 const { AdminController } = require('./controllers/adminController');
 const { UserController } = require('./controllers/userController');
+const { PatientController } = require('./controllers/patientController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
+const { ProfileRepository } = require('./repositories/profileRepository');
 
 const { AuthService } = require('./services/authService');
 const { AdminService } = require('./services/adminService');
 const { UserService } = require('./services/userService');
+const { PatientService } = require('./services/patientService');
 const { SessionService } = require('./services/sessionService');
 const { PasswordService } = require('./services/passwordService');
 const { TokenService } = require('./services/tokenService');
-const { ProfileRepository } = require('./repositories/profileRepository');
 
 const { createAuthRoutes } = require('./routes/authRoutes');
 const { createAdminRoutes } = require('./routes/adminRoutes');
 const { createUserRoutes } = require('./routes/userRoutes');
+const { createPatientRoutes } = require('./routes/patientRoutes');
 const { PhotoStorage } = require('./infra/photoStorage');
 
 const FRONTEND_ROUTE_ALIASES = new Map([
@@ -114,16 +117,19 @@ function createDependencies(appConfig, overrides = {}) {
     photoStorage
   );
 
-const userService = new UserService(repository, photoStorage, {
-  maxPhotoBytes: appConfig.maxPhotoSizeBytes,
-  profileRepository,
-});
+  const userService = new UserService(repository, photoStorage, {
+    maxPhotoBytes: appConfig.maxPhotoSizeBytes,
+    profileRepository,
+  });
+
+  const patientService = new PatientService(profileRepository, repository);
 
   return {
     prisma,
     authController: new AuthController(authService),
     adminController: new AdminController(adminService),
     userController: new UserController(userService),
+    patientController: new PatientController(patientService),
     authenticate: createAuthMiddleware(
       tokenService,
       sessionService,
@@ -143,6 +149,7 @@ function createApp(options = {}) {
     authController,
     adminController,
     userController,
+    patientController,
     authenticate,
   } = createDependencies(appConfig, options);
 
@@ -188,7 +195,11 @@ function createApp(options = {}) {
     })
   );
 
-  
+  app.use(
+    '/api/patients',
+    createPatientRoutes(patientController, authenticate)
+  );
+
   app.use(
     '/uploads',
     express.static(appConfig.uploadsDir, {

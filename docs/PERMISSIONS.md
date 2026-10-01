@@ -33,12 +33,18 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /api/users/me` | ✅ | ✅ | ✅ | Dados do próprio perfil |
 | `PUT /api/users/me` | ✅ | ✅ | ✅ | Atualiza o próprio nome e telefone |
 | `POST /api/users/me/photo` | ✅ | ✅ | ✅ | Envia a própria foto (JPG/PNG, até 2 MB) |
+| `POST /api/patients/me/nutritionist` | ✅ | ❌ | ❌ | Vincula o paciente logado a um nutricionista pelo e-mail dele |
 | `GET /api/admin/users` | ❌ | ❌ | ✅ | Lista usuários (`?role=` e `?search=`) |
 | `PUT /api/admin/users/:userId` | ❌ | ❌ | ✅ | Edita nome, e-mail e telefone de um usuário |
 | `PATCH /api/admin/users/:userId/status` | ❌ | ❌ | ✅ | Bloqueia/desbloqueia (`{ "isActive": boolean }`) |
 | `DELETE /api/admin/users/:userId` | ❌ | ❌ | ✅ | Remove um usuário |
 
 Regras adicionais do admin: não pode bloquear nem remover a própria conta.
+
+Regra adicional do vínculo paciente-nutricionista: o paciente só pode ter um
+nutricionista responsável por vez — vincular de novo substitui o anterior. O
+endpoint retorna `404` se o e-mail informado não pertencer a um nutricionista
+cadastrado, e `403` se o nutricionista estiver inativo.
 
 ## Ao criar uma rota nova
 
