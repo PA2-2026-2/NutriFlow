@@ -30,7 +30,11 @@ async function createUserWithRole(app, role, overrides = {}) {
     .post('/api/auth/login')
     .send({ email, password: PASSWORD });
 
-  if (!login.body.token) throw new Error(JSON.stringify(login.body)); if (!login.body.token) throw new Error(JSON.stringify(login.body)); return { user, email, token: login.body.token };
+  if (!login.body.token) {
+    throw new Error(JSON.stringify(login.body));
+  }
+
+  return { user, email, token: login.body.token };
 }
 
 

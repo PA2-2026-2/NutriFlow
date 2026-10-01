@@ -23,19 +23,19 @@ function createAuthMiddleware(tokenService, tokenBlacklistService, userRepositor
       }
 
       if (tokenBlacklistService.isRevoked(token)) {
-        throw new AppError('DEBUG_BLACKLIST', 401);
+        throw new AppError('Sessao encerrada. Faca login novamente.', 401);
       }
 
       const payload = tokenService.verify(token);
 
       if (!payload) {
-        throw new AppError('DEBUG_TOKEN_INVALIDO', 401);
+        throw new AppError('Token invalido ou expirado.', 401);
       }
 
       const user = await userRepository.findById(payload.sub);
 
       if (!user) {
-        throw new AppError('DEBUG_USUARIO_NAO_ENCONTRADO', 401);
+        throw new AppError('Sessao invalida. Faca login novamente.', 401);
       }
 
       if (!user.isActive) {
