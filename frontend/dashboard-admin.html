@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
   <title>NutriFlow | Painel Admin</title>
+
+  <!-- =======================================================
+       TAILWIND
+  ======================================================== -->
 
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -29,55 +37,82 @@
           }
         }
       }
-    }
+    };
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- =======================================================
+       FONT
+  ======================================================== -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
 
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
-  >
+  />
 
-  <link rel="stylesheet" href="styles.css" />
+
+  <!-- =======================================================
+       GLOBAL CSS
+  ======================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="styles.css"
+  />
+
 </head>
 
-<body class="dashboard-body admin-body text-nutriflow-950">
 
-  <!-- =========================================================
+<body
+  class="dashboard-body admin-body text-nutriflow-950"
+>
+
+  <!-- =======================================================
        BACKGROUND
-  ========================================================== -->
+  ======================================================== -->
 
   <div
     class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(21,53,93,.08),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(111,150,86,.18),transparent_30%)]"
   ></div>
 
 
-  <!-- =========================================================
-       APP CONTAINER
-  ========================================================== -->
+  <!-- =======================================================
+       APP
+  ======================================================== -->
 
   <div
     class="relative mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-4 py-4 md:px-6 xl:gap-6"
   >
 
-    <!-- =======================================================
+
+    <!-- =====================================================
          SIDEBAR
-    ======================================================== -->
+    ====================================================== -->
 
     <aside
       class="dashboard-sidebar admin-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[308px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col"
     >
 
-      <!-- Logo -->
-
       <div>
+
+        <!-- LOGO -->
 
         <a
           href="index.html"
           class="flex items-center gap-3"
         >
+
           <span
             class="grid h-12 w-12 place-items-center rounded-2xl bg-white/12"
           >
@@ -87,22 +122,30 @@
           </span>
 
           <div>
-            <p class="text-xl font-extrabold tracking-[-0.05em]">
+
+            <p
+              class="text-xl font-extrabold tracking-[-0.05em]"
+            >
               NutriFlow
             </p>
 
-            <p class="text-xs text-white/68">
+            <p
+              class="text-xs text-white/68"
+            >
               Controle da plataforma
             </p>
+
           </div>
+
         </a>
 
 
-        <!-- Data -->
+        <!-- DATA -->
 
         <div
           class="mt-8 rounded-[26px] border border-white/12 bg-white/8 p-4"
         >
+
           <p
             class="text-xs font-semibold uppercase tracking-[0.2em] text-white/60"
           >
@@ -110,27 +153,37 @@
           </p>
 
           <p
-            class="mt-3 text-3xl font-bold tracking-[-0.06em]"
             data-sidebar-date
+            class="mt-3 text-3xl font-bold tracking-[-0.06em]"
           >
-            06 Mar
+            --
           </p>
 
-          <p class="mt-2 text-sm leading-6 text-white/72">
-            Acompanhe saude da base, governanca de contas e sinais que pedem acao rapida.
+          <p
+            class="mt-2 text-sm leading-6 text-white/72"
+          >
+            Acompanhe saúde da base, governança de contas
+            e sinais que pedem ação rápida.
           </p>
+
         </div>
 
 
-        <!-- Navigation -->
+        <!-- NAVEGAÇÃO -->
 
-        <nav class="mt-8 space-y-2">
+        <nav
+          class="mt-8 space-y-2"
+        >
+
+          <!-- VISÃO GERAL -->
 
           <a
             href="#visao-geral"
             class="sidebar-link is-active"
           >
+
             <span class="sidebar-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 class="h-4 w-4"
@@ -138,27 +191,42 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 10h6V4h-6zM4 20h6v-5H4z"></path>
+                <path d="M4 13h6V4H4z"></path>
+                <path d="M14 20h6v-9h-6z"></path>
+                <path d="M14 10h6V4h-6z"></path>
+                <path d="M4 20h6v-5H4z"></path>
               </svg>
+
             </span>
 
             <span>
-              <span class="block text-sm font-semibold">
-                Visao geral
+
+              <span
+                class="block text-sm font-semibold"
+              >
+                Visão geral
               </span>
 
-              <span class="block text-xs text-white/55">
-                Resumo da operacao
+              <span
+                class="block text-xs text-white/55"
+              >
+                Resumo da operação
               </span>
+
             </span>
+
           </a>
 
+
+          <!-- USUÁRIOS -->
 
           <a
             href="#usuarios"
             class="sidebar-link"
           >
+
             <span class="sidebar-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 class="h-4 w-4"
@@ -166,30 +234,55 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                <path
+                  d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+                ></path>
+
+                <circle
+                  cx="9"
+                  cy="7"
+                  r="4"
+                ></circle>
+
+                <path
+                  d="M23 21v-2a4 4 0 0 0-3-3.87"
+                ></path>
+
+                <path
+                  d="M16 3.13a4 4 0 0 1 0 7.75"
+                ></path>
               </svg>
+
             </span>
 
             <span>
-              <span class="block text-sm font-semibold">
-                Usuarios
+
+              <span
+                class="block text-sm font-semibold"
+              >
+                Usuários
               </span>
 
-              <span class="block text-xs text-white/55">
-                Governanca e acesso
+              <span
+                class="block text-xs text-white/55"
+              >
+                Governança e acesso
               </span>
+
             </span>
+
           </a>
 
+
+          <!-- ALIMENTOS -->
 
           <a
             href="#alimentos"
             class="sidebar-link"
           >
+
             <span class="sidebar-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 class="h-4 w-4"
@@ -197,29 +290,47 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <path d="M15 11V5a3 3 0 1 0-6 0v6"></path>
+                <path
+                  d="M15 11V5a3 3 0 1 0-6 0v6"
+                ></path>
+
                 <path d="M3 11h18"></path>
-                <path d="M5 11v5a7 7 0 0 0 14 0v-5"></path>
+
+                <path
+                  d="M5 11v5a7 7 0 0 0 14 0v-5"
+                ></path>
               </svg>
+
             </span>
 
             <span>
-              <span class="block text-sm font-semibold">
+
+              <span
+                class="block text-sm font-semibold"
+              >
                 Alimentos
               </span>
 
-              <span class="block text-xs text-white/55">
+              <span
+                class="block text-xs text-white/55"
+              >
                 Base nutricional
               </span>
+
             </span>
+
           </a>
 
+
+          <!-- MÉTRICAS -->
 
           <a
             href="#metricas"
             class="sidebar-link"
           >
+
             <span class="sidebar-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 class="h-4 w-4"
@@ -231,17 +342,25 @@
                 <path d="M18 20V4"></path>
                 <path d="M6 20v-4"></path>
               </svg>
+
             </span>
 
             <span>
-              <span class="block text-sm font-semibold">
-                Metricas
+
+              <span
+                class="block text-sm font-semibold"
+              >
+                Métricas
               </span>
 
-              <span class="block text-xs text-white/55">
+              <span
+                class="block text-xs text-white/55"
+              >
                 Leitura executiva
               </span>
+
             </span>
+
           </a>
 
         </nav>
@@ -249,49 +368,86 @@
       </div>
 
 
-      <!-- Radar -->
+      <!-- RADAR -->
 
       <div
-        class="rounded-[28px] border border-white/12 bg-white/8 p-4"
+        class="mt-auto rounded-[28px] border border-white/12 bg-white/8 p-4"
       >
+
         <p
           class="text-xs font-semibold uppercase tracking-[0.16em] text-white/60"
         >
-          Radar rapido
+          Radar rápido
         </p>
 
-        <div class="mt-4 space-y-3 text-sm text-white/78">
 
-          <div class="flex items-center justify-between">
-            <span>Usuarios ativos</span>
-            <strong id="adminSidebarUsers">0</strong>
+        <div
+          class="mt-4 space-y-3 text-sm text-white/78"
+        >
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <span>
+              Usuários ativos
+            </span>
+
+            <strong id="adminSidebarUsers">
+              0
+            </strong>
+
           </div>
 
-          <div class="flex items-center justify-between">
-            <span>Contas bloqueadas</span>
-            <strong id="adminSidebarBlocked">0</strong>
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <span>
+              Contas bloqueadas
+            </span>
+
+            <strong id="adminSidebarBlocked">
+              0
+            </strong>
+
           </div>
 
-          <div class="flex items-center justify-between">
-            <span>Itens da base</span>
-            <strong id="adminSidebarFoods">0</strong>
+
+          <div
+            class="flex items-center justify-between"
+          >
+
+            <span>
+              Itens da base
+            </span>
+
+            <strong id="adminSidebarFoods">
+              0
+            </strong>
+
           </div>
 
         </div>
+
       </div>
 
     </aside>
 
 
-    <!-- =======================================================
-         MAIN AREA
-    ======================================================== -->
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
 
-    <div class="min-w-0 flex-1">
+    <div
+      class="min-w-0 flex-1"
+    >
 
-      <!-- =====================================================
+
+      <!-- ===================================================
            HEADER
-      ====================================================== -->
+      ==================================================== -->
 
       <header
         class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6"
@@ -301,16 +457,20 @@
           class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
         >
 
-          <!-- Header title -->
 
-          <div class="flex items-center gap-4">
+          <!-- TÍTULO -->
 
-            <!-- Mobile logo -->
+          <div
+            class="flex items-center gap-4"
+          >
+
+            <!-- LOGO MOBILE -->
 
             <a
               href="index.html"
               class="flex items-center gap-3 xl:hidden"
             >
+
               <span
                 class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-nutriflow-500 to-nutriflow-700 text-white"
               >
@@ -320,14 +480,21 @@
               </span>
 
               <div>
-                <p class="text-lg font-extrabold tracking-[-0.05em]">
+
+                <p
+                  class="text-lg font-extrabold tracking-[-0.05em]"
+                >
                   NutriFlow
                 </p>
 
-                <p class="text-xs text-nutriflow-600">
+                <p
+                  class="text-xs text-nutriflow-600"
+                >
                   Painel admin
                 </p>
+
               </div>
+
             </a>
 
 
@@ -343,11 +510,14 @@
                 id="adminGreeting"
                 class="mt-2 text-3xl font-extrabold tracking-[-0.06em]"
               >
-                Carregando operacao
+                Carregando operação
               </h1>
 
-              <p class="mt-2 text-sm text-nutriflow-700">
-                Gerencie usuarios, base nutricional e sinais operacionais do NutriFlow em um unico fluxo.
+              <p
+                class="mt-2 text-sm text-nutriflow-700"
+              >
+                Gerencie usuários, base nutricional e sinais
+                operacionais do NutriFlow em um único fluxo.
               </p>
 
             </div>
@@ -355,13 +525,14 @@
           </div>
 
 
-          <!-- Header actions -->
+          <!-- AÇÕES -->
 
           <div
             class="flex flex-col gap-3 lg:flex-row lg:items-center"
           >
 
-            <!-- Search -->
+
+            <!-- BUSCA -->
 
             <label
               class="dashboard-search flex min-w-[240px] items-center gap-3 rounded-2xl border border-nutriflow-100 bg-white px-4 py-3 text-sm text-nutriflow-700"
@@ -380,22 +551,24 @@
                   r="7"
                 ></circle>
 
-                <path d="m21 21-4.3-4.3"></path>
+                <path
+                  d="m21 21-4.3-4.3"
+                ></path>
               </svg>
+
 
               <input
                 id="adminGlobalSearch"
-                class="w-full bg-transparent outline-none placeholder:text-nutriflow-400"
                 type="text"
-                placeholder="Busca rapida por usuario"
+                class="w-full bg-transparent outline-none placeholder:text-nutriflow-400"
+                placeholder="Busca rápida por usuário"
+                autocomplete="off"
               />
 
             </label>
 
 
-            <!-- =================================================
-                 PROFILE BUTTON
-            ================================================== -->
+            <!-- PERFIL -->
 
             <button
               id="adminProfileButton"
@@ -413,7 +586,9 @@
               </div>
 
 
-              <div class="min-w-0 pr-2">
+              <div
+                class="min-w-0 pr-2"
+              >
 
                 <p
                   id="adminName"
@@ -440,7 +615,7 @@
             </button>
 
 
-            <!-- Logout -->
+            <!-- LOGOUT -->
 
             <button
               id="adminLogoutButton"
@@ -449,7 +624,7 @@
               title="Sair"
               aria-label="Sair"
             >
-              [ -&gt;
+              Sair
             </button>
 
           </div>
@@ -459,26 +634,30 @@
       </header>
 
 
-      <!-- =====================================================
+      <!-- ===================================================
            MOBILE NAV
-      ====================================================== -->
+      ==================================================== -->
 
-      <div class="mt-4 overflow-x-auto xl:hidden">
+      <div
+        class="mt-4 overflow-x-auto xl:hidden"
+      >
 
-        <div class="flex min-w-max gap-3 pb-2">
+        <div
+          class="flex min-w-max gap-3 pb-2"
+        >
 
           <a
             href="#visao-geral"
             class="mobile-nav-pill is-active"
           >
-            Visao geral
+            Visão geral
           </a>
 
           <a
             href="#usuarios"
             class="mobile-nav-pill"
           >
-            Usuarios
+            Usuários
           </a>
 
           <a
@@ -492,7 +671,7 @@
             href="#metricas"
             class="mobile-nav-pill"
           >
-            Metricas
+            Métricas
           </a>
 
         </div>
@@ -500,13 +679,16 @@
       </div>
 
 
-      <!-- =====================================================
-           MAIN
-      ====================================================== -->
+      <!-- ===================================================
+           CONTENT
+      ==================================================== -->
 
-      <main class="mt-4 space-y-6 pb-6">
+      <main
+        class="mt-4 space-y-6 pb-6"
+      >
 
-        <!-- Status -->
+
+        <!-- STATUS -->
 
         <div
           id="adminStatusMessage"
@@ -514,9 +696,9 @@
         ></div>
 
 
-        <!-- ===================================================
-             OVERVIEW
-        ==================================================== -->
+        <!-- =================================================
+             VISÃO GERAL
+        ================================================== -->
 
         <section
           id="visao-geral"
@@ -525,10 +707,11 @@
 
           <nf-stat-card
             variant="admin-summary-card"
-            label="Usuarios"
+            label="Usuários"
             value-id="summaryTotalUsers"
             description="Base total da plataforma"
           ></nf-stat-card>
+
 
           <nf-stat-card
             variant="admin-summary-card"
@@ -537,6 +720,7 @@
             description="Contas em acompanhamento"
           ></nf-stat-card>
 
+
           <nf-stat-card
             variant="admin-summary-card"
             label="Nutricionistas"
@@ -544,26 +728,30 @@
             description="Profissionais conectados"
           ></nf-stat-card>
 
+
           <nf-stat-card
             variant="admin-summary-card"
             label="Administradores"
             value-id="summaryTotalAdmins"
-            description="Governanca da plataforma"
+            description="Governança da plataforma"
           ></nf-stat-card>
+
 
           <nf-stat-card
             variant="admin-summary-card"
-            label="Usuarios ativos"
+            label="Usuários ativos"
             value-id="summaryActiveUsers"
             description="Contas liberadas para uso"
           ></nf-stat-card>
 
+
           <nf-stat-card
             variant="admin-summary-card"
-            label="Usuarios inativos"
+            label="Usuários bloqueados"
             value-id="summaryBlockedUsers"
-            description="Contas bloqueadas"
+            description="Contas fora de operação"
           ></nf-stat-card>
+
 
           <nf-stat-card
             variant="admin-summary-card"
@@ -575,29 +763,33 @@
         </section>
 
 
-        <!-- ===================================================
+        <!-- =================================================
              WORKSPACE
-        ==================================================== -->
+        ================================================== -->
 
-        <section class="workspace-banner admin-workspace-grid">
+        <section
+          class="workspace-banner admin-workspace-grid"
+        >
 
           <nf-workspace-chip
             variant="admin-workspace-chip"
-            label="Saude da base"
+            label="Saúde da base"
             value-id="adminWorkspaceActivationValue"
             meta-id="adminWorkspaceActivationMeta"
             default-value="0%"
-            default-meta="A taxa de usuarios ativos aparece aqui para orientar a operacao."
+            default-meta="A taxa de usuários ativos aparece aqui para orientar a operação."
           ></nf-workspace-chip>
+
 
           <nf-workspace-chip
             variant="admin-workspace-chip"
-            label="Usuarios ativos"
+            label="Usuários ativos"
             value-id="adminWorkspaceUsersValue"
             meta-id="adminWorkspaceUsersMeta"
             default-value="0 contas"
-            default-meta="A relacao entre contas ativas e totais fica consolidada neste bloco."
+            default-meta="A relação entre contas ativas e totais fica consolidada neste bloco."
           ></nf-workspace-chip>
+
 
           <nf-workspace-chip
             variant="admin-workspace-chip"
@@ -608,26 +800,30 @@
             default-meta="Compare cadastro de alimentos com o uso operacional do dia."
           ></nf-workspace-chip>
 
+
           <nf-workspace-chip
             variant="admin-workspace-chip"
             label="Alertas"
             value-id="adminWorkspaceAlertsValue"
             meta-id="adminWorkspaceAlertsMeta"
-            default-value="0 pendencias"
+            default-value="0 pendências"
             default-meta="Contas bloqueadas e gargalos operacionais aparecem aqui."
           ></nf-workspace-chip>
 
         </section>
 
 
-        <!-- ===================================================
-             USERS
-        ==================================================== -->
+        <!-- =================================================
+             USUÁRIOS
+        ================================================== -->
 
         <section
           id="usuarios"
           class="grid gap-6 xl:grid-cols-[1.25fr_.75fr]"
         >
+
+
+          <!-- LISTA -->
 
           <article
             class="dashboard-surface rounded-[30px] p-6"
@@ -640,37 +836,55 @@
               <div>
 
                 <span class="glass-pill">
-                  Usuarios
+                  Usuários
                 </span>
 
                 <h2
                   class="mt-4 text-2xl font-bold tracking-[-0.05em]"
                 >
-                  Gestao de contas da plataforma
+                  Gestão de contas da plataforma
                 </h2>
 
                 <p
                   class="mt-2 text-sm leading-7 text-nutriflow-700"
                 >
-                  Filtre por papel, acompanhe status e atue rapidamente em bloqueios, remocoes e distribuicao da base.
+                  Filtre por papel, acompanhe o status e
+                  gerencie as contas da plataforma.
                 </p>
 
               </div>
 
-              <div class="admin-section-badges">
 
-                <span class="admin-inline-badge">
-                  <strong id="adminFilteredUsersCount">0</strong>
+              <!-- BADGES -->
+
+              <div
+                class="admin-section-badges"
+              >
+
+                <span
+                  class="admin-inline-badge"
+                >
+                  <strong id="adminFilteredUsersCount">
+                    0
+                  </strong>
                   exibidos
                 </span>
 
-                <span class="admin-inline-badge is-muted">
-                  <strong id="adminFilteredActiveCount">0</strong>
+                <span
+                  class="admin-inline-badge is-muted"
+                >
+                  <strong id="adminFilteredActiveCount">
+                    0
+                  </strong>
                   ativos
                 </span>
 
-                <span class="admin-inline-badge is-muted">
-                  <strong id="adminFilteredBlockedCount">0</strong>
+                <span
+                  class="admin-inline-badge is-muted"
+                >
+                  <strong id="adminFilteredBlockedCount">
+                    0
+                  </strong>
                   bloqueados
                 </span>
 
@@ -679,7 +893,7 @@
             </div>
 
 
-            <!-- Filters -->
+            <!-- FILTROS -->
 
             <div
               class="mt-6 grid gap-3 md:grid-cols-[1.2fr_.7fr]"
@@ -697,9 +911,10 @@
 
                 <input
                   id="adminUserSearch"
-                  class="w-full bg-transparent outline-none placeholder:text-nutriflow-400"
                   type="text"
+                  class="w-full bg-transparent outline-none placeholder:text-nutriflow-400"
                   placeholder="Nome ou e-mail"
+                  autocomplete="off"
                 />
 
               </label>
@@ -719,6 +934,7 @@
                   id="adminRoleFilter"
                   class="w-full bg-transparent outline-none"
                 >
+
                   <option value="">
                     Todos
                   </option>
@@ -734,6 +950,7 @@
                   <option value="ADMIN">
                     Administrador
                   </option>
+
                 </select>
 
               </label>
@@ -741,7 +958,7 @@
             </div>
 
 
-            <!-- Users table -->
+            <!-- TABELA -->
 
             <div
               class="mt-6 overflow-hidden rounded-[24px] border border-nutriflow-100"
@@ -750,23 +967,41 @@
               <div
                 class="hidden grid-cols-[1.25fr_.85fr_.55fr_.6fr_.8fr] bg-[#f7faf5] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-nutriflow-500 md:grid"
               >
-                <span>Usuario</span>
-                <span>Papel e contexto</span>
-                <span>Status</span>
-                <span>Criado em</span>
-                <span class="text-right">Acoes</span>
+
+                <span>
+                  Usuário
+                </span>
+
+                <span>
+                  Papel e contexto
+                </span>
+
+                <span>
+                  Status
+                </span>
+
+                <span>
+                  Criado em
+                </span>
+
+                <span class="text-right">
+                  Ações
+                </span>
+
               </div>
+
 
               <div
                 id="adminUsersList"
                 class="divide-y divide-nutriflow-100 bg-white"
               ></div>
 
+
               <div
                 id="adminEmptyUsers"
                 class="hidden px-6 py-10 text-center text-sm text-nutriflow-600"
               >
-                Nenhum usuario encontrado para os filtros atuais.
+                Nenhum usuário encontrado para os filtros atuais.
               </div>
 
             </div>
@@ -774,9 +1009,14 @@
           </article>
 
 
-          <!-- Operational radar -->
+          <!-- RADAR -->
 
-          <div class="space-y-6">
+          <div
+            class="space-y-6"
+          >
+
+
+            <!-- OPERAÇÃO -->
 
             <article
               class="dashboard-surface rounded-[30px] p-6"
@@ -789,20 +1029,28 @@
               <h3
                 class="mt-4 text-2xl font-bold tracking-[-0.05em]"
               >
-                Leitura rapida da saude da operacao
+                Leitura rápida da operação
               </h3>
 
               <p
                 class="mt-2 text-sm leading-7 text-nutriflow-700"
               >
-                Um resumo curto para decidir se o foco deve ser ativacao, governanca ou expansao da base.
+                Acompanhe ativação, cobertura clínica,
+                registros e planos ativos.
               </p>
 
 
-              <div class="mt-6 admin-stats-strip">
+              <div
+                class="mt-6 admin-stats-strip"
+              >
 
-                <article class="admin-mini-stat">
-                  <span>Ativacao</span>
+                <article
+                  class="admin-mini-stat"
+                >
+
+                  <span>
+                    Ativação
+                  </span>
 
                   <strong id="adminOpsActivationRate">
                     0%
@@ -811,11 +1059,17 @@
                   <small id="adminOpsActivationMeta">
                     Aguardando leitura da base.
                   </small>
+
                 </article>
 
 
-                <article class="admin-mini-stat">
-                  <span>Cobertura clinica</span>
+                <article
+                  class="admin-mini-stat"
+                >
+
+                  <span>
+                    Cobertura clínica
+                  </span>
 
                   <strong id="adminOpsCoverageValue">
                     0,0
@@ -824,11 +1078,17 @@
                   <small id="adminOpsCoverageMeta">
                     Pacientes por nutricionista.
                   </small>
+
                 </article>
 
 
-                <article class="admin-mini-stat">
-                  <span>Registros hoje</span>
+                <article
+                  class="admin-mini-stat"
+                >
+
+                  <span>
+                    Registros hoje
+                  </span>
 
                   <strong id="adminOpsFoodLogsValue">
                     0
@@ -837,19 +1097,26 @@
                   <small id="adminOpsFoodLogsMeta">
                     Movimento alimentar do dia.
                   </small>
+
                 </article>
 
 
-                <article class="admin-mini-stat">
-                  <span>Planos ativos</span>
+                <article
+                  class="admin-mini-stat"
+                >
+
+                  <span>
+                    Planos ativos
+                  </span>
 
                   <strong id="adminOpsPlansValue">
                     0
                   </strong>
 
                   <small id="adminOpsPlansMeta">
-                    Acompanhamentos em execucao.
+                    Acompanhamentos em execução.
                   </small>
+
                 </article>
 
               </div>
@@ -857,20 +1124,20 @@
             </article>
 
 
-            <!-- Distribution -->
+            <!-- DISTRIBUIÇÃO -->
 
             <article
               class="dashboard-surface rounded-[30px] p-6 admin-insight-card"
             >
 
               <span class="glass-pill">
-                Distribuicao
+                Distribuição
               </span>
 
               <h3
                 class="mt-4 text-xl font-bold tracking-[-0.04em]"
               >
-                Composicao da base
+                Composição da base
               </h3>
 
               <div
@@ -881,20 +1148,20 @@
             </article>
 
 
-            <!-- Attention -->
+            <!-- ATENÇÃO -->
 
             <article
               class="dashboard-surface rounded-[30px] p-6 admin-insight-card"
             >
 
               <span class="glass-pill">
-                Atencao
+                Atenção
               </span>
 
               <h3
                 class="mt-4 text-xl font-bold tracking-[-0.04em]"
               >
-                Contas e sinais que pedem acao
+                Contas e sinais que pedem ação
               </h3>
 
               <div
@@ -909,78 +1176,80 @@
         </section>
 
 
-        <!-- ===================================================
-             FOODS
-        ==================================================== -->
+        <!-- =================================================
+             ALIMENTOS
+        ================================================== -->
 
         <section
           id="alimentos"
           class="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]"
         >
 
-          <!-- New food -->
+
+          <!-- NOVO ALIMENTO -->
 
           <article
             class="dashboard-surface rounded-[30px] p-6"
           >
 
-            <div
-              class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between"
-            >
+            <div>
 
-              <div>
+              <span class="glass-pill">
+                Novo alimento
+              </span>
 
-                <span class="glass-pill">
-                  Novo alimento
-                </span>
+              <h2
+                class="mt-4 text-2xl font-bold tracking-[-0.05em]"
+              >
+                Curadoria da base nutricional
+              </h2>
 
-                <h2
-                  class="mt-4 text-2xl font-bold tracking-[-0.05em]"
-                >
-                  Curadoria da base nutricional
-                </h2>
-
-                <p
-                  class="mt-2 text-sm leading-7 text-nutriflow-700"
-                >
-                  Mantenha o catalogo util para metas, planos e historicos alimentares com consistencia de macros.
-                </p>
-
-              </div>
+              <p
+                class="mt-2 text-sm leading-7 text-nutriflow-700"
+              >
+                Cadastre alimentos com informações
+                nutricionais básicas.
+              </p>
 
             </div>
 
 
-            <div class="mt-6 grid gap-4 md:grid-cols-3">
+            <!-- MÉTRICAS -->
+
+            <div
+              class="mt-6 grid gap-4 md:grid-cols-3"
+            >
 
               <nf-metric-block
-                label="Prontidao da base"
+                label="Prontidão da base"
                 value-id="adminFoodBaseReadiness"
                 meta-id="adminFoodBaseReadinessMeta"
                 default-value="0%"
-                default-meta="O indice considera volume e cobertura do catalogo."
+                default-meta="Volume atual do catálogo."
               ></nf-metric-block>
 
+
               <nf-metric-block
-                label="Media calorica"
+                label="Média calórica"
                 value-id="adminFoodAverageCalories"
                 meta-id="adminFoodAverageCaloriesMeta"
                 default-value="0 kcal"
-                default-meta="Media dos itens cadastrados atualmente."
+                default-meta="Média dos alimentos."
               ></nf-metric-block>
+
 
               <nf-metric-block
                 label="Densidade macro"
                 value-id="adminFoodMacroDensity"
                 meta-id="adminFoodMacroDensityMeta"
                 default-value="0g"
-                default-meta="Soma media de proteina, carboidrato e gordura."
+                default-meta="Média de macronutrientes."
               ></nf-metric-block>
 
             </div>
 
 
-            <!-- Food form -->
+            <!-- FORM -->
 
             <form
               id="foodForm"
@@ -999,16 +1268,18 @@
 
                 <input
                   id="foodName"
-                  class="w-full bg-transparent outline-none placeholder:text-nutriflow-400"
                   type="text"
-                  placeholder="Ex: Aveia em flocos"
                   required
+                  class="w-full bg-transparent outline-none placeholder:text-nutriflow-400"
+                  placeholder="Ex.: Aveia em flocos"
                 />
 
               </label>
 
 
-              <div class="grid gap-4 sm:grid-cols-2">
+              <div
+                class="grid gap-4 sm:grid-cols-2"
+              >
 
                 <label
                   class="rounded-2xl border border-nutriflow-100 bg-white px-4 py-3 text-sm text-nutriflow-700"
@@ -1022,12 +1293,12 @@
 
                   <input
                     id="foodCalories"
-                    class="w-full bg-transparent outline-none"
                     type="number"
                     min="0"
                     step="1"
-                    placeholder="120"
                     required
+                    class="w-full bg-transparent outline-none"
+                    placeholder="120"
                   />
 
                 </label>
@@ -1040,17 +1311,17 @@
                   <span
                     class="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-nutriflow-500"
                   >
-                    Proteina
+                    Proteína
                   </span>
 
                   <input
                     id="foodProtein"
-                    class="w-full bg-transparent outline-none"
                     type="number"
                     min="0"
-                    step="1"
-                    placeholder="5"
+                    step="0.1"
                     required
+                    class="w-full bg-transparent outline-none"
+                    placeholder="5"
                   />
 
                 </label>
@@ -1068,12 +1339,12 @@
 
                   <input
                     id="foodCarbs"
-                    class="w-full bg-transparent outline-none"
                     type="number"
                     min="0"
-                    step="1"
-                    placeholder="18"
+                    step="0.1"
                     required
+                    class="w-full bg-transparent outline-none"
+                    placeholder="18"
                   />
 
                 </label>
@@ -1091,12 +1362,12 @@
 
                   <input
                     id="foodFat"
-                    class="w-full bg-transparent outline-none"
                     type="number"
                     min="0"
-                    step="1"
-                    placeholder="3"
+                    step="0.1"
                     required
+                    class="w-full bg-transparent outline-none"
+                    placeholder="3"
                   />
 
                 </label>
@@ -1106,8 +1377,8 @@
 
               <button
                 id="foodSubmitButton"
-                class="rounded-2xl bg-nutriflow-950 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-nutriflow-800"
                 type="submit"
+                class="rounded-2xl bg-nutriflow-950 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-nutriflow-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cadastrar alimento
               </button>
@@ -1117,7 +1388,7 @@
           </article>
 
 
-          <!-- Food catalog -->
+          <!-- CATÁLOGO -->
 
           <article
             class="dashboard-surface rounded-[30px] p-6"
@@ -1130,7 +1401,7 @@
               <div>
 
                 <span class="glass-pill">
-                  Catalogo
+                  Catálogo
                 </span>
 
                 <h2
@@ -1142,32 +1413,44 @@
                 <p
                   class="mt-2 text-sm leading-7 text-nutriflow-700"
                 >
-                  O catalogo abaixo ajuda a enxergar densidade nutricional, equilibrio de macros e lacunas da base.
+                  Consulte os alimentos cadastrados
+                  na base nutricional.
                 </p>
 
               </div>
 
 
-              <div class="admin-section-badges">
+              <div
+                class="admin-section-badges"
+              >
 
-                <span class="admin-inline-badge">
-                  <strong id="adminFilteredFoodsCount">
+                <span
+                  class="admin-inline-badge"
+                >
+
+                  <strong
+                    id="adminFilteredFoodsCount"
+                  >
                     0
                   </strong>
+
                   resultados
+
                 </span>
 
                 <span
-                  class="admin-inline-badge is-muted"
                   id="adminFilteredFoodsMeta"
+                  class="admin-inline-badge is-muted"
                 >
-                  Refine por nome para revisar o catalogo.
+                  Refine por nome para revisar o catálogo.
                 </span>
 
               </div>
 
             </div>
 
+
+            <!-- BUSCA -->
 
             <div
               class="mt-6 rounded-[24px] border border-nutriflow-100 bg-[#f8faf7] p-4"
@@ -1180,17 +1463,19 @@
                 <p
                   class="text-sm font-semibold text-nutriflow-950"
                 >
-                  Busca no catalogo
+                  Busca no catálogo
                 </p>
 
                 <input
                   id="foodSearch"
-                  class="rounded-full border border-nutriflow-100 bg-white px-4 py-2 text-sm outline-none"
                   type="text"
+                  class="rounded-full border border-nutriflow-100 bg-white px-4 py-2 text-sm outline-none focus:border-nutriflow-400"
                   placeholder="Buscar alimento"
+                  autocomplete="off"
                 />
 
               </div>
+
 
               <div
                 id="foodsList"
@@ -1204,14 +1489,17 @@
         </section>
 
 
-        <!-- ===================================================
-             METRICS
-        ==================================================== -->
+        <!-- =================================================
+             MÉTRICAS
+        ================================================== -->
 
         <section
           id="metricas"
           class="grid gap-6 xl:grid-cols-[1.1fr_.9fr]"
         >
+
+
+          <!-- INDICADORES -->
 
           <article
             class="dashboard-surface rounded-[30px] p-6"
@@ -1224,7 +1512,7 @@
               <div>
 
                 <span class="glass-pill">
-                  Metricas
+                  Métricas
                 </span>
 
                 <h2
@@ -1236,16 +1524,21 @@
                 <p
                   class="mt-2 text-sm leading-7 text-nutriflow-700"
                 >
-                  Indicadores derivados para decidir se a plataforma precisa de mais ativacao, curadoria de dados ou suporte operacional.
+                  Indicadores derivados da operação
+                  administrativa.
                 </p>
 
               </div>
 
 
-              <div class="admin-inline-badge">
+              <div
+                class="admin-inline-badge"
+              >
 
-                <strong id="adminMetricExecutivePulse">
-                  Estavel
+                <strong
+                  id="adminMetricExecutivePulse"
+                >
+                  Estável
                 </strong>
 
               </div>
@@ -1259,50 +1552,55 @@
 
               <nf-report-card
                 variant="admin-report-card"
-                label="Ativacao da base"
+                label="Ativação da base"
                 value-id="adminMetricActivationRate"
                 default-value="0%"
-                description="Taxa de contas ativas no ecossistema."
+                description="Taxa de contas ativas."
               ></nf-report-card>
+
 
               <nf-report-card
                 variant="admin-report-card"
-                label="Pressao de bloqueio"
+                label="Pressão de bloqueio"
                 value-id="adminMetricBlockedRate"
                 default-value="0%"
-                description="Percentual da base hoje fora de operacao."
+                description="Percentual de contas bloqueadas."
               ></nf-report-card>
+
 
               <nf-report-card
                 variant="admin-report-card"
                 label="Carga assistencial"
                 value-id="adminMetricCareLoad"
                 default-value="0,0"
-                description="Media de pacientes por nutricionista."
+                description="Pacientes por nutricionista."
               ></nf-report-card>
+
 
               <nf-report-card
                 variant="admin-report-card"
-                label="Densidade do catalogo"
+                label="Densidade do catálogo"
                 value-id="adminMetricCatalogDensity"
                 default-value="0%"
                 description="Volume relativo da base nutricional."
               ></nf-report-card>
+
 
               <nf-report-card
                 variant="admin-report-card"
                 label="Cobertura admin"
                 value-id="adminMetricAdminCoverage"
                 default-value="0%"
-                description="Participacao do time administrativo."
+                description="Participação administrativa."
               ></nf-report-card>
+
 
               <nf-report-card
                 variant="admin-report-card"
-                label="Movimento diario"
+                label="Movimento diário"
                 value-id="adminMetricFoodLogs"
                 default-value="0"
-                description="Registros alimentares processados hoje."
+                description="Registros alimentares do dia."
               ></nf-report-card>
 
             </div>
@@ -1310,52 +1608,58 @@
           </article>
 
 
-          <!-- Recommendation -->
+          <!-- RECOMENDAÇÃO -->
 
           <article
             class="dashboard-surface rounded-[30px] p-6 admin-recommendation-shell"
           >
 
             <span class="glass-pill">
-              Recomendacao
+              Recomendação
             </span>
 
             <h2
               id="adminRecommendationTitle"
               class="mt-4 text-2xl font-bold tracking-[-0.05em]"
             >
-              Aguardando leitura da operacao
+              Aguardando leitura da operação
             </h2>
 
             <p
               id="adminRecommendationBody"
               class="mt-3 text-sm leading-7 text-nutriflow-700"
             >
-              Assim que o painel carregar os dados do backend, esta area resume o proximo melhor foco da plataforma.
+              Assim que os dados do backend forem
+              carregados, esta área apresentará os
+              principais sinais operacionais.
             </p>
 
 
-            <div class="mt-6 space-y-4">
+            <div
+              class="mt-6 space-y-4"
+            >
 
               <nf-metric-block
                 label="Administradores"
                 value-id="adminMetricAdmins"
                 default-value="0"
-                default-meta="Contas com poder de governanca na plataforma."
+                default-meta="Contas administrativas."
               ></nf-metric-block>
+
 
               <nf-metric-block
                 label="Planos ativos"
                 value-id="adminMetricMealPlans"
                 default-value="0"
-                default-meta="Usuarios que hoje dependem de operacao nutricional ativa."
+                default-meta="Planos nutricionais ativos."
               ></nf-metric-block>
+
 
               <nf-metric-block
                 label="Pacientes por nutricionista"
                 value-id="adminMetricCareLoadAside"
                 default-value="0,0"
-                default-meta="Use esse indicador para calibrar capacidade assistencial."
+                default-meta="Carga assistencial média."
               ></nf-metric-block>
 
             </div>
@@ -1371,20 +1675,23 @@
   </div>
 
 
-  <!-- =========================================================
+  <!-- =======================================================
        MODAL — MEU PERFIL
-  ========================================================== -->
+  ======================================================== -->
 
   <div
     id="adminProfileModal"
-    class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 p-4"
+    class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="adminProfileTitle"
   >
 
     <div
       class="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl"
     >
 
-      <!-- Modal header -->
+      <!-- CABEÇALHO -->
 
       <div
         class="flex items-start justify-between gap-4"
@@ -1392,13 +1699,12 @@
 
         <div>
 
-          <span
-            class="glass-pill"
-          >
+          <span class="glass-pill">
             Meu Perfil
           </span>
 
           <h2
+            id="adminProfileTitle"
             class="mt-3 text-2xl font-extrabold tracking-[-0.04em] text-nutriflow-950"
           >
             Perfil administrativo
@@ -1425,14 +1731,14 @@
       </div>
 
 
-      <!-- Profile form -->
+      <!-- FORMULÁRIO -->
 
       <form
         id="adminProfileForm"
         class="mt-6 space-y-4"
       >
 
-        <!-- Name -->
+        <!-- NOME -->
 
         <label class="block">
 
@@ -1455,7 +1761,7 @@
         </label>
 
 
-        <!-- Email -->
+        <!-- EMAIL -->
 
         <label class="block">
 
@@ -1477,7 +1783,7 @@
         </label>
 
 
-        <!-- Phone -->
+        <!-- TELEFONE -->
 
         <label class="block">
 
@@ -1499,7 +1805,7 @@
         </label>
 
 
-        <!-- Error -->
+        <!-- STATUS -->
 
         <div
           id="adminProfileStatus"
@@ -1507,7 +1813,7 @@
         ></div>
 
 
-        <!-- Actions -->
+        <!-- AÇÕES -->
 
         <div
           class="flex justify-end gap-3 pt-3"
@@ -1520,6 +1826,7 @@
           >
             Cancelar
           </button>
+
 
           <button
             id="adminProfileSubmit"
@@ -1538,18 +1845,23 @@
   </div>
 
 
-  <!-- =========================================================
+  <!-- =======================================================
        MODAL — EDITAR USUÁRIO
-  ========================================================== -->
+  ======================================================== -->
 
   <div
     id="adminEditUserModal"
-    class="fixed inset-0 z-[55] hidden items-center justify-center bg-black/40 p-4"
+    class="fixed inset-0 z-[55] hidden items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="adminEditUserTitle"
   >
 
     <div
       class="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl"
     >
+
+      <!-- CABEÇALHO -->
 
       <div
         class="mb-6 flex items-start justify-between gap-4"
@@ -1558,10 +1870,11 @@
         <div>
 
           <span class="glass-pill">
-            Usuarios
+            Usuários
           </span>
 
           <h2
+            id="adminEditUserTitle"
             class="mt-3 text-xl font-bold text-nutriflow-950"
           >
             Editar usuário
@@ -1588,6 +1901,8 @@
       </div>
 
 
+      <!-- FORM -->
+
       <form
         id="adminEditUserForm"
         class="space-y-4"
@@ -1599,7 +1914,7 @@
         />
 
 
-        <!-- Name -->
+        <!-- NOME -->
 
         <label class="block">
 
@@ -1614,13 +1929,13 @@
             type="text"
             required
             maxlength="100"
-            class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500"
+            class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500 focus:ring-2 focus:ring-nutriflow-100"
           />
 
         </label>
 
 
-        <!-- Email -->
+        <!-- EMAIL -->
 
         <label class="block">
 
@@ -1634,13 +1949,13 @@
             id="adminEditUserEmail"
             type="email"
             required
-            class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500"
+            class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500 focus:ring-2 focus:ring-nutriflow-100"
           />
 
         </label>
 
 
-        <!-- Phone -->
+        <!-- TELEFONE -->
 
         <label class="block">
 
@@ -1655,13 +1970,13 @@
             type="text"
             maxlength="30"
             placeholder="DDD + número"
-            class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500"
+            class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500 focus:ring-2 focus:ring-nutriflow-100"
           />
 
         </label>
 
 
-        <!-- Status -->
+        <!-- STATUS -->
 
         <div
           id="adminEditUserStatus"
@@ -1669,7 +1984,7 @@
         ></div>
 
 
-        <!-- Actions -->
+        <!-- AÇÕES -->
 
         <div
           class="flex justify-end gap-3 pt-2"
@@ -1682,6 +1997,7 @@
           >
             Cancelar
           </button>
+
 
           <button
             id="adminEditUserSubmit"
@@ -1700,19 +2016,21 @@
   </div>
 
 
-  <!-- =========================================================
+  <!-- =======================================================
        TOAST
-  ========================================================== -->
+  ======================================================== -->
 
   <div
     id="adminToast"
     class="nf-toast hidden"
+    role="status"
+    aria-live="polite"
   ></div>
 
 
-  <!-- =========================================================
+  <!-- =======================================================
        SCRIPTS
-  ========================================================== -->
+  ======================================================== -->
 
   <script src="ui.js"></script>
   <script src="api.js"></script>
@@ -1721,4 +2039,5 @@
   <script src="dashboard-admin.js"></script>
 
 </body>
+
 </html>

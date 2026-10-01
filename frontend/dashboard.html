@@ -84,28 +84,36 @@
     </aside>
 
     <div class="min-w-0 flex-1">
-      <header class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-3 flex items-center justify-between">
-        <div>
-          <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-nutriflow-600">Painel do paciente</p>
-          <h1 class="text-2xl font-extrabold tracking-[-0.06em] md:text-3xl" data-greeting>Boa tarde</h1>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button id="quickAddMealButton" class="rounded-[20px] bg-nutriflow-950 px-4 py-2 text-sm font-bold text-white transition hover:-translate-y-0.5">Nova Refeição</button>
-          
-          <button onclick="openPatientSettingsModal()" class="rounded-[20px] border border-nutriflow-200 bg-white px-4 py-2 text-sm font-bold text-nutriflow-900 transition hover:-translate-y-0.5 shadow-sm">Meu Perfil</button>
-          
-          <div class="flex items-center gap-3 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 shadow-sm">
-            <div class="grid h-10 w-10 place-items-center rounded-[14px] bg-nutriflow-500 text-sm font-bold text-white" data-user-initial>--</div>
-            <div class="min-w-0 pr-2">
-              <p class="truncate text-sm font-bold text-nutriflow-950" data-user-name>Paciente</p>
-              <p class="truncate text-xs font-semibold text-nutriflow-600" data-linked-nutritionist-name>Nutricionista</p>
-            </div>
+      <header class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-nutriflow-600">Painel do paciente</p>
+            <h1 class="mt-2 text-2xl font-extrabold tracking-[-0.06em] md:text-3xl" data-greeting>Boa tarde</h1>
+            <p class="mt-2 text-sm text-nutriflow-700">Acompanhe sua rotina e mantenha seus dados atualizados.</p>
           </div>
-          
-          <button id="logoutButton" class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 text-red-600 hover:bg-red-100 font-bold transition shadow-sm" title="Sair">
-            [ ->
-          </button>
+
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <label class="dashboard-search flex min-w-[220px] items-center gap-3 rounded-2xl border border-nutriflow-100 bg-white px-4 py-3 text-sm text-nutriflow-700">
+              <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-nutriflow-500" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+              <input id="patientGlobalSearch" type="search" class="w-full bg-transparent outline-none placeholder:text-nutriflow-400" placeholder="Buscar refeições e histórico" autocomplete="off" />
+            </label>
+
+            <button id="quickAddMealButton" type="button" class="rounded-[20px] bg-nutriflow-950 px-4 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">Nova refeição</button>
+
+            <button id="patientProfileButton" type="button" class="flex items-center gap-3 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:bg-nutriflow-50" title="Meu perfil" aria-label="Abrir meu perfil">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-nutriflow-500 to-nutriflow-700 text-sm font-bold text-white" data-user-initial>--</span>
+              <span class="min-w-0 pr-2">
+                <span class="block max-w-[180px] truncate text-sm font-bold text-nutriflow-950" data-user-name>Paciente</span>
+                <span class="block max-w-[180px] truncate text-xs text-nutriflow-600" data-user-email>--</span>
+                <span class="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-nutriflow-500">Meu perfil</span>
+              </span>
+            </button>
+
+            <button id="logoutButton" type="button" class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-3 font-bold text-red-600 shadow-sm transition hover:bg-red-100" title="Sair" aria-label="Sair">Sair</button>
+          </div>
         </div>
       </header>
 
