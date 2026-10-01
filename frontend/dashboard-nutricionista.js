@@ -952,49 +952,127 @@ window.openPatientProfile = function(patientId) {
 };
 
 function bindButtons() {
-  document.getElementById('btnOpenLinkPatient')?.addEventListener('click', () => openModal('linkPatient'));
-  document.getElementById('btnOpenMealPlan')?.addEventListener('click', () => {
-    document.getElementById('mealPlanForm').reset();
-    if (state.selectedPatientId) document.getElementById('mealPlanPatient').value = state.selectedPatientId;
-    resetMealPlanBuilder();
-    openModal('mealPlan');
-  });
-  document.getElementById('btnOpenAssessment')?.addEventListener('click', () => { resetAssessmentForm(); openModal('assessment'); });
-  document.getElementById('btnOpenAppointment')?.addEventListener('click', () => { document.getElementById('appointmentForm').reset(); openModal('appointment'); });
-  document.getElementById('btnOpenChallenge')?.addEventListener('click', () => { document.getElementById('challengeForm').reset(); openModal('challenge'); });
-  
-  document.getElementById('btnProfileNewPlan')?.addEventListener('click', () => {
-    document.getElementById('mealPlanForm').reset();
-    if (state.selectedPatientId) document.getElementById('mealPlanPatient').value = state.selectedPatientId;
-    resetMealPlanBuilder();
-    openModal('mealPlan');
-  });
-  document.getElementById('btnAddMealPlanItem')?.addEventListener('click', () => addMealPlanItemRow());
-  document.getElementById('btnAddAssessmentMeasurement')?.addEventListener('click', () => addAssessmentMeasurementRow());
-  document.getElementById('btnProfileNewAssessment')?.addEventListener('click', () => { resetAssessmentForm(); openModal('assessment'); });
 
-  document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', (e) => { e.preventDefault(); closeModal(e.target.dataset.close); });
+  document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
+    openModal('settings');
   });
-  document.getElementById('logoutButton')?.addEventListener('click', () => { session.clear(); window.location.href = 'index.html'; });
+
+  document.getElementById('btnOpenLinkPatient')?.addEventListener('click', () => {
+    openModal('linkPatient');
+  });
+
+  document.getElementById('btnOpenMealPlan')?.addEventListener('click', () => {
+    document.getElementById('mealPlanForm')?.reset();
+
+    if (state.selectedPatientId) {
+      const patientSelect = document.getElementById('mealPlanPatient');
+
+      if (patientSelect) {
+        patientSelect.value = state.selectedPatientId;
+      }
+    }
+
+    resetMealPlanBuilder();
+    openModal('mealPlan');
+  });
+
+  document.getElementById('btnOpenAssessment')?.addEventListener('click', () => {
+    resetAssessmentForm();
+    openModal('assessment');
+  });
+
+  document.getElementById('btnOpenAppointment')?.addEventListener('click', () => {
+    document.getElementById('appointmentForm')?.reset();
+    openModal('appointment');
+  });
+
+  document.getElementById('btnOpenChallenge')?.addEventListener('click', () => {
+    document.getElementById('challengeForm')?.reset();
+    openModal('challenge');
+  });
+
+  document.getElementById('btnProfileNewPlan')?.addEventListener('click', () => {
+    document.getElementById('mealPlanForm')?.reset();
+
+    if (state.selectedPatientId) {
+      const patientSelect = document.getElementById('mealPlanPatient');
+
+      if (patientSelect) {
+        patientSelect.value = state.selectedPatientId;
+      }
+    }
+
+    resetMealPlanBuilder();
+    openModal('mealPlan');
+  });
+
+  document.getElementById('btnAddMealPlanItem')?.addEventListener('click', () => {
+    addMealPlanItemRow();
+  });
+
+  document.getElementById('btnAddAssessmentMeasurement')?.addEventListener('click', () => {
+    addAssessmentMeasurementRow();
+  });
+
+  document.getElementById('btnProfileNewAssessment')?.addEventListener('click', () => {
+    resetAssessmentForm();
+    openModal('assessment');
+  });
+
+  document.querySelectorAll('[data-close]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      const modalId = e.currentTarget.dataset.close;
+
+      if (modalId) {
+        closeModal(modalId);
+      }
+    });
+  });
+
+
+  document.getElementById('logoutButton')?.addEventListener('click', () => {
+    session.clear();
+    window.location.href = 'index.html';
+  });
 
   chatPatientSelect?.addEventListener('change', (event) => {
     state.chatPatientId = event.target.value || null;
+
     clearActiveConversation();
     renderChatPanel();
 
     if (state.chatPatientId) {
-      void syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
+      void syncNutritionistRealtimeChat({
+        forceRender: true,
+        allowHidden: true,
+        silent: true,
+      });
     }
   });
 
-  chatForm?.addEventListener('submit', handleNutritionistChatSubmit);
+
+  chatForm?.addEventListener(
+    'submit',
+    handleNutritionistChatSubmit
+  );
+
+
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      void syncNutritionistRealtimeChat({ forceRender: true, silent: true });
+      void syncNutritionistRealtimeChat({
+        forceRender: true,
+        silent: true,
+      });
     }
   });
-  window.addEventListener('beforeunload', stopNutritionistRealtimeChat);
+
+
+  window.addEventListener(
+    'beforeunload',
+    stopNutritionistRealtimeChat
+  );
 }
 
 

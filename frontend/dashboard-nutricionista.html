@@ -33,16 +33,63 @@
     </aside>
 
     <div class="min-w-0 flex-1">
-      <header class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-3 flex items-center justify-between">
-        <div><p class="text-[10px] font-bold uppercase tracking-[0.2em] text-nutriflow-600">Workspace Premium</p><h1 class="text-2xl font-extrabold tracking-[-0.06em]" data-header-greeting>Carregando...</h1></div>
-        <div class="flex items-center gap-3">
-          <div id="btnOpenSettings" class="flex items-center gap-2 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 shadow-sm cursor-pointer hover:bg-nutriflow-50 transition" title="Ver Meu Perfil">
-            <div class="grid h-8 w-8 place-items-center rounded-[12px] bg-nutriflow-500 text-xs font-bold text-white" data-nutritionist-initial>--</div>
-            <div class="min-w-0 pr-2"><p class="truncate text-sm font-bold text-nutriflow-950" data-nutritionist-name>Nutricionista</p><p class="text-[10px] text-nutriflow-500 font-bold uppercase">Ver Perfil</p></div>
-          </div>
-          <button id="logoutButton" class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 text-red-600 hover:bg-red-100 font-bold transition shadow-sm">[ -></button>
-        </div>
-      </header>
+<header class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-3 flex items-center justify-between">
+  <div>
+    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-nutriflow-600">
+      Workspace Premium
+    </p>
+
+    <h1
+      class="text-2xl font-extrabold tracking-[-0.06em]"
+      data-header-greeting
+    >
+      Carregando...
+    </h1>
+  </div>
+
+  <div class="flex items-center gap-3">
+
+    <!-- Meu Perfil -->
+    <button
+      id="btnOpenSettings"
+      type="button"
+      class="flex items-center gap-3 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:bg-nutriflow-50"
+      title="Meu Perfil"
+    >
+      <div
+        class="grid h-10 w-10 place-items-center rounded-[14px] bg-nutriflow-500 text-sm font-bold text-white"
+        data-nutritionist-initial
+      >
+        --
+      </div>
+
+      <div class="min-w-0 pr-2 text-left">
+        <p
+          class="truncate text-sm font-bold text-nutriflow-950"
+          data-nutritionist-name
+        >
+          Nutricionista
+        </p>
+
+        <p class="truncate text-[10px] font-bold uppercase text-nutriflow-500">
+          Meu Perfil
+        </p>
+      </div>
+    </button>
+
+    <!-- Sair -->
+    <button
+      id="logoutButton"
+      type="button"
+      class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-600 shadow-sm transition hover:bg-red-100"
+      title="Sair"
+      aria-label="Sair"
+    >
+      [ ->
+    </button>
+
+  </div>
+</header>
 
       <main class="mt-6 space-y-6 pb-6">
         <section id="pacientes" class="grid gap-6 2xl:grid-cols-[1.3fr_.7fr]">
