@@ -1283,6 +1283,7 @@ document.getElementById('btnCloseChat')?.addEventListener('click', closeChatModa
 
 async function init() {
   if (!ensureNutritionistAccess()) return;
+  renderHeader();
   bindButtons();
   syncNutritionistRealtimeAvailability();
   await fetchDatabaseData();
