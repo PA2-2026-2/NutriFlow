@@ -18,8 +18,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "db:push": "prisma db push",
     "prisma:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js",
     "test": "jest --runInBand"
   },
   "dependencies": {
