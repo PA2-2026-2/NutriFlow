@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -9,13 +9,29 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(uuid())
+  id              String          @id @default(uuid())
   name            String
-  email           String   @unique
+  email           String          @unique
+  phone           String?
   profile         String
   passwordHash    String
-  isActive        Boolean  @default(true)
+  isActive        Boolean         @default(true)
   profilePhotoUrl String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  patientProfile  PatientProfile?
+}
+
+model PatientProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  age          Int?
+  weight       Float?
+  height       Float?
+  objective    String?
+  restrictions String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

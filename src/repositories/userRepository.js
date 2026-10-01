@@ -48,6 +48,18 @@ class UserRepository {
       data: { profilePhotoUrl },
     });
   }
+
+  delete(id) {
+    return this.prisma.user.delete({
+      where: { id },
+    });
+  }
+
+  countActiveByRole(role) {
+    return this.prisma.user.count({
+      where: { profile: role, isActive: true },
+    });
+  }
 }
 
 module.exports = {

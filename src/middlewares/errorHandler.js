@@ -17,6 +17,14 @@ function errorHandler(error, request, response, next) {
 		return;
 	}
 
+	if (error?.type === 'entity.too.large') {
+		response.status(413).json({
+			message: 'Corpo da requisicao maior que o limite permitido.',
+		});
+
+		return;
+	}
+
 	if (error?.code === 'P2002') {
 		response.status(409).json({
 			message: 'Registro duplicado. Verifique os dados informados.',

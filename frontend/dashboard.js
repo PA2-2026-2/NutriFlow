@@ -274,7 +274,7 @@ function resetMealEntryForm() {
   setMealFormError('');
 
   const list = document.getElementById('mealItemsList');
-  if (list) list.innerHTML = ''; // Limpa a lista ao abrir o modal
+  if (list) list.innerHTML = ''; 
 }
 
 function applyMealTemplate(templateKey) {
@@ -327,9 +327,9 @@ function applyMealTemplate(templateKey) {
   setMealFormError('');
 }
 
-// --- LÓGICA DINÂMICA DE ALIMENTOS DO PACIENTE ---
 
-// Simula a busca do alimento (o back-end precisa retornar state.dashboard.foods igual no nutri)
+
+
 function getFoodByIdForPatient(foodId) {
   const foods = state.dashboard?.foods || [];
   return foods.find((food) => food.id === foodId) || null;
@@ -362,7 +362,7 @@ function updateMealTotals() {
     acc.protein += (food.protein || 0) * factor;
     acc.carbs += (food.carbs || 0) * factor;
     acc.fats += (food.fat || food.fats || 0) * factor;
-    acc.fiber += (food.fiber || 0) * factor; // Assumindo que o banco tem fibra
+    acc.fiber += (food.fiber || 0) * factor; 
     return acc;
   }, { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0 });
 
@@ -418,7 +418,7 @@ document.getElementById('btnAutoFillMeal')?.addEventListener('click', () => {
     return;
   }
 
-  // Limpa a lista atual
+  
   const list = document.getElementById('mealItemsList');
   if (list) list.innerHTML = '';
 
@@ -792,9 +792,14 @@ async function linkNutritionist(payload) {
   });
 }
 
+async function getCurrentUserProfile() {
+  const result = await apiRequest('/api/users/me');
+  return result.user || result;
+}
+
 async function updatePatientProfile(payload) {
-  return apiRequest('/api/patient/profile', {
-    method: 'PATCH',
+  return apiRequest('/api/users/me', {
+    method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
@@ -1534,7 +1539,7 @@ async function syncPatientRealtimeChat(options = {}) {
     }
   } catch (error) {
     if (error.message !== 'Sessao invalida.') {
-      // O polling deve ser silencioso em falhas transitórias.
+      
     }
   } finally {
     patientChatSyncInFlight = false;
@@ -1901,13 +1906,13 @@ async function init() {
   }
 }
 
-// --- FUNÇÕES DO CHAT FLUTUANTE ---
+
 function toggleChat() {
   const chat = document.getElementById('floatingChat');
   if (chat.classList.contains('chat-hidden')) {
     chat.classList.remove('chat-hidden');
     chat.classList.add('chat-visible');
-    // Rola para o final quando abre
+    
     const msgs = document.getElementById('chatMessages');
     if(msgs) msgs.scrollTop = msgs.scrollHeight;
   } else {
@@ -1916,9 +1921,21 @@ function toggleChat() {
   }
 }
 
-// --- FUNÇÕES DO PERFIL DO PACIENTE ---
-function openPatientSettingsModal() {
-  const patient = getPatientData();
+
+async function openPatientSettingsModal() {
+  let patient = getPatientData();
+
+  try {
+    patient = await getCurrentUserProfile();
+
+    persistCurrentUser({
+      ...state.currentUser,
+      ...patient,
+    });
+  } catch (error) {
+    console.warn('Nao foi possivel atualizar os dados do perfil:', error);
+  }
+
   document.getElementById('profileNameInput').value = patient.name || '';
   document.getElementById('profileAgeInput').value = patient.age || '';
   document.getElementById('profileWeightInput').value = patient.weight || '';
@@ -1931,7 +1948,6 @@ function openPatientSettingsModal() {
   modal.classList.add('flex');
   document.body.classList.add('modal-open');
 }
-
 function closePatientSettingsModal() {
   const modal = document.getElementById('patientSettingsModal');
   modal.classList.add('hidden');
@@ -1939,6 +1955,37 @@ function closePatientSettingsModal() {
   document.body.classList.remove('modal-open');
 }
 
+async function handlePatientPhotoUpload() {
+  const input = document.getElementById('profilePhotoInput');
+  const file = input?.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    showToast('Selecione uma imagem JPG ou PNG.');
+    input.value = '';
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+
+    const result = await apiRequest('/api/users/me/photo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: buffer,
+    });
+
+    showToast(result.message || 'Foto atualizada com sucesso!');
+    input.value = '';
+  } catch (error) {
+    showToast(error.message || 'Nao foi possivel atualizar a foto.');
+  }
+}
 async function handlePatientSettingsSubmit(e) {
   e.preventDefault();
   const btn = document.getElementById('profileSubmitBtn');
@@ -2000,3 +2047,9 @@ function renderChallenges() {
 }
 
 init();
+
+
+
+
+
+

@@ -20,7 +20,7 @@
     "dev": "node --watch index.js",
     "db:push": "prisma db push",
     "prisma:generate": "prisma generate",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

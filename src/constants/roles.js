@@ -1,3 +1,13 @@
+const ROLES = Object.freeze({
+	PATIENT: 'PATIENT',
+	NUTRITIONIST: 'NUTRITIONIST',
+	ADMIN: 'ADMIN',
+});
+
+
+
+const SELF_REGISTRATION_ROLES = Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]);
+
 const ROLE_MAP = {
 	paciente: 'PATIENT',
 	patient: 'PATIENT',
@@ -47,6 +57,8 @@ function toRoleLabel(value) {
 }
 
 module.exports = {
+	ROLES,
+	SELF_REGISTRATION_ROLES,
 	normalizeRole,
 	toRoleLabel,
 };

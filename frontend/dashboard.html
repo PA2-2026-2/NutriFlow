@@ -34,7 +34,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* CSS para o Chat Flutuante */
+    
     #floatingChat { transition: transform 0.3s ease, opacity 0.3s ease; }
     .chat-hidden { transform: translateY(150%); opacity: 0; pointer-events: none; }
     .chat-visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
@@ -331,7 +331,12 @@
 
       <form id="patientSettingsForm" class="mt-6 grid gap-4" onsubmit="handlePatientSettingsSubmit(event)">
         <label class="nf-field">
-          <span>Nome Completo</span>
+          <span>Foto de Perfil</span>
+          <input id="profilePhotoInput" type="file" accept="image/jpeg,image/png" class="font-bold" />
+          <span class="text-xs text-nutriflow-600">JPG ou PNG.</span>
+        </label>
+
+        <label class="nf-field">          <span>Nome Completo</span>
           <input id="profileNameInput" type="text" class="font-bold" required />
         </label>
         
@@ -491,3 +496,5 @@
   <script src="dashboard.js"></script>
 </body>
 </html>
+
+

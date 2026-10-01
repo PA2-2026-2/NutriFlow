@@ -352,5 +352,88 @@
   <script src="dashboard-core.js"></script>
   <script src="dashboard-components.js"></script>
   <script src="dashboard-admin.js"></script>
+
+<div id="adminEditUserModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+  <div class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+    <div class="mb-6 flex items-start justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-bold text-nutriflow-950">Editar usuário</h2>
+        <p class="mt-1 text-sm text-nutriflow-600">
+          Atualize os dados básicos da conta.
+        </p>
+      </div>
+
+      <button
+        id="adminEditUserClose"
+        type="button"
+        class="rounded-full px-3 py-2 text-nutriflow-600 hover:bg-nutriflow-50"
+        aria-label="Fechar"
+      >
+        ✕
+      </button>
+    </div>
+
+    <form id="adminEditUserForm" class="space-y-4">
+      <input id="adminEditUserId" type="hidden" />
+
+      <label class="block">
+        <span class="mb-1 block text-sm font-semibold text-nutriflow-900">
+          Nome
+        </span>
+        <input
+          id="adminEditUserName"
+          type="text"
+          required
+          maxlength="100"
+          class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none focus:border-nutriflow-500"
+        />
+      </label>
+
+      <label class="block">
+        <span class="mb-1 block text-sm font-semibold text-nutriflow-900">
+          E-mail
+        </span>
+        <input
+          id="adminEditUserEmail"
+          type="email"
+          required
+          class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none focus:border-nutriflow-500"
+        />
+      </label>
+
+      <label class="block">
+        <span class="mb-1 block text-sm font-semibold text-nutriflow-900">
+          Telefone
+        </span>
+        <input
+          id="adminEditUserPhone"
+          type="text"
+          placeholder="DDD + número"
+          class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none focus:border-nutriflow-500"
+        />
+      </label>
+
+      <div id="adminEditUserStatus" class="hidden rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button
+          id="adminEditUserCancel"
+          type="button"
+          class="rounded-full border border-nutriflow-200 px-5 py-3 text-sm font-semibold text-nutriflow-900"
+        >
+          Cancelar
+        </button>
+
+        <button
+          id="adminEditUserSubmit"
+          type="submit"
+          class="rounded-full bg-nutriflow-900 px-5 py-3 text-sm font-semibold text-white"
+        >
+          Salvar alterações
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

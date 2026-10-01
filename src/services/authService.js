@@ -1,5 +1,6 @@
 const { AppError } = require('../errors/appError');
-const { normalizeRole, toRoleLabel } = require('../constants/roles');
+const { SELF_REGISTRATION_ROLES, normalizeRole } = require('../constants/roles');
+const { toPublicUser } = require('../utils/userPresenter');
 
 function normalizeEmail(email) {
 	return String(email || '').trim().toLowerCase();
@@ -9,23 +10,12 @@ function normalizeText(value) {
 	return String(value || '').trim();
 }
 
-function toPublicUser(user) {
-	return {
-		id: user.id,
-		name: user.name,
-		email: user.email,
-		profile: toRoleLabel(user.profile),
-		role: normalizeRole(user.profile),
-		isActive: user.isActive,
-		createdAt: user.createdAt,
-	};
-}
-
 class AuthService {
-	constructor(userRepository, passwordService, tokenService) {
+	constructor(userRepository, passwordService, tokenService, sessionService) {
 		this.userRepository = userRepository;
 		this.passwordService = passwordService;
 		this.tokenService = tokenService;
+		this.sessionService = sessionService;
 	}
 
 	async register(payload) {
@@ -38,6 +28,14 @@ class AuthService {
 			throw new AppError(
 				'Preencha nome, e-mail, perfil e senha.',
 				400,
+			);
+		}
+
+		
+		if (!SELF_REGISTRATION_ROLES.includes(role)) {
+			throw new AppError(
+				'Este perfil nao pode ser criado pelo cadastro. Escolha Paciente ou Nutricionista.',
+				403,
 			);
 		}
 
@@ -63,11 +61,6 @@ class AuthService {
 			profile: role,
 			passwordHash: this.passwordService.hash(password),
 		});
-
-		// Vinculo com nutricionista, perfil de paciente/nutricionista
-		// e demais dados de onboarding entram nas Sprints 2-3,
-		// junto com os models PatientProfile e NutritionistProfile
-		// no schema.
 
 		return {
 			message: 'Cadastro realizado com sucesso.',
@@ -111,6 +104,30 @@ class AuthService {
 			token: this.tokenService.create(user),
 			user: toPublicUser(user),
 		};
+	}
+
+	
+	
+	async logout(token) {
+		if (token) {
+			const payload = this.tokenService.verify(token);
+
+			if (payload) {
+				this.sessionService.revoke(token, payload.exp);
+			}
+		}
+
+		return { message: 'Logout realizado com sucesso.' };
+	}
+
+	async me(userId) {
+		const user = await this.userRepository.findById(userId);
+
+		if (!user) {
+			throw new AppError('Usuario nao encontrado.', 404);
+		}
+
+		return { user: toPublicUser(user) };
 	}
 }
 
