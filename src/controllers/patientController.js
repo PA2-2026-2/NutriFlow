@@ -10,6 +10,10 @@ class PatientController {
 		);
 		response.status(200).json(result);
 	}
+
+	linkNutritionist(request, response) {
+		return this.setNutritionist(request, response);
+	}
 }
 
 module.exports = {

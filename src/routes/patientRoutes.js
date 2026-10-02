@@ -4,14 +4,12 @@ const { authorize } = require('../middlewares/authMiddleware');
 
 function createPatientRoutes(patientController, authenticate) {
 	const router = express.Router();
-
+	router.use(authenticate);
 	router.post(
 		'/me/nutritionist',
-		authenticate,
 		authorize('POST /api/patients/me/nutritionist'),
-		asyncHandler(patientController.setNutritionist.bind(patientController)),
+		asyncHandler(patientController.linkNutritionist.bind(patientController)),
 	);
-
 	return router;
 }
 
