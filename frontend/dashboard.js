@@ -18,6 +18,7 @@ const state = {
 
 let patientChatSyncIntervalId = null;
 let patientChatSyncInFlight = false;
+let patientProfileSyncIntervalId = null;
 
 const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
@@ -797,6 +798,27 @@ async function linkNutritionist(payload) {
 async function getCurrentUserProfile() {
   const result = await apiRequest('/api/users/me');
   return result.user || result;
+}
+
+async function refreshCurrentUserProfile() {
+  try {
+    const user = await getCurrentUserProfile();
+    const updatedUser = { ...state.currentUser, ...user };
+
+    persistCurrentUser(updatedUser);
+
+    if (state.dashboard?.patient) {
+      state.dashboard.patient = {
+        ...state.dashboard.patient,
+        ...updatedUser,
+      };
+    }
+
+    renderHeader();
+    renderHighlights();
+  } catch (error) {
+    console.warn('Nao foi possivel atualizar o perfil do paciente:', error);
+  }
 }
 
 async function updatePatientProfile(payload) {
@@ -1798,10 +1820,10 @@ async function handleNutritionistLink(event) {
     persistCurrentUser({
       ...state.currentUser,
       ...result.patient,
-      nutritionist: result.patient?.nutritionist,
+      nutritionist: result.nutritionist || result.patient?.nutritionist,
     });
 
-    await refreshDashboard();
+    await refreshCurrentUserProfile();
     showToast(result.message || 'Vinculo atualizado com sucesso.');
   } catch (error) {
     showToast(error.message || 'Nao foi possivel concluir o vinculo.');
@@ -1901,13 +1923,18 @@ function bindEvents() {
   bindWeightModalEvents();
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
+      void refreshCurrentUserProfile();
       void syncPatientRealtimeChat({ forceRender: true });
     }
   });
   window.addEventListener('focus', () => {
+    void refreshCurrentUserProfile();
     void syncPatientRealtimeChat({ forceRender: true });
   });
-  window.addEventListener('beforeunload', stopPatientRealtimeChat);
+  window.addEventListener('beforeunload', () => {
+    stopPatientRealtimeChat();
+    window.clearInterval(patientProfileSyncIntervalId);
+  });
   bindNavigationState();
 }
 
@@ -1919,8 +1946,13 @@ async function init() {
   renderHeader();
   bindEvents();
   window.NutriFlowUi?.setupSectionNavigation({ linkSelector: '.sidebar-link, .mobile-nav-pill' });
+  patientProfileSyncIntervalId = window.setInterval(
+    () => void refreshCurrentUserProfile(),
+    30000,
+  );
 
   try {
+    await refreshCurrentUserProfile();
     await refreshDashboard();
   } catch (error) {
     showToast(error.message || 'Nao foi possivel carregar o dashboard do paciente.');
@@ -2068,8 +2100,6 @@ function renderChallenges() {
 }
 
 init();
-
-
 
 
 

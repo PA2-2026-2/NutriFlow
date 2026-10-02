@@ -33,6 +33,17 @@ describe('POST /api/patients/me/nutritionist', () => {
       email: nutritionist.email,
     });
     expect(response.body.patientProfile.nutritionistId).toBe(nutritionist.user.id);
+
+    const patientProfile = await request(app)
+      .get('/api/users/me')
+      .set(bearer(patient.token));
+
+    expect(patientProfile.statusCode).toBe(200);
+    expect(patientProfile.body.user.nutritionist).toEqual({
+      id: nutritionist.user.id,
+      name: nutritionist.user.name,
+      email: nutritionist.email,
+    });
   });
 
   it('deve retornar 404 se o nutricionista nao existir', async () => {
