@@ -67,8 +67,13 @@ class UserService {
     const publicUser = toPublicUser(user);
 
     if (this.profileRepository) {
-      const patientProfile =
-        await this.profileRepository.findPatientByUserId(userId);
+      const patientProfile = user.profile === 'PATIENT'
+        ? await this.profileRepository.findPatientWithNutritionistByUserId(userId)
+        : await this.profileRepository.findPatientByUserId(userId);
+
+      if (user.profile === 'PATIENT') {
+        publicUser.nutritionist = patientProfile?.nutritionist || null;
+      }
 
       if (patientProfile) {
         publicUser.age = patientProfile.age;
@@ -191,8 +196,13 @@ class UserService {
     const publicUser = toPublicUser(updated);
 
     if (this.profileRepository) {
-      const patientProfile =
-        await this.profileRepository.findPatientByUserId(userId);
+      const patientProfile = updated.profile === 'PATIENT'
+        ? await this.profileRepository.findPatientWithNutritionistByUserId(userId)
+        : await this.profileRepository.findPatientByUserId(userId);
+
+      if (updated.profile === 'PATIENT') {
+        publicUser.nutritionist = patientProfile?.nutritionist || null;
+      }
 
       if (patientProfile) {
         publicUser.age = patientProfile.age;

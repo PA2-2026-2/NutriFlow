@@ -4,6 +4,7 @@ const { ROLES } = require('./roles');
 const ANY_ROLE = Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST, ROLES.ADMIN]);
 const ADMIN_ONLY = Object.freeze([ROLES.ADMIN]);
 const PATIENT_ONLY = Object.freeze([ROLES.PATIENT]);
+const NUTRITIONIST_ONLY = Object.freeze([ROLES.NUTRITIONIST]);
 
 
 const PUBLIC_ROUTES = Object.freeze([
@@ -22,8 +23,11 @@ const PROTECTED_ROUTES = Object.freeze({
   'POST /api/users/me/photo': ANY_ROLE,
 
   'POST /api/patients/me/nutritionist': PATIENT_ONLY,
+  'GET /api/nutritionist/patients': NUTRITIONIST_ONLY,
+  'POST /api/nutritionist/link-patient': NUTRITIONIST_ONLY,
 
   'GET /api/admin/users': ADMIN_ONLY,
+  'GET /api/admin/summary': ADMIN_ONLY,
   'PUT /api/admin/users/:userId': ADMIN_ONLY,
   'PATCH /api/admin/users/:userId/status': ADMIN_ONLY,
   'DELETE /api/admin/users/:userId': ADMIN_ONLY,

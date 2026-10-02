@@ -8,6 +8,11 @@ class AdminController {
 		response.status(200).json(result);
 	}
 
+	async getSummary(request, response) {
+		const result = await this.adminService.getSummary();
+		response.status(200).json(result);
+	}
+
 	async updateUser(request, response) {
 		const result = await this.adminService.updateUser(
 			request.params.userId,

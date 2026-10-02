@@ -7,6 +7,7 @@ function createAdminRoutes(adminController, authenticate) {
 
 	router.use(authenticate);
 
+	router.get('/summary', authorize('GET /api/admin/summary'), asyncHandler(adminController.getSummary.bind(adminController)));
 	router.get('/users', authorize('GET /api/admin/users'), asyncHandler(adminController.getUsers.bind(adminController)));
 	router.put('/users/:userId', authorize('PUT /api/admin/users/:userId'), asyncHandler(adminController.updateUser.bind(adminController)));
 	router.patch('/users/:userId/status', authorize('PATCH /api/admin/users/:userId/status'), asyncHandler(adminController.updateUserStatus.bind(adminController)));

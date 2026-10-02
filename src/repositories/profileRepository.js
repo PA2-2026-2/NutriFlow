@@ -9,6 +9,25 @@ class ProfileRepository {
     });
   }
 
+  findPatientWithNutritionistByUserId(userId) {
+    return this.prisma.patientProfile.findUnique({
+      where: { userId },
+      include: {
+        nutritionist: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+  }
+
+  findPatientsByNutritionistId(nutritionistId) {
+    return this.prisma.patientProfile.findMany({
+      where: { nutritionistId },
+      include: { user: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
   createPatientProfile(data) {
     return this.prisma.patientProfile.create({
       data,
