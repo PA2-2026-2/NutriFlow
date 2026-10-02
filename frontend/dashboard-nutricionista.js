@@ -155,15 +155,8 @@ async function sendNutritionistChatMessage(payload) {
 
 async function fetchDatabaseData() {
   try {
-    const data = await apiRequest('/api/nutritionist/dashboard');
+    const data = await apiRequest('/api/nutritionist/patients');
     state.patients = data.patients || [];
-    state.mealPlans = data.mealPlans || [];
-    state.assessments = data.assessments || [];
-    state.appointments = data.appointments || [];
-    state.reminders = data.reminders || [];
-    state.challenges = data.challenges || [];
-    state.messages = data.messages || [];
-    state.foods = data.foods || [];
 
     ensureValidPatientSelections();
     renderAll();
@@ -1155,8 +1148,9 @@ document.getElementById('linkPatientForm')?.addEventListener('submit', async (e)
   const email = document.getElementById('linkPatientEmail').value;
   const age = document.getElementById('linkPatientAge').value;
   const objective = document.getElementById('linkPatientObjective').value;
+  const restrictions = document.getElementById('linkPatientRestrictions').value;
   try {
-    await apiRequest('/api/nutritionist/link-patient', { method: 'POST', body: JSON.stringify({ patientEmail: email, age, objective }) });
+    await apiRequest('/api/nutritionist/link-patient', { method: 'POST', body: JSON.stringify({ patientEmail: email, age, objective, restrictions }) });
     showToast('Paciente vinculado com sucesso!');
     closeModal('linkPatient');
     await fetchDatabaseData();

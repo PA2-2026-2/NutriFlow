@@ -26,6 +26,7 @@ const { createAuthRoutes } = require('./routes/authRoutes');
 const { createAdminRoutes } = require('./routes/adminRoutes');
 const { createUserRoutes } = require('./routes/userRoutes');
 const { createPatientRoutes } = require('./routes/patientRoutes');
+const { createNutritionistRoutes } = require('./routes/nutritionistRoutes');
 const { PhotoStorage } = require('./infra/photoStorage');
 
 const FRONTEND_ROUTE_ALIASES = new Map([
@@ -198,6 +199,11 @@ function createApp(options = {}) {
   app.use(
     '/api/patients',
     createPatientRoutes(patientController, authenticate)
+  );
+
+  app.use(
+    '/api/nutritionist',
+    createNutritionistRoutes(patientController, authenticate)
   );
 
   app.use(
