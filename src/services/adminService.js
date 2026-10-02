@@ -65,6 +65,46 @@ class AdminService {
 		return { users: users.map(toManagedUser) };
 	}
 
+	async getSummary() {
+		const groups = await this.adminRepository.getUserSummary();
+		const summary = {
+			total_users: 0,
+			total_patients: 0,
+			total_nutritionists: 0,
+			total_admins: 0,
+			active_users: 0,
+			blocked_users: 0,
+			total_foods: null,
+			food_logs_today: null,
+			active_meal_plans: null,
+			average_food_calories: null,
+			food_catalog_available: false,
+			food_logs_available: false,
+			meal_plans_available: false,
+		};
+
+		for (const group of groups) {
+			const count = group._count._all;
+			summary.total_users += count;
+
+			if (group.isActive) {
+				summary.active_users += count;
+			} else {
+				summary.blocked_users += count;
+			}
+
+			if (group.profile === 'PATIENT') {
+				summary.total_patients += count;
+			} else if (group.profile === 'NUTRITIONIST') {
+				summary.total_nutritionists += count;
+			} else if (group.profile === 'ADMIN') {
+				summary.total_admins += count;
+			}
+		}
+
+		return { summary };
+	}
+
 	
 	async updateUser(userId, payload) {
 		const name = normalizeText(payload.name);

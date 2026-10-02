@@ -27,6 +27,7 @@ const PROTECTED_ROUTES = Object.freeze({
   'POST /api/nutritionist/link-patient': NUTRITIONIST_ONLY,
 
   'GET /api/admin/users': ADMIN_ONLY,
+  'GET /api/admin/summary': ADMIN_ONLY,
   'PUT /api/admin/users/:userId': ADMIN_ONLY,
   'PATCH /api/admin/users/:userId/status': ADMIN_ONLY,
   'DELETE /api/admin/users/:userId': ADMIN_ONLY,

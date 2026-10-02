@@ -687,6 +687,12 @@ const state = {
   }
 
   function renderSummary(summary = {}) {
+    const foodCatalogAvailable =
+      summary.food_catalog_available !== false;
+    const foodLogsAvailable =
+      summary.food_logs_available !== false;
+    const mealPlansAvailable =
+      summary.meal_plans_available !== false;
     const totalUsers = Number(
       summary.total_users ??
       summary.totalUsers ??
@@ -740,12 +746,14 @@ const state = {
       ).length,
     );
 
-    const totalFoods = Number(
-      summary.total_foods ??
-      summary.totalFoods ??
-      state.foods.length ??
-      0,
-    );
+    const totalFoods = foodCatalogAvailable
+      ? Number(
+          summary.total_foods ??
+          summary.totalFoods ??
+          state.foods.length ??
+          0,
+        )
+      : null;
 
     setText(
       'summaryTotalUsers',
@@ -779,7 +787,7 @@ const state = {
 
     setText(
       'summaryTotalFoods',
-      formatNumber(totalFoods),
+      totalFoods === null ? 'N/D' : formatNumber(totalFoods),
     );
 
     setText(
@@ -794,7 +802,7 @@ const state = {
 
     setText(
       'adminSidebarFoods',
-      formatNumber(totalFoods),
+      totalFoods === null ? 'N/D' : formatNumber(totalFoods),
     );
 
     const activationRate =
@@ -829,12 +837,14 @@ const state = {
 
     setText(
       'adminWorkspaceFoodsValue',
-      `${formatNumber(totalFoods)} itens`,
+      totalFoods === null ? 'N/D' : `${formatNumber(totalFoods)} itens`,
     );
 
     setText(
       'adminWorkspaceFoodsMeta',
-      'Itens disponíveis na base nutricional.',
+      foodCatalogAvailable
+        ? 'Itens disponíveis na base nutricional.'
+        : 'O catálogo ainda não está conectado ao banco de dados.',
     );
 
     setText(
@@ -869,36 +879,36 @@ const state = {
       'Pacientes por nutricionista.',
     );
 
-    const foodLogsToday = Number(
-      summary.food_logs_today ??
-      summary.foodLogsToday ??
-      0,
-    );
+    const foodLogsToday = foodLogsAvailable
+      ? Number(summary.food_logs_today ?? summary.foodLogsToday ?? 0)
+      : null;
 
-    const mealPlans = Number(
-      summary.active_meal_plans ??
-      summary.activeMealPlans ??
-      0,
-    );
+    const mealPlans = mealPlansAvailable
+      ? Number(summary.active_meal_plans ?? summary.activeMealPlans ?? 0)
+      : null;
 
     setText(
       'adminOpsFoodLogsValue',
-      formatNumber(foodLogsToday),
+      foodLogsToday === null ? 'N/D' : formatNumber(foodLogsToday),
     );
 
     setText(
       'adminOpsFoodLogsMeta',
-      'Movimento alimentar do dia.',
+      foodLogsAvailable
+        ? 'Movimento alimentar do dia.'
+        : 'Registros alimentares ainda não estão disponíveis.',
     );
 
     setText(
       'adminOpsPlansValue',
-      formatNumber(mealPlans),
+      mealPlans === null ? 'N/D' : formatNumber(mealPlans),
     );
 
     setText(
       'adminOpsPlansMeta',
-      'Planos ativos atualmente.',
+      mealPlansAvailable
+        ? 'Planos ativos atualmente.'
+        : 'Planos nutricionais ainda não estão disponíveis.',
     );
 
     setText(
@@ -928,7 +938,7 @@ const state = {
 
     setText(
       'adminMetricCatalogDensity',
-      formatPercent(catalogDensity),
+      totalFoods === null ? 'N/D' : formatPercent(catalogDensity),
     );
 
     const adminCoverage =
@@ -943,7 +953,7 @@ const state = {
 
     setText(
       'adminMetricFoodLogs',
-      formatNumber(foodLogsToday),
+      foodLogsToday === null ? 'N/D' : formatNumber(foodLogsToday),
     );
 
     setText(
@@ -953,7 +963,7 @@ const state = {
 
     setText(
       'adminMetricMealPlans',
-      formatNumber(mealPlans),
+      mealPlans === null ? 'N/D' : formatNumber(mealPlans),
     );
 
     setText(
@@ -963,23 +973,27 @@ const state = {
 
     setText(
       'adminFoodBaseReadiness',
-      formatPercent(catalogDensity),
+      totalFoods === null ? 'N/D' : formatPercent(catalogDensity),
     );
 
-    const averageCalories = Number(
-      summary.average_food_calories ??
-      summary.averageFoodCalories ??
-      calculateAverageCalories(),
-    );
+    const averageCalories = foodCatalogAvailable
+      ? Number(
+          summary.average_food_calories ??
+          summary.averageFoodCalories ??
+          calculateAverageCalories(),
+        )
+      : null;
 
     setText(
       'adminFoodAverageCalories',
-      `${formatNumber(averageCalories)} kcal`,
+      averageCalories === null ? 'N/D' : `${formatNumber(averageCalories)} kcal`,
     );
 
     setText(
       'adminFoodAverageCaloriesMeta',
-      'Média calórica dos itens cadastrados.',
+      foodCatalogAvailable
+        ? 'Média calórica dos itens cadastrados.'
+        : 'O catálogo ainda não está conectado ao banco de dados.',
     );
 
     const macroDensity =
@@ -987,12 +1001,14 @@ const state = {
 
     setText(
       'adminFoodMacroDensity',
-      `${formatDecimal(macroDensity)}g`,
+      foodCatalogAvailable ? `${formatDecimal(macroDensity)}g` : 'N/D',
     );
 
     setText(
       'adminFoodMacroDensityMeta',
-      'Proteína + carboidrato + gordura por item.',
+      foodCatalogAvailable
+        ? 'Proteína + carboidrato + gordura por item.'
+        : 'O catálogo ainda não está conectado ao banco de dados.',
     );
 
     renderDistribution({
@@ -2121,19 +2137,30 @@ async function toggleUserStatus(user) {
 
     foodsList.innerHTML = '';
 
+    const catalogAvailable =
+      state.summary?.food_catalog_available !== false;
+
     setText(
       'adminFilteredFoodsCount',
-      formatNumber(
-        foods.length,
-      ),
+      catalogAvailable ? formatNumber(foods.length) : 'N/D',
     );
 
     setText(
       'adminFilteredFoodsMeta',
-      foodSearch?.value
-        ? `Resultados para "${foodSearch.value}".`
-        : 'Refine por nome para revisar o catálogo.',
+      !catalogAvailable
+        ? 'O catálogo de alimentos ainda não está conectado ao banco de dados.'
+        : foodSearch?.value
+          ? `Resultados para "${foodSearch.value}".`
+          : 'Refine por nome para revisar o catálogo.',
     );
+
+    if (!catalogAvailable) {
+      const message = document.createElement('p');
+      message.className = 'p-4 text-sm text-nutriflow-600';
+      message.textContent = 'Não há uma fonte de dados de alimentos configurada.';
+      foodsList.appendChild(message);
+      return;
+    }
 
     foods.forEach(
       (food) => {
@@ -2411,6 +2438,16 @@ async function toggleUserStatus(user) {
   }
 
   function renderFoodMetrics() {
+    if (state.summary?.food_catalog_available === false) {
+      setText('adminFoodBaseReadiness', 'N/D');
+      setText('adminFoodBaseReadinessMeta', 'O catálogo ainda não está conectado ao banco de dados.');
+      setText('adminFoodAverageCalories', 'N/D');
+      setText('adminFoodAverageCaloriesMeta', 'O catálogo ainda não está conectado ao banco de dados.');
+      setText('adminFoodMacroDensity', 'N/D');
+      setText('adminFoodMacroDensityMeta', 'O catálogo ainda não está conectado ao banco de dados.');
+      return;
+    }
+
     const averageCalories =
       calculateAverageCalories();
 
@@ -2581,7 +2618,7 @@ async function toggleUserStatus(user) {
       });
     }
 
-    if (activationRate < 70) {
+    if (totalUsers > 0 && activationRate < 70) {
       alerts.push({
         title:
           'Ativação abaixo de 70%',
@@ -2590,7 +2627,7 @@ async function toggleUserStatus(user) {
       });
     }
 
-    if (totalFoods < 100) {
+    if (totalFoods !== null && totalFoods < 100) {
       alerts.push({
         title:
           'Catálogo ainda enxuto',
@@ -2666,7 +2703,7 @@ async function toggleUserStatus(user) {
       body =
         `Existem ${formatNumber(blockedUsers)} contas bloqueadas. O painel pode ser usado para revisar esses registros e manter a base organizada.`;
     } else if (
-      activationRate < 70
+      totalUsers > 0 && activationRate < 70
     ) {
       title =
         'Acompanhar ativação';
@@ -2674,7 +2711,7 @@ async function toggleUserStatus(user) {
       body =
         `A taxa atual de ativação é ${formatPercent(activationRate)}. Vale acompanhar a evolução das contas ativas ao longo do tempo.`;
     } else if (
-      totalFoods < 100
+      totalFoods !== null && totalFoods < 100
     ) {
       title =
         'Expandir a base nutricional';
@@ -2683,10 +2720,14 @@ async function toggleUserStatus(user) {
         `O catálogo possui ${formatNumber(totalFoods)} itens. A expansão da base pode ampliar a cobertura dos fluxos nutricionais.`;
     } else {
       title =
-        'Operação dentro dos indicadores atuais';
+        totalFoods === null
+          ? 'Resumo de usuários atualizado'
+          : 'Operação dentro dos indicadores atuais';
 
       body =
-        `A base possui ${formatNumber(totalFoods)} alimentos e uma carga média de ${formatDecimal(coverage)} pacientes por nutricionista. Continue acompanhando a evolução dos indicadores.`;
+        totalFoods === null
+          ? `A base possui ${formatNumber(data.totalUsers)} usuários e ${formatNumber(data.totalPatients)} pacientes. Os indicadores de alimentos, registros e planos não estão conectados ao banco de dados.`
+          : `A base possui ${formatNumber(totalFoods)} alimentos e uma carga média de ${formatDecimal(coverage)} pacientes por nutricionista. Continue acompanhando a evolução dos indicadores.`;
     }
 
     setText(

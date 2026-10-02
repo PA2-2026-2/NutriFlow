@@ -22,6 +22,13 @@ class AdminRepository {
     });
   }
 
+  getUserSummary() {
+    return this.prisma.user.groupBy({
+      by: ['profile', 'isActive'],
+      _count: { _all: true },
+    });
+  }
+
   findUserById(userId) {
     return this.prisma.user.findUnique({
       where: { id: userId },
