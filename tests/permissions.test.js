@@ -16,7 +16,7 @@ const ALL_ROLES = Object.values(ROLES);
 
 function callRoute(app, routeKey) {
   const [method, route] = routeKey.split(' ');
-  return request(app)[method.toLowerCase()](route.replace(':userId', SAMPLE_ID));
+  return request(app)[method.toLowerCase()](route.replace(/:[^/]+/g, SAMPLE_ID));
 }
 
 describe('matriz de permissoes', () => {
@@ -74,6 +74,9 @@ describe('matriz de permissoes', () => {
     for (const role of ALL_ROLES) {
       if (allowed.includes(role)) {
         it(`permite ${role} (nao retorna 401/403)`, async () => {
+          const routePath = routeKey.includes('GET /api/patients/:id/measurements') && role === ROLES.PATIENT
+            ? routeKey.split(' ')[1].replace(':id', accounts[role].user.id)
+            : null;
           if (
             role === ROLES.PATIENT &&
             ['/api/patient/meals', '/api/patient/weights'].includes(routeKey.split(' ')[1])
@@ -90,7 +93,10 @@ describe('matriz de permissoes', () => {
             });
           }
 
-          const response = await callRoute(app, routeKey).set(bearer(accounts[role].token));
+          const response = (routePath
+            ? request(app)[routeKey.split(' ')[0].toLowerCase()](routePath)
+            : callRoute(app, routeKey))
+            .set(bearer(accounts[role].token));
 
           expect(response.statusCode).not.toBe(401);
           expect(response.statusCode).not.toBe(403);

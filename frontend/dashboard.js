@@ -1242,7 +1242,7 @@ function renderHistory() {
   }
 
   container.innerHTML = history.map((item) => `
-    <div class="history-row grid grid-cols-[1.2fr_.8fr_.7fr_.7fr] items-center gap-3 px-4 py-4">
+    <div class="history-row grid min-w-[620px] grid-cols-[1.2fr_.8fr_.7fr_.7fr] items-center gap-3 px-4 py-4">
       <span class="font-medium text-nutriflow-950">${escapeHtml(item.dateLabel)}</span>
       <span class="text-nutriflow-700">${escapeHtml(item.planLabel)}</span>
       <span class="text-nutriflow-700">${escapeHtml(item.caloriesLabel)}</span>
@@ -1403,7 +1403,7 @@ function renderWeight() {
   if (historyList) {
     historyList.innerHTML = history.length
       ? history.map((entry) => `
-          <div class="grid grid-cols-[.9fr_.7fr_.7fr_1.4fr] gap-2 px-4 py-3">
+          <div class="grid min-w-[640px] grid-cols-[.9fr_.7fr_.7fr_1.4fr] gap-2 px-4 py-3">
             <span>${escapeHtml(entry.dateLabel)}</span>
             <span class="font-bold text-nutriflow-950">${escapeHtml(entry.weightLabel)}</span>
             <span>${escapeHtml(entry.variationLabel)}</span>
@@ -2101,5 +2101,4 @@ function renderChallenges() {
 }
 
 init();
-
 

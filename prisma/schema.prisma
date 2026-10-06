@@ -76,13 +76,14 @@ model PatientMeasurement {
 }
 
 model Food {
-  id        String   @id
-  name      String   @unique
-  calories  Float
-  protein   Float
-  carbs     Float
-  fat       Float
-  createdAt DateTime @default(now())
+  id          String   @id
+  name        String   @unique
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
 
   mealPlanItems MealPlanItem[]
 }

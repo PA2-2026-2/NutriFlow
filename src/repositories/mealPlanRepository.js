@@ -11,7 +11,10 @@ class MealPlanRepository {
 			update: {},
 		})));
 
-		return this.prisma.food.findMany({ orderBy: { name: 'asc' } });
+		return this.prisma.food.findMany({
+			where: { isAvailable: true },
+			orderBy: { name: 'asc' },
+		});
 	}
 
 	listForNutritionist(nutritionistId) {

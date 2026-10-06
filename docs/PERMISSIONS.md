@@ -35,6 +35,7 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/users/me/photo` | ✅ | ✅ | ✅ | Envia a própria foto (JPG/PNG, até 2 MB) |
 | `POST /api/patients/me/nutritionist` | ✅ | ❌ | ❌ | Vincula o paciente logado a um nutricionista pelo e-mail dele |
 | `POST /api/patients/:id/measurements` | ❌ | ✅ | ❌ | Registra medidas de paciente vinculado ao nutricionista autenticado |
+| `GET /api/patients/:id/measurements` | ✅ | ✅ | ❌ | Lista medidas em ordem cronológica; paciente consulta apenas as próprias e nutricionista apenas pacientes vinculados |
 | `GET /api/patient/dashboard` | ✅ | ❌ | ❌ | Carrega dados, plano alimentar e históricos do paciente |
 | `POST /api/patient/meals` | ✅ | ❌ | ❌ | Registra uma refeição do paciente |
 | `POST /api/patient/weights` | ✅ | ❌ | ❌ | Registra uma pesagem semanal do paciente |
@@ -45,6 +46,9 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
 | `GET /api/admin/users` | ❌ | ❌ | ✅ | Lista usuários (`?role=` e `?search=`) |
 | `GET /api/admin/summary` | ❌ | ❌ | ✅ | Exibe o resumo administrativo |
+| `GET /api/admin/foods` | ❌ | ❌ | ✅ | Lista o catálogo global de alimentos |
+| `POST /api/admin/foods` | ❌ | ❌ | ✅ | Cadastra alimento disponível para planos e registros alimentares |
+| `DELETE /api/admin/foods/:foodId` | ❌ | ❌ | ✅ | Remove alimento do catálogo e atualiza ou remove planos que o utilizavam |
 | `PUT /api/admin/users/:userId` | ❌ | ❌ | ✅ | Edita nome, e-mail e telefone de um usuário |
 | `PATCH /api/admin/users/:userId/status` | ❌ | ❌ | ✅ | Bloqueia/desbloqueia (`{ "isActive": boolean }`) |
 | `DELETE /api/admin/users/:userId` | ❌ | ❌ | ✅ | Remove um usuário |
@@ -68,6 +72,17 @@ Planos alimentares só podem ser criados para pacientes vinculados ao nutricioni
 autenticado. Os itens referenciam alimentos da base; calorias, proteínas,
 carboidratos e gorduras são calculados no servidor com os valores por 100 g do
 catálogo inicial, e o plano fica ativo por 30 dias.
+
+O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados
+O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados
+pelo administrador ficam disponíveis para nutricionistas criarem planos e para o
+paciente visualizar o catálogo e o plano associado. Ao remover um alimento, ele
+deixa de aparecer no catálogo; seus itens são retirados dos planos e os valores
+nutricionais são recalculados. Planos sem itens restantes também são removidos.
+O cadastro recebe calorias,
+proteínas, carboidratos e gorduras por 100 g; o nome deve ser único, calorias
+devem ser não negativas (sem limite superior) e cada macronutriente fica entre
+0 e 100 g.
 
 ## Ao criar uma rota nova
 

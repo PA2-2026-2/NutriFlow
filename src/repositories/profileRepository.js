@@ -18,6 +18,13 @@ class ProfileRepository {
     });
   }
 
+  findMeasurementsByPatientProfileId(patientProfileId) {
+    return this.prisma.patientMeasurement.findMany({
+      where: { patientProfileId },
+      orderBy: [{ recordedAt: 'asc' }, { id: 'asc' }],
+    });
+  }
+
   findPatientWithNutritionistByUserId(userId) {
     return this.prisma.patientProfile.findUnique({
       where: { userId },

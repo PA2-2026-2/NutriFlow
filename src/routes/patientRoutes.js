@@ -15,6 +15,11 @@ function createPatientRoutes(patientController, authenticate) {
 		authorize('POST /api/patients/:id/measurements'),
 		asyncHandler(patientController.recordMeasurement.bind(patientController)),
 	);
+	router.get(
+		'/:id/measurements',
+		authorize('GET /api/patients/:id/measurements'),
+		asyncHandler(patientController.getMeasurements.bind(patientController)),
+	);
 	return router;
 }
 

@@ -305,6 +305,33 @@ class PatientService {
 
 		return this.profileRepository.createMeasurement(patientProfile.id, data);
 	}
+
+	async getMeasurements(requesterId, requesterRole, patientId) {
+		if (requesterRole === ROLES.PATIENT && requesterId !== patientId) {
+			throw new AppError('Voce so pode consultar suas proprias medidas.', 403);
+		}
+
+		const patientProfile = await this.profileRepository.findPatientByUserId(patientId);
+		if (!patientProfile) {
+			if (requesterRole === ROLES.PATIENT) {
+				return { measurements: [] };
+			}
+			throw new AppError('Paciente nao encontrado.', 404);
+		}
+
+		if (
+			requesterRole === ROLES.NUTRITIONIST &&
+			patientProfile.nutritionistId !== requesterId
+		) {
+			throw new AppError('Este paciente nao esta vinculado ao nutricionista.', 403);
+		}
+
+		return {
+			measurements: await this.profileRepository.findMeasurementsByPatientProfileId(
+				patientProfile.id,
+			),
+		};
+	}
 }
 
 module.exports = {

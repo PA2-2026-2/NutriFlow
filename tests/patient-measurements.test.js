@@ -13,6 +13,104 @@ describe('POST /api/patients/:id/measurements', () => {
     app = createApp();
   });
 
+  describe('GET /api/patients/:id/measurements', () => {
+    let app;
+
+    beforeAll(() => {
+      app = createApp();
+    });
+
+    afterAll(async () => {
+      await cleanupTestUsers(app);
+      await app.stop();
+    });
+
+    async function linkPatient(nutritionist, patient) {
+      const response = await request(app)
+        .post('/api/nutritionist/link-patient')
+        .set(bearer(nutritionist.token))
+        .send({
+          patientEmail: patient.email,
+          age: 30,
+          objective: 'Acompanhamento',
+        });
+
+      expect(response.statusCode).toBe(200);
+      return response.body.patientProfile;
+    }
+
+    it('retorna todas as medidas em ordem cronologica para o paciente e nutricionista vinculado', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      const profile = await linkPatient(nutritionist, patient);
+      const older = await app.locals.prisma.patientMeasurement.create({
+        data: {
+          patientProfileId: profile.id,
+          weightKg: 70,
+          heightCm: 175,
+          recordedAt: new Date('2026-01-10T10:00:00.000Z'),
+        },
+      });
+      const newer = await app.locals.prisma.patientMeasurement.create({
+        data: {
+          patientProfileId: profile.id,
+          weightKg: 72,
+          heightCm: 175,
+          waistCircumferenceCm: 80,
+          recordedAt: new Date('2026-02-10T10:00:00.000Z'),
+        },
+      });
+
+      const patientResponse = await request(app)
+        .get(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(patient.token));
+      const nutritionistResponse = await request(app)
+        .get(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(nutritionist.token));
+
+      for (const response of [patientResponse, nutritionistResponse]) {
+        expect(response.statusCode).toBe(200);
+        expect(response.body.measurements.map((entry) => entry.id)).toEqual([older.id, newer.id]);
+        expect(response.body.measurements.map((entry) => entry.recordedAt)).toEqual([
+          older.recordedAt.toISOString(),
+          newer.recordedAt.toISOString(),
+        ]);
+      }
+      expect(patientResponse.body.measurements[1]).toMatchObject({
+        weightKg: 72,
+        waistCircumferenceCm: 80,
+      });
+    });
+
+    it('impede que o paciente consulte outro e que nutricionista consulte paciente nao vinculado', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const otherPatient = await createUserWithRole(app, 'PATIENT');
+      const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      const otherNutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      await linkPatient(nutritionist, patient);
+
+      const patientLookingAtOther = await request(app)
+        .get(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(otherPatient.token));
+      const unrelatedNutritionist = await request(app)
+        .get(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(otherNutritionist.token));
+
+      expect(patientLookingAtOther.statusCode).toBe(403);
+      expect(unrelatedNutritionist.statusCode).toBe(403);
+    });
+
+    it('retorna historico vazio ao proprio paciente sem perfil ou medidas', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const response = await request(app)
+        .get(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(patient.token));
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual({ measurements: [] });
+    });
+  });
+
   afterAll(async () => {
     await cleanupTestUsers(app);
     await app.stop();

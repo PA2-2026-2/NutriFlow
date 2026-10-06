@@ -48,7 +48,10 @@ class PatientDashboardRepository {
 			where: { id: food.id },
 			create: food,
 			update: {},
-		}))).then(() => this.prisma.food.findMany({ orderBy: { name: 'asc' } }));
+		}))).then(() => this.prisma.food.findMany({
+			where: { isAvailable: true },
+			orderBy: { name: 'asc' },
+		}));
 	}
 }
 
