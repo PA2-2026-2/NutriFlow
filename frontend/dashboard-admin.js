@@ -239,7 +239,7 @@ const state = {
       return '—';
     }
 
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
   function formatPercent(value) {

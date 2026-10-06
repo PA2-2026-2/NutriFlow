@@ -22,20 +22,6 @@ function foodIdFromName(name) {
 	return `${base || 'alimento'}-${uniqueSuffix}`;
 }
 
-function formatDate(date) {
-	const instance = new Date(date);
-
-	if (Number.isNaN(instance.getTime())) {
-		return '';
-	}
-
-	return new Intl.DateTimeFormat('pt-BR', {
-		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
-	}).format(instance);
-}
-
 function toManagedUser(user) {
 	return {
 		id: user.id,
@@ -46,7 +32,7 @@ function toManagedUser(user) {
 		isActive: user.isActive,
 		phone: user.phone || null,
 		profilePhotoUrl: user.profilePhotoUrl || null,
-		createdAt: formatDate(user.createdAt),
+		createdAt: user.createdAt,
 	};
 }
 

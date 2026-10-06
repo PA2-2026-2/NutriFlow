@@ -42,6 +42,16 @@ describe('/api/admin/users', () => {
       expect(JSON.stringify(response.body)).not.toContain('passwordHash');
     });
 
+    it('deve retornar a data de criacao original do Prisma em formato ISO', async () => {
+      const response = await request(app)
+        .get('/api/admin/users')
+        .set(bearer(admin.token));
+      const listedPatient = response.body.users.find((user) => user.id === patient.user.id);
+
+      expect(response.statusCode).toBe(200);
+      expect(listedPatient.createdAt).toBe(patient.user.createdAt.toISOString());
+    });
+
     it('deve filtrar por role', async () => {
       const response = await request(app)
         .get('/api/admin/users?role=NUTRITIONIST')
