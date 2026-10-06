@@ -10,16 +10,19 @@ const { AuthController } = require('./controllers/authController');
 const { AdminController } = require('./controllers/adminController');
 const { UserController } = require('./controllers/userController');
 const { PatientController } = require('./controllers/patientController');
+const { PatientDashboardController } = require('./controllers/patientDashboardController');
 const { MealPlanController } = require('./controllers/mealPlanController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
 const { ProfileRepository } = require('./repositories/profileRepository');
+const { PatientDashboardRepository } = require('./repositories/patientDashboardRepository');
 const { MealPlanRepository } = require('./repositories/mealPlanRepository');
 
 const { AuthService } = require('./services/authService');
 const { AdminService } = require('./services/adminService');
 const { UserService } = require('./services/userService');
 const { PatientService } = require('./services/patientService');
+const { PatientDashboardService } = require('./services/patientDashboardService');
 const { MealPlanService } = require('./services/mealPlanService');
 const { SessionService } = require('./services/sessionService');
 const { PasswordService } = require('./services/passwordService');
@@ -29,6 +32,7 @@ const { createAuthRoutes } = require('./routes/authRoutes');
 const { createAdminRoutes } = require('./routes/adminRoutes');
 const { createUserRoutes } = require('./routes/userRoutes');
 const { createPatientRoutes } = require('./routes/patientRoutes');
+const { createPatientDashboardRoutes } = require('./routes/patientDashboardRoutes');
 const { createNutritionistRoutes } = require('./routes/nutritionistRoutes');
 const { PhotoStorage } = require('./infra/photoStorage');
 
@@ -127,6 +131,9 @@ function createDependencies(appConfig, overrides = {}) {
   });
 
   const patientService = new PatientService(profileRepository, repository);
+  const patientDashboardService = new PatientDashboardService(
+    new PatientDashboardRepository(prisma),
+  );
   const mealPlanService = new MealPlanService(
     new MealPlanRepository(prisma),
     profileRepository,
@@ -138,6 +145,7 @@ function createDependencies(appConfig, overrides = {}) {
     adminController: new AdminController(adminService),
     userController: new UserController(userService),
     patientController: new PatientController(patientService),
+    patientDashboardController: new PatientDashboardController(patientDashboardService),
     mealPlanController: new MealPlanController(mealPlanService),
     authenticate: createAuthMiddleware(
       tokenService,
@@ -159,6 +167,7 @@ function createApp(options = {}) {
     adminController,
     userController,
     patientController,
+    patientDashboardController,
     mealPlanController,
     authenticate,
   } = createDependencies(appConfig, options);
@@ -208,6 +217,11 @@ function createApp(options = {}) {
   app.use(
     '/api/patients',
     createPatientRoutes(patientController, authenticate)
+  );
+
+  app.use(
+    '/api/patient',
+    createPatientDashboardRoutes(patientDashboardController, authenticate)
   );
 
   app.use(

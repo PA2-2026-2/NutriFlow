@@ -789,7 +789,7 @@ async function sendPatientMessage(payload) {
 }
 
 async function linkNutritionist(payload) {
-  return apiRequest('/api/patient/link-nutritionist', {
+  return apiRequest('/api/patients/me/nutritionist', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -1824,6 +1824,7 @@ async function handleNutritionistLink(event) {
     });
 
     await refreshCurrentUserProfile();
+    await refreshDashboard();
     showToast(result.message || 'Vinculo atualizado com sucesso.');
   } catch (error) {
     showToast(error.message || 'Nao foi possivel concluir o vinculo.');
@@ -2100,7 +2101,5 @@ function renderChallenges() {
 }
 
 init();
-
-
 
 

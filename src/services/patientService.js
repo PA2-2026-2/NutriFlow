@@ -89,11 +89,15 @@ class PatientService {
 		this.userRepository = userRepository;
 	}
 
-	setNutritionist(patientId, { nutritionistEmail } = {}) {
-		return this.linkNutritionist(patientId, nutritionistEmail);
+	setNutritionist(patientId, { nutritionistEmail, age, objective, restrictions } = {}) {
+		return this.linkNutritionist(patientId, nutritionistEmail, {
+			age,
+			objective,
+			restrictions,
+		});
 	}
 
-	async linkNutritionist(patientId, nutritionistEmail) {
+	async linkNutritionist(patientId, nutritionistEmail, profileData = {}) {
 		const email = normalizeEmail(nutritionistEmail);
 		if (!email) {
 			throw new AppError('Informe o e-mail do nutricionista responsavel.', 400);
@@ -108,9 +112,37 @@ class PatientService {
 			throw new AppError('Este nutricionista esta inativo no momento.', 403);
 		}
 
+		const profileUpdates = {};
+		if (profileData.age !== undefined && profileData.age !== '') {
+			const age = Number(profileData.age);
+			if (!Number.isInteger(age) || age < 13 || age > 120) {
+				throw new AppError('A idade deve ser um numero inteiro entre 13 e 120.', 400);
+			}
+			profileUpdates.age = age;
+		}
+		if (profileData.objective !== undefined) {
+			const objective = typeof profileData.objective === 'string'
+				? profileData.objective.trim()
+				: '';
+			if (objective.length > 120) {
+				throw new AppError('O objetivo deve ter ate 120 caracteres.', 400);
+			}
+			profileUpdates.objective = objective || null;
+		}
+		if (profileData.restrictions !== undefined) {
+			const restrictions = typeof profileData.restrictions === 'string'
+				? profileData.restrictions.trim()
+				: '';
+			if (restrictions.length > 500) {
+				throw new AppError('As restricoes devem ter ate 500 caracteres.', 400);
+			}
+			profileUpdates.restrictions = restrictions || null;
+		}
+
 		const patientProfile = await this.profileRepository.linkNutritionist(
 			patientId,
 			nutritionist.id,
+			profileUpdates,
 		);
 
 		return {

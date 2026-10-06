@@ -59,15 +59,17 @@ class ProfileRepository {
     });
   }
 
-  linkNutritionist(userId, nutritionistId) {
+  linkNutritionist(userId, nutritionistId, profileData = {}) {
     return this.prisma.patientProfile.upsert({
       where: { userId },
       update: {
         nutritionistId,
+        ...profileData,
       },
       create: {
         userId,
         nutritionistId,
+        ...profileData,
       },
       include: {
         nutritionist: true,

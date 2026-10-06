@@ -74,6 +74,22 @@ describe('matriz de permissoes', () => {
     for (const role of ALL_ROLES) {
       if (allowed.includes(role)) {
         it(`permite ${role} (nao retorna 401/403)`, async () => {
+          if (
+            role === ROLES.PATIENT &&
+            ['/api/patient/meals', '/api/patient/weights'].includes(routeKey.split(' ')[1])
+          ) {
+            await app.locals.prisma.patientProfile.upsert({
+              where: { userId: accounts[role].user.id },
+              create: {
+                userId: accounts[role].user.id,
+                nutritionistId: accounts[ROLES.NUTRITIONIST].user.id,
+              },
+              update: {
+                nutritionistId: accounts[ROLES.NUTRITIONIST].user.id,
+              },
+            });
+          }
+
           const response = await callRoute(app, routeKey).set(bearer(accounts[role].token));
 
           expect(response.statusCode).not.toBe(401);
