@@ -39,4 +39,34 @@ model PatientProfile {
 
   nutritionistId String?
   nutritionist   User?   @relation("NutritionistPatients", fields: [nutritionistId], references: [id])
+
+  measurements PatientMeasurement[]
+}
+
+model PatientMeasurement {
+  id                         String         @id @default(uuid())
+  patientProfileId           String
+  weightKg                   Float
+  heightCm                   Float
+  bodyFatPercent             Float?
+  notes                      String?
+  neckCircumferenceCm        Float?
+  chestCircumferenceCm       Float?
+  waistCircumferenceCm       Float?
+  hipCircumferenceCm         Float?
+  armCircumferenceCm         Float?
+  thighCircumferenceCm       Float?
+  calfCircumferenceCm        Float?
+  tricepsSkinfoldMm          Float?
+  bicepsSkinfoldMm           Float?
+  subscapularSkinfoldMm      Float?
+  suprailiacSkinfoldMm       Float?
+  abdominalSkinfoldMm        Float?
+  thighSkinfoldMm            Float?
+  calfSkinfoldMm             Float?
+  recordedAt                 DateTime       @default(now())
+
+  patientProfile PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientProfileId, recordedAt])
 }

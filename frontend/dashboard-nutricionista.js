@@ -372,12 +372,6 @@ function buildMealTimeOptions(selectedMealTime = 'Almoco') {
   `).join('');
 }
 
-function toDateInputValue(date = new Date()) {
-  const baseDate = date instanceof Date ? date : new Date(date || Date.now());
-  const timezoneOffset = baseDate.getTimezoneOffset() * 60000;
-  return new Date(baseDate.getTime() - timezoneOffset).toISOString().slice(0, 10);
-}
-
 function getSelectedPatient() {
   return state.patients.find((patient) => patient.id === state.selectedPatientId) || state.patients[0] || null;
 }
@@ -385,21 +379,28 @@ function getSelectedPatient() {
 function getAssessmentMeasurementsPayload(options = {}) {
   const allowIncomplete = options.allowIncomplete === true;
 
-  return Array.from(document.querySelectorAll('[data-assessment-measurement-row]')).map((row) => {
-    const label = row.querySelector('[data-assessment-measurement-label]')?.value || '';
-    const value = row.querySelector('[data-assessment-measurement-value]')?.value || '';
-    const unit = row.querySelector('[data-assessment-measurement-unit]')?.value || '';
+  const measurements = {};
+  const rows = Array.from(document.querySelectorAll('[data-assessment-measurement-row]'));
 
-    return {
-      label: label.trim(),
-      value: value.trim(),
-      unit: unit.trim(),
-    };
-  }).filter((measurement) => (
-    allowIncomplete
-      ? (measurement.label || measurement.value || measurement.unit)
-      : (measurement.label && measurement.value)
-  ));
+  for (const row of rows) {
+    const field = row.querySelector('[data-assessment-measurement-label]')?.value || '';
+    const value = row.querySelector('[data-assessment-measurement-value]')?.value || '';
+
+    if (!field || !value) {
+      if (allowIncomplete && (field || value)) {
+        return null;
+      }
+      continue;
+    }
+
+    if (Object.hasOwn(measurements, field)) {
+      return null;
+    }
+
+    measurements[field] = Number(value);
+  }
+
+  return measurements;
 }
 
 function addAssessmentMeasurementRow(measurement = {}) {
@@ -413,11 +414,28 @@ function addAssessmentMeasurementRow(measurement = {}) {
   row.className = 'grid gap-2 rounded-lg border border-white bg-white p-2 shadow-sm md:grid-cols-[1.2fr_140px_110px_auto]';
   row.dataset.assessmentMeasurementRow = 'true';
   row.innerHTML = `
-    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-label type="text" maxlength="40" placeholder="Ex: Cintura" value="${escapeHtml(measurement.label || '')}" />
-    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-value type="number" min="0.1" max="500" step="0.1" placeholder="82.5" value="${escapeHtml(String(measurement.value || ''))}" />
-    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-unit type="text" maxlength="12" placeholder="cm" value="${escapeHtml(measurement.unit || 'cm')}" />
+    <select class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-label>
+      <option value="neckCircumferenceCm">Pescoco (cm)</option>
+      <option value="chestCircumferenceCm">Torax (cm)</option>
+      <option value="waistCircumferenceCm">Cintura (cm)</option>
+      <option value="hipCircumferenceCm">Quadril (cm)</option>
+      <option value="armCircumferenceCm">Braco (cm)</option>
+      <option value="thighCircumferenceCm">Coxa (cm)</option>
+      <option value="calfCircumferenceCm">Panturrilha (cm)</option>
+      <option value="tricepsSkinfoldMm">Dobra tricipital (mm)</option>
+      <option value="bicepsSkinfoldMm">Dobra bicipital (mm)</option>
+      <option value="subscapularSkinfoldMm">Dobra subescapular (mm)</option>
+      <option value="suprailiacSkinfoldMm">Dobra suprailiaca (mm)</option>
+      <option value="abdominalSkinfoldMm">Dobra abdominal (mm)</option>
+      <option value="thighSkinfoldMm">Dobra da coxa (mm)</option>
+      <option value="calfSkinfoldMm">Dobra da panturrilha (mm)</option>
+    </select>
+    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-value type="number" min="0.1" max="500" step="0.1" placeholder="Valor" value="${escapeHtml(String(measurement.value || ''))}" />
     <button class="rounded-lg border border-red-100 px-3 py-2 text-xs font-bold text-red-500" type="button" data-remove-assessment-measurement>Remover</button>
   `;
+  if (measurement.field) {
+    row.querySelector('[data-assessment-measurement-label]').value = measurement.field;
+  }
 
   row.querySelector('[data-remove-assessment-measurement]')?.addEventListener('click', () => {
     row.remove();
@@ -431,7 +449,6 @@ function resetAssessmentForm() {
 
   const patient = getSelectedPatient();
   const patientSelect = document.getElementById('assessmentPatient');
-  const dateInput = document.getElementById('assessmentDate');
   const weightInput = document.getElementById('assessmentWeight');
   const heightInput = document.getElementById('assessmentHeight');
   const bodyFatInput = document.getElementById('assessmentBodyFat');
@@ -441,16 +458,12 @@ function resetAssessmentForm() {
     patientSelect.value = patient.id;
   }
 
-  if (dateInput) {
-    dateInput.value = toDateInputValue(new Date());
-  }
-
   if (weightInput) {
     weightInput.value = patient?.weight || '';
   }
 
   if (heightInput) {
-    heightInput.value = patient?.height || '';
+    heightInput.value = patient?.height ? Number(patient.height) * 100 : '';
   }
 
   if (bodyFatInput) {
@@ -1182,21 +1195,27 @@ document.getElementById('mealPlanForm')?.addEventListener('submit', async (e) =>
 
 document.getElementById('assessmentForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const dateValue = document.getElementById('assessmentDate').value;
-  const recordedAt = dateValue ? new Date(`${dateValue}T12:00:00`) : new Date();
+  const measurements = getAssessmentMeasurementsPayload({ allowIncomplete: true });
+  if (!measurements) {
+    showToast('Complete as medidas adicionadas e nao repita o mesmo tipo.');
+    return;
+  }
+
+  const patientId = document.getElementById('assessmentPatient').value;
   const payload = {
-    patientId: document.getElementById('assessmentPatient').value,
-    weight: document.getElementById('assessmentWeight').value,
-    height: document.getElementById('assessmentHeight').value,
-    bodyFat: document.getElementById('assessmentBodyFat').value,
+    weightKg: Number(document.getElementById('assessmentWeight').value),
+    heightCm: Number(document.getElementById('assessmentHeight').value),
+    bodyFatPercent: Number(document.getElementById('assessmentBodyFat').value),
     notes: document.getElementById('assessmentNotes').value,
-    measurements: getAssessmentMeasurementsPayload(),
-    date: Number.isNaN(recordedAt.getTime()) ? new Date().toISOString() : recordedAt.toISOString()
+    ...measurements,
   };
   try {
-    await apiRequest('/api/nutritionist/assessments', { method: 'POST', body: JSON.stringify(payload) });
+    await apiRequest(`/api/patients/${encodeURIComponent(patientId)}/measurements`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
     showToast('Avaliação salva!'); closeModal('assessment'); await fetchDatabaseData();
-  } catch(err) { showToast('Erro ao salvar avaliação.'); }
+  } catch(err) { showToast(err.message || 'Erro ao salvar avaliação.'); }
 });
 
 

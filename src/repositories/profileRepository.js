@@ -9,6 +9,15 @@ class ProfileRepository {
     });
   }
 
+  createMeasurement(patientProfileId, data) {
+    return this.prisma.patientMeasurement.create({
+      data: {
+        patientProfileId,
+        ...data,
+      },
+    });
+  }
+
   findPatientWithNutritionistByUserId(userId) {
     return this.prisma.patientProfile.findUnique({
       where: { userId },
@@ -23,7 +32,12 @@ class ProfileRepository {
   findPatientsByNutritionistId(nutritionistId) {
     return this.prisma.patientProfile.findMany({
       where: { nutritionistId },
-      include: { user: true },
+      include: {
+        user: true,
+        measurements: {
+          orderBy: { recordedAt: 'desc' },
+        },
+      },
       orderBy: { updatedAt: 'desc' },
     });
   }

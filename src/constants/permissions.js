@@ -23,6 +23,7 @@ const PROTECTED_ROUTES = Object.freeze({
   'POST /api/users/me/photo': ANY_ROLE,
 
   'POST /api/patients/me/nutritionist': PATIENT_ONLY,
+  'POST /api/patients/:id/measurements': NUTRITIONIST_ONLY,
   'GET /api/nutritionist/patients': NUTRITIONIST_ONLY,
   'POST /api/nutritionist/link-patient': NUTRITIONIST_ONLY,
 
