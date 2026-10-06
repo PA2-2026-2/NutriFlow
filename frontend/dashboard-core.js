@@ -1,4 +1,6 @@
 (function initNutriFlowCore() {
+  const PROFILE_PHOTO_DIMENSIONS = 512;
+
   function safeParse(jsonValue) {
     try {
       return jsonValue ? JSON.parse(jsonValue) : null;
@@ -25,6 +27,66 @@
       .join('');
 
     return initials || fallback;
+  }
+
+  async function cropImageToSquare(file) {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    try {
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error('Nao foi possivel ler a imagem selecionada.'));
+        image.src = objectUrl;
+      });
+
+      const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
+
+      if (!sourceSize) {
+        throw new Error('A imagem selecionada possui dimensoes invalidas.');
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = PROFILE_PHOTO_DIMENSIONS;
+      canvas.height = PROFILE_PHOTO_DIMENSIONS;
+
+      const context = canvas.getContext('2d');
+
+      if (!context) {
+        throw new Error('Nao foi possivel preparar a imagem para o avatar.');
+      }
+
+      const sourceX = (image.naturalWidth - sourceSize) / 2;
+      const sourceY = (image.naturalHeight - sourceSize) / 2;
+      context.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceSize,
+        sourceSize,
+        0,
+        0,
+        PROFILE_PHOTO_DIMENSIONS,
+        PROFILE_PHOTO_DIMENSIONS,
+      );
+
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Nao foi possivel preparar a imagem para o avatar.'));
+              return;
+            }
+
+            resolve(blob);
+          },
+          file.type,
+          0.9,
+        );
+      });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   }
 
   function formatSidebarDate(options = {}) {
@@ -175,6 +237,7 @@
     createApiClient,
     createSessionManager,
     createToastController,
+    cropImageToSquare,
     escapeHtml,
     formatSidebarDate,
     getInitials,
