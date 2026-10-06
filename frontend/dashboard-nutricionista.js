@@ -155,13 +155,37 @@ async function sendNutritionistChatMessage(payload) {
 
 async function fetchDatabaseData() {
   try {
-    const data = await apiRequest('/api/nutritionist/patients');
-    state.patients = data.patients || [];
+    const [patientsData, foodsData, mealPlansData] = await Promise.all([
+      apiRequest('/api/nutritionist/patients'),
+      apiRequest('/api/nutritionist/foods'),
+      apiRequest('/api/nutritionist/meal-plans'),
+    ]);
+    state.patients = patientsData.patients || [];
+    state.foods = foodsData.foods || [];
+    state.mealPlans = mealPlansData.mealPlans || [];
+    state.assessments = state.patients
+      .flatMap((patient) => (patient.bodyMeasurements?.history || []).map((entry) => {
+        const weight = entry.items.find((item) => item.label === 'Peso');
+        const bodyFat = entry.items.find((item) => item.label === 'Gordura corporal');
+
+        return {
+          id: entry.id,
+          patientId: patient.id,
+          patient: patient.name,
+          weight: weight?.value ?? '--',
+          bodyFat: bodyFat?.value ?? null,
+          date: entry.date,
+          measurements: entry.items.filter(
+            (item) => !['Peso', 'Altura', 'Gordura corporal'].includes(item.label),
+          ),
+        };
+      }))
+      .sort((first, second) => new Date(second.date) - new Date(first.date));
 
     ensureValidPatientSelections();
     renderAll();
     await syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
-  } catch (error) { showToast('Erro ao conectar ao banco de dados.'); }
+  } catch (error) { showToast(error.message || 'Erro ao carregar os dados do painel.'); }
 }
 
 function renderAll() {
@@ -800,7 +824,7 @@ function renderGeneralLists() {
 
   const plansContainer = document.getElementById('latestMealPlans');
   plansContainer.innerHTML = plans.length ? plans.map(plan => `
-      <div class="bg-white border rounded-xl p-3 shadow-sm relative group">
+      <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
         <p class="text-xs font-bold text-nutriflow-500 uppercase">${plan.patient}</p>
         <p class="text-sm font-bold text-nutriflow-950 mt-1 pr-12">${plan.title}</p>
         <p class="text-xs font-semibold text-nutriflow-600">${plan.calories} kcal - ${plan.protein}g prot - ${plan.carbs || 0}g carb - ${plan.fats || 0}g gord</p>
@@ -814,12 +838,12 @@ function renderGeneralLists() {
 
   const assContainer = document.getElementById('latestAssessments');
   assContainer.innerHTML = asss.length ? asss.map(ass => `
-      <div class="bg-white border rounded-xl p-3 shadow-sm relative group">
+      <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
         <p class="text-xs font-bold text-nutriflow-500 uppercase">${ass.patient}</p>
         <p class="text-sm font-bold text-nutriflow-950 mt-1">Peso: ${ass.weight}kg</p>
-        <p class="text-xs font-semibold text-nutriflow-600">${new Date(ass.date).toLocaleDateString()}</p>
+        ${ass.bodyFat !== null ? `<p class="text-xs font-semibold text-nutriflow-600">Gordura corporal: ${ass.bodyFat}%</p>` : ''}
+        <p class="text-xs font-semibold text-nutriflow-600">${new Date(ass.date).toLocaleDateString('pt-BR')}</p>
         <p class="mt-1 text-xs text-nutriflow-500">${ass.measurements?.length ? `${ass.measurements.length} medidas registradas` : 'Sem medidas complementares'}</p>
-        <button onclick="window.deleteResource('assessments', '${ass.id}')" class="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">🗑️</button>
       </div>
     `).join('') : '<p class="text-sm text-nutriflow-500">Nenhuma avaliação.</p>';
 
@@ -1190,7 +1214,7 @@ document.getElementById('mealPlanForm')?.addEventListener('submit', async (e) =>
   try {
     await apiRequest('/api/nutritionist/meal-plans', { method: 'POST', body: JSON.stringify(payload) });
     showToast('Plano salvo!'); closeModal('mealPlan'); await fetchDatabaseData();
-  } catch(err) { showToast('Erro ao salvar plano.'); }
+  } catch(err) { showToast(err.message || 'Erro ao salvar plano.'); }
 });
 
 document.getElementById('assessmentForm')?.addEventListener('submit', async (e) => {

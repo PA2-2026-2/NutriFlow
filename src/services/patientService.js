@@ -158,7 +158,12 @@ class PatientService {
 						})),
 					bodyMeasurements: {
 						latest: latest?.items || [],
-						history: entries.map(({ dateLabel, items }) => ({ dateLabel, items })),
+						history: entries.map(({ id, date, dateLabel, items }) => ({
+							id,
+							date,
+							dateLabel,
+							items,
+						})),
 					},
 				};
 			}),

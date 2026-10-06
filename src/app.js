@@ -10,14 +10,17 @@ const { AuthController } = require('./controllers/authController');
 const { AdminController } = require('./controllers/adminController');
 const { UserController } = require('./controllers/userController');
 const { PatientController } = require('./controllers/patientController');
+const { MealPlanController } = require('./controllers/mealPlanController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
 const { ProfileRepository } = require('./repositories/profileRepository');
+const { MealPlanRepository } = require('./repositories/mealPlanRepository');
 
 const { AuthService } = require('./services/authService');
 const { AdminService } = require('./services/adminService');
 const { UserService } = require('./services/userService');
 const { PatientService } = require('./services/patientService');
+const { MealPlanService } = require('./services/mealPlanService');
 const { SessionService } = require('./services/sessionService');
 const { PasswordService } = require('./services/passwordService');
 const { TokenService } = require('./services/tokenService');
@@ -124,6 +127,10 @@ function createDependencies(appConfig, overrides = {}) {
   });
 
   const patientService = new PatientService(profileRepository, repository);
+  const mealPlanService = new MealPlanService(
+    new MealPlanRepository(prisma),
+    profileRepository,
+  );
 
   return {
     prisma,
@@ -131,6 +138,7 @@ function createDependencies(appConfig, overrides = {}) {
     adminController: new AdminController(adminService),
     userController: new UserController(userService),
     patientController: new PatientController(patientService),
+    mealPlanController: new MealPlanController(mealPlanService),
     authenticate: createAuthMiddleware(
       tokenService,
       sessionService,
@@ -151,6 +159,7 @@ function createApp(options = {}) {
     adminController,
     userController,
     patientController,
+    mealPlanController,
     authenticate,
   } = createDependencies(appConfig, options);
 
@@ -203,7 +212,7 @@ function createApp(options = {}) {
 
   app.use(
     '/api/nutritionist',
-    createNutritionistRoutes(patientController, authenticate)
+    createNutritionistRoutes(patientController, mealPlanController, authenticate)
   );
 
   app.use(

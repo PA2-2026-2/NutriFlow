@@ -37,6 +37,9 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/patients/:id/measurements` | ❌ | ✅ | ❌ | Registra medidas de paciente vinculado ao nutricionista autenticado |
 | `GET /api/nutritionist/patients` | ❌ | ✅ | ❌ | Lista pacientes vinculados ao nutricionista autenticado |
 | `POST /api/nutritionist/link-patient` | ❌ | ✅ | ❌ | Vincula um paciente pelo e-mail dele |
+| `GET /api/nutritionist/foods` | ❌ | ✅ | ❌ | Lista a base de alimentos para montar planos |
+| `GET /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Lista os planos alimentares do nutricionista |
+| `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
 | `GET /api/admin/users` | ❌ | ❌ | ✅ | Lista usuários (`?role=` e `?search=`) |
 | `GET /api/admin/summary` | ❌ | ❌ | ✅ | Exibe o resumo administrativo |
 | `PUT /api/admin/users/:userId` | ❌ | ❌ | ✅ | Edita nome, e-mail e telefone de um usuário |
@@ -57,6 +60,11 @@ altura de 30–300 cm, circunferências de pescoço/braço/panturrilha de 5–10
 tórax/cintura/quadril de 20–250 cm, coxa de 10–150 cm e dobras cutâneas de
 1–100 mm. `recordedAt` é definido automaticamente e não pode ser enviado no
 corpo da requisição.
+
+Planos alimentares só podem ser criados para pacientes vinculados ao nutricionista
+autenticado. Os itens referenciam alimentos da base; calorias, proteínas,
+carboidratos e gorduras são calculados no servidor com os valores por 100 g do
+catálogo inicial, e o plano fica ativo por 30 dias.
 
 ## Ao criar uma rota nova
 

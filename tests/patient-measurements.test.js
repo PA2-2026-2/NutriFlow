@@ -95,6 +95,8 @@ describe('POST /api/patients/:id/measurements', () => {
         ]),
         history: [
           expect.objectContaining({
+            id: response.body.measurement.id,
+            date: response.body.measurement.recordedAt,
             items: expect.arrayContaining([
               expect.objectContaining({ label: 'Cintura', value: 82 }),
             ]),

@@ -22,6 +22,8 @@ model User {
   patientProfile  PatientProfile?
 
   patients PatientProfile[] @relation("NutritionistPatients")
+  mealPlansAsPatient MealPlan[] @relation("PatientMealPlans")
+  mealPlansAsNutritionist MealPlan[] @relation("NutritionistMealPlans")
 }
 
 model PatientProfile {
@@ -69,4 +71,52 @@ model PatientMeasurement {
   patientProfile PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
 
   @@index([patientProfileId, recordedAt])
+}
+
+model Food {
+  id        String   @id
+  name      String   @unique
+  calories  Float
+  protein   Float
+  carbs     Float
+  fat       Float
+  createdAt DateTime @default(now())
+
+  mealPlanItems MealPlanItem[]
+}
+
+model MealPlan {
+  id             String         @id @default(uuid())
+  patientId      String
+  nutritionistId String
+  title          String
+  notes          String?
+  calories       Float          @default(0)
+  protein        Float          @default(0)
+  carbs          Float          @default(0)
+  fats           Float          @default(0)
+  startDate      DateTime       @default(now())
+  endDate        DateTime
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  patient      User           @relation("PatientMealPlans", fields: [patientId], references: [id], onDelete: Cascade)
+  nutritionist User           @relation("NutritionistMealPlans", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  items        MealPlanItem[]
+
+  @@index([patientId, createdAt])
+  @@index([nutritionistId, createdAt])
+}
+
+model MealPlanItem {
+  id         String   @id @default(uuid())
+  mealPlanId String
+  foodId     String
+  quantity   Float
+  mealTime   String
+
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  food     Food     @relation(fields: [foodId], references: [id], onDelete: Restrict)
+
+  @@index([mealPlanId])
 }
