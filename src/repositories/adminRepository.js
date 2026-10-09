@@ -1,15 +1,12 @@
+const { ensureDefaultFoods } = require('../infra/foodCatalog');
+
 class AdminRepository {
   constructor(prisma) {
     this.prisma = prisma;
   }
 
   async listFoods() {
-    const { DEFAULT_FOODS } = require('../data/foodCatalog');
-    await Promise.all(DEFAULT_FOODS.map((food) => this.prisma.food.upsert({
-      where: { id: food.id },
-      create: food,
-      update: {},
-    })));
+    await ensureDefaultFoods(this.prisma);
 
     return this.prisma.food.findMany({
       where: { isAvailable: true },

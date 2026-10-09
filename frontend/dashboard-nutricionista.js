@@ -31,6 +31,7 @@ const state = {
   isSendingChatMessage: false,
   isLoadingConversation: false,
   patientSearch: '',
+  editingMeasurement: null,
 };
 
 const APPOINTMENT_STATUS_LABELS = {
@@ -289,7 +290,7 @@ function renderPatientsList() {
         <div>
           <p class="font-bold text-nutriflow-950 text-sm">${escapeHtml(patientName)}</p>
           <div class="mt-1 flex flex-wrap gap-2">${pendingBadge}${lastMessageTime}</div>
-          <p class="text-xs text-nutriflow-600">${patient.objective || 'Em avaliação'}</p>
+          <p class="text-xs text-nutriflow-600">${escapeHtml(patient.objective || 'Em avaliação')}</p>
         </div>
       </div>
       <button class="text-xs bg-nutriflow-950 text-white px-3 py-1 rounded-lg font-bold" onclick="window.openPatientProfile('${patient.id}')">Perfil</button>
@@ -324,7 +325,11 @@ function renderSelectedPatient() {
   
   document.getElementById('selectedPatientName').textContent = patient.name;
   document.getElementById('selectedPatientWeight').textContent = patient.weight ? `${patient.weight}kg` : '--';
-  document.getElementById('selectedPatientHeight').textContent = patient.height ? `${patient.height}m` : '--';
+  const patientHeight = Number(patient.height);
+  const patientHeightLabel = Number.isFinite(patientHeight) && patientHeight > 0
+    ? `${patientHeight}${patientHeight <= 3 ? 'm' : 'cm'}`
+    : '--';
+  document.getElementById('selectedPatientHeight').textContent = patientHeightLabel;
   document.getElementById('selectedPatientBodyFat').textContent = patient.bodyFat ? `${patient.bodyFat}%` : '--';
   document.getElementById('selectedPatientViewButton').onclick = () => window.openPatientProfile(patient.id);
 
@@ -377,7 +382,13 @@ function renderPatientProfileModal(patient) {
     measurementsHistoryContainer.innerHTML = bodyMeasurements.history?.length
       ? bodyMeasurements.history.map((group) => `
           <div class="rounded-xl border border-nutriflow-100 bg-nutriflow-50 px-3 py-3">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-nutriflow-500">${escapeHtml(group.dateLabel)}</p>
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-bold uppercase tracking-[0.12em] text-nutriflow-500">${escapeHtml(group.dateLabel)}</p>
+              <div class="flex gap-2">
+                <button type="button" data-edit-measurement-id="${escapeHtml(group.id)}" class="rounded-lg border border-nutriflow-200 bg-white px-2 py-1 text-xs font-bold text-nutriflow-900">Editar</button>
+                <button type="button" data-delete-measurement-id="${escapeHtml(group.id)}" class="rounded-lg border border-red-200 bg-white px-2 py-1 text-xs font-bold text-red-600">Excluir</button>
+              </div>
+            </div>
             <div class="mt-2 flex flex-wrap gap-2">
               ${group.items.map((measurement) => `
                 <span class="rounded-full border border-white bg-white px-3 py-1 text-xs font-bold text-nutriflow-950">
@@ -510,32 +521,85 @@ function addAssessmentMeasurementRow(measurement = {}) {
 
 function resetAssessmentForm() {
   document.getElementById('assessmentForm')?.reset();
+  state.editingMeasurement = null;
+  document.getElementById('assessmentModalTitle').textContent = 'Registrar Avaliação Física';
+  document.getElementById('assessmentSubmitButton').textContent = 'Salvar no Banco';
 
   const patient = getSelectedPatient();
   const patientSelect = document.getElementById('assessmentPatient');
   const weightInput = document.getElementById('assessmentWeight');
   const heightInput = document.getElementById('assessmentHeight');
-  const bodyFatInput = document.getElementById('assessmentBodyFat');
   const measurementsList = document.getElementById('assessmentMeasurementsList');
+
+  if (weightInput) {
+    weightInput.value = '';
+  }
+
+  if (heightInput) {
+    heightInput.value = '';
+  }
 
   if (patientSelect && patient?.id) {
     patientSelect.value = patient.id;
   }
 
-  if (weightInput) {
-    weightInput.value = patient?.weight || '';
-  }
-
-  if (heightInput) {
-    heightInput.value = patient?.height ? Number(patient.height) * 100 : '';
-  }
-
-  if (bodyFatInput) {
-    bodyFatInput.value = patient?.bodyFat || '';
-  }
-
   if (measurementsList) {
     measurementsList.innerHTML = '';
+  }
+}
+
+async function editPatientMeasurement(patientId, measurementId) {
+  try {
+    const response = await apiRequest(`/api/patients/${encodeURIComponent(patientId)}/measurements`);
+    const measurement = (response.measurements || []).find((entry) => entry.id === measurementId);
+
+    if (!measurement) {
+      showToast('Medida nao encontrada no historico.');
+      return;
+    }
+
+    resetAssessmentForm();
+    state.editingMeasurement = { patientId, measurementId };
+    document.getElementById('assessmentModalTitle').textContent = 'Editar Avaliação Física';
+    document.getElementById('assessmentSubmitButton').textContent = 'Salvar alterações';
+    document.getElementById('assessmentPatient').value = patientId;
+    document.getElementById('assessmentWeight').value = measurement.weightKg;
+    document.getElementById('assessmentHeight').value = measurement.heightCm;
+    document.getElementById('assessmentBodyFat').value = measurement.bodyFatPercent ?? '';
+    document.getElementById('assessmentNotes').value = measurement.notes || '';
+
+    for (const [field, value] of Object.entries(measurement)) {
+      if (
+        field.endsWith('CircumferenceCm') ||
+        field.endsWith('SkinfoldMm')
+      ) {
+        if (value !== null && value !== undefined) {
+          addAssessmentMeasurementRow({ field, value });
+        }
+      }
+    }
+
+    openModal('assessment');
+  } catch (error) {
+    showToast(error.message || 'Nao foi possivel carregar a medida.');
+  }
+}
+
+async function deletePatientMeasurement(patientId, measurementId) {
+  if (!window.confirm('Deseja excluir esta medida do historico de evolucao?')) {
+    return;
+  }
+
+  try {
+    await apiRequest(
+      `/api/patients/${encodeURIComponent(patientId)}/measurements/${encodeURIComponent(measurementId)}`,
+      { method: 'DELETE' },
+    );
+    showToast('Medida removida do historico.');
+    await fetchDatabaseData();
+    renderPatientProfileModal(state.patients.find((patient) => patient.id === patientId));
+  } catch (error) {
+    showToast(error.message || 'Nao foi possivel excluir a medida.');
   }
 }
 
@@ -865,8 +929,8 @@ function renderGeneralLists() {
   const plansContainer = document.getElementById('latestMealPlans');
   plansContainer.innerHTML = plans.length ? plans.map(plan => `
       <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
-        <p class="text-xs font-bold text-nutriflow-500 uppercase">${plan.patient}</p>
-        <p class="text-sm font-bold text-nutriflow-950 mt-1 pr-12">${plan.title}</p>
+        <p class="text-xs font-bold text-nutriflow-500 uppercase">${escapeHtml(plan.patient)}</p>
+        <p class="text-sm font-bold text-nutriflow-950 mt-1 pr-12">${escapeHtml(plan.title)}</p>
         <p class="text-xs font-semibold text-nutriflow-600">${plan.calories} kcal - ${plan.protein}g prot - ${plan.carbs || 0}g carb - ${plan.fats || 0}g gord</p>
         <p class="mt-1 text-xs text-nutriflow-500">${plan.items?.length ? `${plan.items.length} alimentos cadastrados` : 'Sem alimentos detalhados'}</p>
         <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
@@ -879,7 +943,7 @@ function renderGeneralLists() {
   const assContainer = document.getElementById('latestAssessments');
   assContainer.innerHTML = asss.length ? asss.map(ass => `
       <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
-        <p class="text-xs font-bold text-nutriflow-500 uppercase">${ass.patient}</p>
+        <p class="text-xs font-bold text-nutriflow-500 uppercase">${escapeHtml(ass.patient)}</p>
         <p class="text-sm font-bold text-nutriflow-950 mt-1">Peso: ${ass.weight}kg</p>
         ${ass.bodyFat !== null ? `<p class="text-xs font-semibold text-nutriflow-600">Gordura corporal: ${ass.bodyFat}%</p>` : ''}
         <p class="text-xs font-semibold text-nutriflow-600">${new Date(ass.date).toLocaleDateString('pt-BR')}</p>
@@ -905,12 +969,12 @@ function renderGeneralLists() {
   agendaContainer.innerHTML = apps.length ? apps.map(app => `
       <div class="bg-white border rounded-xl p-3 shadow-sm flex justify-between items-center relative group">
         <div>
-          <p class="text-sm font-bold text-nutriflow-950">${app.patient}</p>
-          <p class="text-xs font-bold text-nutriflow-500">${app.type}</p>
+          <p class="text-sm font-bold text-nutriflow-950">${escapeHtml(app.patient)}</p>
+          <p class="text-xs font-bold text-nutriflow-500">${escapeHtml(app.type)}</p>
           <p class="text-[11px] font-bold text-nutriflow-700 mt-1">Status: ${escapeHtml(APPOINTMENT_STATUS_LABELS[app.status] || app.status)}</p>
         </div>
         <div class="flex items-center gap-2">
-          <p class="text-xs font-bold bg-nutriflow-50 px-2 py-1 rounded-lg">${app.date}</p>
+          <p class="text-xs font-bold bg-nutriflow-50 px-2 py-1 rounded-lg">${escapeHtml(app.date)}</p>
           <button onclick="window.updateAppointmentStatus('${app.id}', 'confirmada')" class="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">Confirmar</button>
           <button onclick="window.rescheduleAppointment('${app.id}')" class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">Remarcar</button>
           <button onclick="window.updateAppointmentStatus('${app.id}', 'faltou')" class="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700">Faltou</button>
@@ -923,8 +987,8 @@ function renderGeneralLists() {
   if (challContainer) {
     challContainer.innerHTML = state.challenges.length ? state.challenges.map(ch => `
       <div class="bg-white border rounded-xl p-3 shadow-sm relative group mb-2">
-        <p class="text-sm font-bold text-nutriflow-950 pr-16">${ch.title}</p>
-        <p class="text-xs font-semibold text-nutriflow-600">${ch.target}</p>
+        <p class="text-sm font-bold text-nutriflow-950 pr-16">${escapeHtml(ch.title)}</p>
+        <p class="text-xs font-semibold text-nutriflow-600">${escapeHtml(ch.target)}</p>
         <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
            <button onclick="window.openAddParticipant('${ch.id}')" title="Adicionar Paciente" class="p-1 bg-nutriflow-100 rounded text-xs font-bold">➕ Pct</button>
            <button onclick="window.deleteResource('challenges', '${ch.id}')" title="Excluir" class="p-1 text-red-400 hover:text-red-600">🗑️</button>
@@ -1213,6 +1277,17 @@ function bindButtons() {
     openModal('assessment');
   });
 
+  document.getElementById('patientProfileBodyMeasurementHistory')?.addEventListener('click', (event) => {
+    const editButton = event.target.closest('[data-edit-measurement-id]');
+    const deleteButton = event.target.closest('[data-delete-measurement-id]');
+
+    if (editButton) {
+      void editPatientMeasurement(state.selectedPatientId, editButton.dataset.editMeasurementId);
+    } else if (deleteButton) {
+      void deletePatientMeasurement(state.selectedPatientId, deleteButton.dataset.deleteMeasurementId);
+    }
+  });
+
   document.querySelectorAll('[data-close]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1315,20 +1390,59 @@ document.getElementById('assessmentForm')?.addEventListener('submit', async (e) 
     return;
   }
 
-  const patientId = document.getElementById('assessmentPatient').value;
+  const patientId = state.editingMeasurement?.patientId
+    || document.getElementById('assessmentPatient').value;
   const payload = {
     weightKg: Number(document.getElementById('assessmentWeight').value),
     heightCm: Number(document.getElementById('assessmentHeight').value),
-    bodyFatPercent: Number(document.getElementById('assessmentBodyFat').value),
-    notes: document.getElementById('assessmentNotes').value,
     ...measurements,
   };
+  const bodyFatValue = document.getElementById('assessmentBodyFat').value;
+  const notesValue = document.getElementById('assessmentNotes').value;
+
+  if (state.editingMeasurement) {
+    payload.bodyFatPercent = bodyFatValue ? Number(bodyFatValue) : null;
+    payload.notes = notesValue.trim() || null;
+    for (const field of [
+      'neckCircumferenceCm',
+      'chestCircumferenceCm',
+      'waistCircumferenceCm',
+      'hipCircumferenceCm',
+      'armCircumferenceCm',
+      'thighCircumferenceCm',
+      'calfCircumferenceCm',
+      'tricepsSkinfoldMm',
+      'bicepsSkinfoldMm',
+      'subscapularSkinfoldMm',
+      'suprailiacSkinfoldMm',
+      'abdominalSkinfoldMm',
+      'thighSkinfoldMm',
+      'calfSkinfoldMm',
+    ]) {
+      payload[field] = Object.hasOwn(measurements, field) ? measurements[field] : null;
+    }
+  } else {
+    if (bodyFatValue) {
+      payload.bodyFatPercent = Number(bodyFatValue);
+    }
+    payload.notes = notesValue;
+  }
+
   try {
-    await apiRequest(`/api/patients/${encodeURIComponent(patientId)}/measurements`, {
-      method: 'POST',
+    await apiRequest(
+      state.editingMeasurement
+        ? `/api/patients/${encodeURIComponent(patientId)}/measurements/${encodeURIComponent(state.editingMeasurement.measurementId)}`
+        : `/api/patients/${encodeURIComponent(patientId)}/measurements`,
+      {
+      method: state.editingMeasurement ? 'PATCH' : 'POST',
       body: JSON.stringify(payload),
-    });
-    showToast('Avaliação salva!'); closeModal('assessment'); await fetchDatabaseData();
+      },
+    );
+    showToast(state.editingMeasurement ? 'Avaliação atualizada!' : 'Avaliação salva!');
+    closeModal('assessment');
+    state.editingMeasurement = null;
+    await fetchDatabaseData();
+    renderPatientProfileModal(state.patients.find((patient) => patient.id === patientId));
   } catch(err) { showToast(err.message || 'Erro ao salvar avaliação.'); }
 });
 

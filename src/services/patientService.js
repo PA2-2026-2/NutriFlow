@@ -45,71 +45,6 @@ const MEASUREMENT_LABELS = Object.freeze({
 	calfSkinfoldMm: 'Dobra da panturrilha',
 });
 
-function validateMeasurementPayload(payload, { partial = false } = {}) {
-	if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-		throw new AppError('Informe os dados das medidas em um objeto.', 400);
-	}
-
-	const unknownFields = Object.keys(payload).filter(
-		(field) => !Object.hasOwn(MEASUREMENT_FIELDS, field) && field !== 'notes',
-	);
-
-	if (unknownFields.length) {
-		throw new AppError(`Campo de medida nao reconhecido: ${unknownFields[0]}.`, 400);
-	}
-
-	if (partial && Object.keys(payload).length === 0) {
-		throw new AppError('Informe ao menos um campo para atualizar.', 400);
-	}
-
-	const data = {};
-
-	for (const [field, rules] of Object.entries(MEASUREMENT_FIELDS)) {
-		if (!Object.hasOwn(payload, field)) {
-			if (!partial && rules.required) {
-				throw new AppError(`Informe o campo ${field}.`, 400);
-			}
-
-			continue;
-		}
-
-		const value = payload[field];
-		if (partial && value === null && !rules.required) {
-			data[field] = null;
-			continue;
-		}
-
-		if (
-			typeof value !== 'number' ||
-			!Number.isFinite(value) ||
-			value < rules.min ||
-			value > rules.max
-		) {
-			throw new AppError(
-				`${field} deve ser um numero entre ${rules.min} e ${rules.max}.`,
-				400,
-			);
-		}
-
-		data[field] = value;
-	}
-
-	if (Object.hasOwn(payload, 'notes')) {
-		if (
-			(partial && payload.notes === null)
-			|| (typeof payload.notes === 'string' && payload.notes.length <= 2000)
-		) {
-			data.notes = typeof payload.notes === 'string'
-				? payload.notes.trim() || null
-				: null;
-		} else {
-			throw new AppError('As observacoes devem ser um texto de ate 2000 caracteres.', 400);
-		}
-	}
-
-	return data;
-}
-
 function formatMeasurementValue(field, value) {
 	const unit = field.endsWith('SkinfoldMm')
 		? 'mm'
@@ -146,6 +81,72 @@ function presentMeasurement(measurement) {
 		dateLabel,
 		items,
 	};
+}
+
+function validateMeasurementPayload(payload, { partial = false } = {}) {
+	if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+		throw new AppError('Informe os dados das medidas em um objeto.', 400);
+	}
+
+	const unknownFields = Object.keys(payload).filter(
+		(field) => !Object.hasOwn(MEASUREMENT_FIELDS, field) && field !== 'notes',
+	);
+
+	if (unknownFields.length) {
+		throw new AppError(`Campo de medida nao reconhecido: ${unknownFields[0]}.`, 400);
+	}
+
+	if (partial && Object.keys(payload).length === 0) {
+		throw new AppError('Informe ao menos um campo para atualizar.', 400);
+	}
+
+	const data = {};
+
+	for (const [field, rules] of Object.entries(MEASUREMENT_FIELDS)) {
+		if (!Object.hasOwn(payload, field)) {
+			if (!partial && rules.required) {
+				throw new AppError(`Informe o campo ${field}.`, 400);
+			}
+			if (!partial) {
+				data[field] = null;
+			}
+			continue;
+		}
+
+		const value = payload[field];
+		if (value === null && !rules.required) {
+			data[field] = null;
+			continue;
+		}
+
+		if (
+			typeof value !== 'number' ||
+			!Number.isFinite(value) ||
+			value < rules.min ||
+			value > rules.max
+		) {
+			throw new AppError(
+				`${field} deve ser um numero entre ${rules.min} e ${rules.max}.`,
+				400,
+			);
+		}
+
+		data[field] = value;
+	}
+
+	if (Object.hasOwn(payload, 'notes')) {
+		if (payload.notes === null) {
+			data.notes = null;
+		} else if (typeof payload.notes !== 'string' || payload.notes.length > 2000) {
+			throw new AppError('As observacoes devem ser um texto de ate 2000 caracteres.', 400);
+		} else {
+			data.notes = payload.notes.trim() || null;
+		}
+	} else if (!partial) {
+		data.notes = null;
+	}
+
+	return data;
 }
 
 class PatientService {
@@ -325,44 +326,45 @@ class PatientService {
 		return this.profileRepository.createMeasurement(patientProfile.id, data);
 	}
 
-	async updateMeasurement(nutritionistId, patientId, measurementId, payload) {
-		const patientProfile = await this.getPatientProfileForMeasurementChange(
-			nutritionistId,
-			patientId,
-		);
-		const existingMeasurement = await this.profileRepository
-			.findMeasurementByIdAndPatientProfileId(measurementId, patientProfile.id);
-
-		if (!existingMeasurement) {
-			throw new AppError('Medida nao encontrada.', 404);
-		}
-
-		const data = validateMeasurementPayload(payload, { partial: true });
-		return this.profileRepository.updateMeasurement(
+	async updateMeasurement(nutritionistId, patientId, measurementId, payload, options = {}) {
+		const patientProfile = await this.getMeasurementPatientProfile(nutritionistId, patientId);
+		const data = validateMeasurementPayload(payload, options);
+		const result = await this.profileRepository.updateMeasurement(
 			patientProfile.id,
 			measurementId,
 			data,
 		);
+
+		if (result.count === 0) {
+			throw new AppError('Medida nao encontrada.', 404);
+		}
+
+		const measurement = await this.profileRepository.findMeasurementByIdAndPatientProfileId(
+			measurementId,
+			patientProfile.id,
+		);
+		if (!measurement) {
+			throw new AppError('Medida nao encontrada.', 404);
+		}
+
+		return measurement;
 	}
 
 	async deleteMeasurement(nutritionistId, patientId, measurementId) {
-		const patientProfile = await this.getPatientProfileForMeasurementChange(
-			nutritionistId,
-			patientId,
-		);
-		const deletedCount = await this.profileRepository.deleteMeasurement(
+		const patientProfile = await this.getMeasurementPatientProfile(nutritionistId, patientId);
+		const result = await this.profileRepository.deleteMeasurement(
 			patientProfile.id,
 			measurementId,
 		);
 
-		if (!deletedCount) {
+		if (result === 0) {
 			throw new AppError('Medida nao encontrada.', 404);
 		}
 
-		return { message: 'Medida removida do historico de evolucao.' };
+		return { message: 'Medida removida com sucesso.' };
 	}
 
-	async getPatientProfileForMeasurementChange(nutritionistId, patientId) {
+	async getMeasurementPatientProfile(nutritionistId, patientId) {
 		const patientProfile = await this.profileRepository.findPatientByUserId(patientId);
 
 		if (!patientProfile) {

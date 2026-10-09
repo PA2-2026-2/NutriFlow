@@ -20,6 +20,11 @@ function createPatientRoutes(patientController, authenticate) {
 		authorize('PUT /api/patients/:id/measurements/:measurementId'),
 		asyncHandler(patientController.updateMeasurement.bind(patientController)),
 	);
+	router.patch(
+		'/:id/measurements/:measurementId',
+		authorize('PATCH /api/patients/:id/measurements/:measurementId'),
+		asyncHandler(patientController.updateMeasurement.bind(patientController)),
+	);
 	router.delete(
 		'/:id/measurements/:measurementId',
 		authorize('DELETE /api/patients/:id/measurements/:measurementId'),

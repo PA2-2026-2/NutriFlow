@@ -247,6 +247,9 @@ describe('GET /api/admin/summary', () => {
       request(app).get('/api/nutritionist/foods').set(bearer(nutritionist.token)),
       request(app).get('/api/patient/dashboard').set(bearer(patient.token)),
     ]);
+    expect(adminCatalog.statusCode).toBe(200);
+    expect(nutritionistCatalog.statusCode).toBe(200);
+    expect(patientDashboard.statusCode).toBe(200);
     for (const foods of [
       adminCatalog.body.foods,
       nutritionistCatalog.body.foods,

@@ -204,6 +204,117 @@ describe('POST /api/patients/:id/measurements', () => {
     });
   });
 
+  describe('PUT/PATCH/DELETE /api/patients/:id/measurements/:measurementId', () => {
+    it('atualiza parcialmente a medida somente para o nutricionista responsavel', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      const otherNutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      await linkPatient(nutritionist, patient);
+
+      const created = await request(app)
+        .post(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(nutritionist.token))
+        .send({
+          weightKg: 72,
+          heightCm: 175,
+          waistCircumferenceCm: 82,
+          notes: 'Registro inicial',
+        });
+
+      const updated = await request(app)
+        .patch(`/api/patients/${patient.user.id}/measurements/${created.body.measurement.id}`)
+        .set(bearer(nutritionist.token))
+        .send({ weightKg: 70, waistCircumferenceCm: null });
+      const forbidden = await request(app)
+        .patch(`/api/patients/${patient.user.id}/measurements/${created.body.measurement.id}`)
+        .set(bearer(otherNutritionist.token))
+        .send({ weightKg: 69 });
+
+      expect(updated.statusCode).toBe(200);
+      expect(updated.body.measurement).toMatchObject({
+        weightKg: 70,
+        heightCm: 175,
+        waistCircumferenceCm: null,
+        notes: 'Registro inicial',
+      });
+      expect(forbidden.statusCode).toBe(403);
+    });
+
+    it('substitui os dados com PUT e valida peso e altura obrigatorios', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      await linkPatient(nutritionist, patient);
+
+      const created = await request(app)
+        .post(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(nutritionist.token))
+        .send({
+          weightKg: 72,
+          heightCm: 175,
+          waistCircumferenceCm: 82,
+          notes: 'Registro inicial',
+        });
+
+      const updated = await request(app)
+        .put(`/api/patients/${patient.user.id}/measurements/${created.body.measurement.id}`)
+        .set(bearer(nutritionist.token))
+        .send({ weightKg: 71, heightCm: 174 });
+      const invalid = await request(app)
+        .put(`/api/patients/${patient.user.id}/measurements/${created.body.measurement.id}`)
+        .set(bearer(nutritionist.token))
+        .send({ weightKg: 71 });
+
+      expect(updated.statusCode).toBe(200);
+      expect(updated.body.measurement).toMatchObject({
+        weightKg: 71,
+        heightCm: 174,
+        waistCircumferenceCm: null,
+        notes: null,
+      });
+      expect(invalid.statusCode).toBe(400);
+    });
+
+    it('remove a medida do historico de evolucao', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      await linkPatient(nutritionist, patient);
+
+      const created = await request(app)
+        .post(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(nutritionist.token))
+        .send({ weightKg: 72, heightCm: 175 });
+      const deleted = await request(app)
+        .delete(`/api/patients/${patient.user.id}/measurements/${created.body.measurement.id}`)
+        .set(bearer(nutritionist.token));
+      const history = await request(app)
+        .get(`/api/patients/${patient.user.id}/measurements`)
+        .set(bearer(patient.token));
+
+      expect(deleted.statusCode).toBe(200);
+      expect(deleted.body).toEqual({ message: 'Medida removida com sucesso.' });
+      expect(history.statusCode).toBe(200);
+      expect(history.body.measurements).toEqual([]);
+    });
+
+    it('retorna 404 ao editar ou remover uma medida inexistente', async () => {
+      const patient = await createUserWithRole(app, 'PATIENT');
+      const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+      await linkPatient(nutritionist, patient);
+
+      const path = `/api/patients/${patient.user.id}/measurements/medida-inexistente`;
+      const updated = await request(app)
+        .patch(path)
+        .set(bearer(nutritionist.token))
+        .send({ weightKg: 70 });
+      const deleted = await request(app)
+        .delete(path)
+        .set(bearer(nutritionist.token));
+
+      expect(updated.statusCode).toBe(404);
+      expect(deleted.statusCode).toBe(404);
+    });
+  });
+
   it('nega o registro por nutricionista diferente do vinculado', async () => {
     const patient = await createUserWithRole(app, 'PATIENT');
     const linkedNutritionist = await createUserWithRole(app, 'NUTRITIONIST');

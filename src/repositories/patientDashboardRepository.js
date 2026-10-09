@@ -1,3 +1,5 @@
+const { ensureDefaultFoods } = require('../infra/foodCatalog');
+
 class PatientDashboardRepository {
 	constructor(prisma) {
 		this.prisma = prisma;
@@ -42,16 +44,12 @@ class PatientDashboardRepository {
 		});
 	}
 
-	listFoods() {
-		const { DEFAULT_FOODS } = require('../data/foodCatalog');
-		return Promise.all(DEFAULT_FOODS.map((food) => this.prisma.food.upsert({
-			where: { id: food.id },
-			create: food,
-			update: {},
-		}))).then(() => this.prisma.food.findMany({
+	async listFoods() {
+		await ensureDefaultFoods(this.prisma);
+		return this.prisma.food.findMany({
 			where: { isAvailable: true },
 			orderBy: { name: 'asc' },
-		}));
+		});
 	}
 }
 

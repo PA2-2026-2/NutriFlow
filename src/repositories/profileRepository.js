@@ -25,7 +25,7 @@ class ProfileRepository {
   }
 
   updateMeasurement(patientProfileId, id, data) {
-    return this.prisma.patientMeasurement.update({
+    return this.prisma.patientMeasurement.updateMany({
       where: { id, patientProfileId },
       data,
     });

@@ -41,6 +41,7 @@ class PatientController {
                         request.params.id,
                         request.params.measurementId,
                         request.body || {},
+                        { partial: request.method === 'PATCH' },
                 );
                 response.status(200).json({ measurement: result });
         }
