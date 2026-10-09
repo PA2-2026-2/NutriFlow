@@ -93,7 +93,7 @@ describe('matriz de permissoes', () => {
             });
           }
 
-          const response = (routePath
+          const response = await (routePath
             ? request(app)[routeKey.split(' ')[0].toLowerCase()](routePath)
             : callRoute(app, routeKey))
             .set(bearer(accounts[role].token));
