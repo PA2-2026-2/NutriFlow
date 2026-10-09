@@ -118,7 +118,7 @@
       </header>
 
       <main class="mt-6 space-y-6 pb-6">
-        <section id="visao-geral" class="grid gap-6   2xl:grid-cols-[1.2fr_.8fr]">
+        <section id="visao-geral" class="grid gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.85fr)]">
           <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
@@ -208,8 +208,8 @@
           </article>
         </section>
 
-        <section class="grid gap-6 2xl:grid-cols-[1.05fr_.95fr]">
-          <div class="grid gap-6">
+        <section class="grid gap-6 2xl:grid-cols-12">
+          <div class="grid min-w-0 gap-6 2xl:col-span-7">
             <article id="refeicoes" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -228,8 +228,8 @@
                   <h2 class="mt-4 text-2xl font-bold tracking-[-0.05em]">Últimos registros</h2>
                 </div>
               </div>
-              <div class="mt-6 overflow-hidden rounded-[24px] border border-nutriflow-200">
-                <div class="grid grid-cols-[1.2fr_.8fr_.7fr_.7fr] bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
+              <div class="mt-6 overflow-x-auto rounded-[24px] border border-nutriflow-200">
+                <div class="grid min-w-[620px] grid-cols-[1.2fr_.8fr_.7fr_.7fr] bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
                   <span>Data</span><span>Plano</span><span>Calorias</span><span>Check-in</span>
                 </div>
                 <div id="historyList" class="divide-y divide-nutriflow-100 bg-white text-sm font-medium"></div>
@@ -237,7 +237,7 @@
             </article>
           </div>
 
-          <div class="grid gap-6">
+          <div class="grid min-w-0 gap-6 2xl:col-span-5">
             <article id="plano" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex items-center justify-between gap-4">
                 <div>
@@ -265,7 +265,7 @@
             </article>
 
             <article id="peso" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
-              <div class="flex items-center justify-between gap-4">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <span class="glass-pill">Evolução de peso</span>
                   <h2 class="mt-4 text-2xl font-bold tracking-[-0.05em]">Curva das semanas</h2>
@@ -273,13 +273,8 @@
                 <button id="addWeeklyWeightButton" class="rounded-[20px] border border-nutriflow-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-nutriflow-900 transition hover:-translate-y-0.5 shadow-sm">Add Peso</button>
               </div>
 
-              <div class="mt-6 rounded-[26px] border border-nutriflow-200 bg-nutriflow-50 p-4">
-                <svg id="weightChart" viewBox="0 0 320 180" class="w-full h-auto"></svg>
-                <div id="weightChartLabels" class="mt-4 grid grid-cols-5 text-xs font-bold text-nutriflow-500 text-center"></div>
-              </div>
-
               <div class="mt-6 grid gap-4 sm:grid-cols-3">
-                <div class="rounded-[22px] border border-nutriflow-200 bg-white p-4"><p class="text-sm font-bold text-nutriflow-600">Atual</p><p id="currentWeightValue" class="mt-2 text-2xl font-bold text-nutriflow-950">--</p></div>
+                <div class="rounded-[22px] border border-nutriflow-200 bg-nutriflow-50 p-4"><p class="text-sm font-bold text-nutriflow-600">Atual</p><p id="currentWeightValue" class="mt-2 text-2xl font-bold text-nutriflow-950">--</p></div>
                 <div class="rounded-[22px] border border-nutriflow-200 bg-white p-4"><p class="text-sm font-bold text-nutriflow-600">Meta</p><p id="targetWeightValue" class="mt-2 text-2xl font-bold text-nutriflow-950">--</p></div>
                 <div class="rounded-[22px] border border-nutriflow-200 bg-white p-4"><p class="text-sm font-bold text-nutriflow-600">Variação</p><p id="weightVariationValue" class="mt-2 text-2xl font-bold text-nutriflow-950">--</p></div>
               </div>
@@ -288,8 +283,12 @@
                 <div class="rounded-[22px] border border-nutriflow-200 bg-white p-4"><p class="text-sm font-bold text-nutriflow-600">Media semanal</p><p id="weeklyWeightAverageValue" class="mt-2 text-xl font-bold text-nutriflow-950">--</p></div>
                 <div class="rounded-[22px] border border-nutriflow-200 bg-white p-4"><p class="text-sm font-bold text-nutriflow-600">Tendencia</p><p id="weightTrendValue" class="mt-2 text-xl font-bold text-nutriflow-950">--</p></div>
               </div>
-              <div class="mt-5 overflow-hidden rounded-[22px] border border-nutriflow-200 bg-white">
-                <div class="grid grid-cols-[.9fr_.7fr_.7fr_1.4fr] bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
+              <div class="mt-6 rounded-[26px] border border-nutriflow-200 bg-nutriflow-50 p-4">
+                <svg id="weightChart" viewBox="0 0 320 180" class="h-auto w-full"></svg>
+                <div id="weightChartLabels" class="mt-4 grid grid-cols-5 text-center text-xs font-bold text-nutriflow-500"></div>
+              </div>
+              <div class="mt-5 overflow-x-auto rounded-[22px] border border-nutriflow-200 bg-white">
+                <div class="grid min-w-[640px] grid-cols-[.9fr_.7fr_.7fr_1.4fr] bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
                   <span>Data</span><span>Peso</span><span>Variacao</span><span>Observacao</span>
                 </div>
                 <div id="weightHistoryList" class="divide-y divide-nutriflow-100 text-sm font-medium"></div>

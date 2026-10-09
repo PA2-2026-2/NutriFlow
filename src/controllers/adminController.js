@@ -13,6 +13,21 @@ class AdminController {
 		response.status(200).json(result);
 	}
 
+	async listFoods(request, response) {
+		const result = await this.adminService.listFoods();
+		response.status(200).json(result);
+	}
+
+	async createFood(request, response) {
+		const result = await this.adminService.createFood(request.body || {});
+		response.status(201).json(result);
+	}
+
+	async deleteFood(request, response) {
+		const result = await this.adminService.deleteFood(request.params.foodId);
+		response.status(200).json(result);
+	}
+
 	async updateUser(request, response) {
 		const result = await this.adminService.updateUser(
 			request.params.userId,

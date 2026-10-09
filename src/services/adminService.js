@@ -10,18 +10,16 @@ function normalizeText(value) {
 	return String(value || '').trim();
 }
 
-function formatDate(date) {
-	const instance = new Date(date);
-
-	if (Number.isNaN(instance.getTime())) {
-		return '';
-	}
-
-	return new Intl.DateTimeFormat('pt-BR', {
-		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
-	}).format(instance);
+function foodIdFromName(name) {
+	const base = name
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '')
+		.slice(0, 60);
+	const uniqueSuffix = require('crypto').randomBytes(4).toString('hex');
+	return `${base || 'alimento'}-${uniqueSuffix}`;
 }
 
 function toManagedUser(user) {
@@ -34,7 +32,7 @@ function toManagedUser(user) {
 		isActive: user.isActive,
 		phone: user.phone || null,
 		profilePhotoUrl: user.profilePhotoUrl || null,
-		createdAt: formatDate(user.createdAt),
+		createdAt: user.createdAt,
 	};
 }
 
@@ -66,7 +64,10 @@ class AdminService {
 	}
 
 	async getSummary() {
-		const groups = await this.adminRepository.getUserSummary();
+		const [groups, foodMetrics] = await Promise.all([
+			this.adminRepository.getUserSummary(),
+			this.adminRepository.getFoodMetrics(),
+		]);
 		const summary = {
 			total_users: 0,
 			total_patients: 0,
@@ -74,13 +75,13 @@ class AdminService {
 			total_admins: 0,
 			active_users: 0,
 			blocked_users: 0,
-			total_foods: null,
-			food_logs_today: null,
-			active_meal_plans: null,
-			average_food_calories: null,
-			food_catalog_available: false,
-			food_logs_available: false,
-			meal_plans_available: false,
+			total_foods: foodMetrics.totalFoods,
+			food_logs_today: foodMetrics.foodLogsToday,
+			active_meal_plans: foodMetrics.activeMealPlans,
+			average_food_calories: foodMetrics.averageFoodCalories,
+			food_catalog_available: true,
+			food_logs_available: true,
+			meal_plans_available: true,
 		};
 
 		for (const group of groups) {
@@ -103,6 +104,83 @@ class AdminService {
 		}
 
 		return { summary };
+	}
+
+	async listFoods() {
+		const foods = await this.adminRepository.listFoods();
+		return { foods };
+	}
+
+	async createFood(payload) {
+		if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+			throw new AppError('Informe os dados do alimento.', 400);
+		}
+		const name = normalizeText(payload.name);
+		if (name.length < 2 || name.length > 100) {
+			throw new AppError('O nome do alimento deve ter de 2 a 100 caracteres.', 400);
+		}
+
+		const nutrientValues = {};
+		for (const field of ['calories', 'protein', 'carbs', 'fat']) {
+			const value = payload[field];
+			const max = field === 'calories' ? null : 100;
+			if (
+				typeof value !== 'number' ||
+				!Number.isFinite(value) ||
+				value < 0 ||
+				(max !== null && value > max)
+			) {
+				throw new AppError(
+					field === 'calories'
+						? 'calories deve ser um numero maior ou igual a 0 por 100g.'
+						: `${field} deve ser um numero entre 0 e ${max} por 100g.`,
+					400,
+				);
+			}
+			nutrientValues[field] = value;
+		}
+
+		const existingFood = await this.adminRepository.findFoodByName(name);
+		if (existingFood?.isAvailable) {
+			throw new AppError('Ja existe um alimento ativo com esse nome.', 409);
+		}
+		if (existingFood) {
+			const food = await this.adminRepository.restoreFood(existingFood.id, {
+				name,
+				...nutrientValues,
+			});
+			return {
+				message: 'Alimento reativado no catalogo com sucesso.',
+				food,
+			};
+		}
+
+		try {
+			const food = await this.adminRepository.createFood({
+				id: foodIdFromName(name),
+				name,
+				...nutrientValues,
+			});
+			return { message: 'Alimento cadastrado com sucesso.', food };
+		} catch (error) {
+			if (error.code === 'P2002') {
+				throw new AppError('Ja existe um alimento com esse nome ou identificador.', 409);
+			}
+			throw error;
+		}
+	}
+
+	async deleteFood(foodId) {
+		const result = await this.adminRepository.deleteFood(foodId);
+		if (!result) {
+			throw new AppError('Alimento nao encontrado.', 404);
+		}
+		return {
+			message: 'Alimento removido do catalogo e dos planos alimentares.',
+			food: result.deletedFood,
+			affectedPlanCount: result.affectedPlanCount,
+			deletedPlanCount: result.deletedPlanCount,
+		};
 	}
 
 	

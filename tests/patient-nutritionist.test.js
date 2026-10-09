@@ -253,6 +253,10 @@ describe('POST /api/nutritionist/link-patient', () => {
         email: patient.email,
         objective: 'Emagrecimento',
         restrictions: 'Lactose',
+        bodyMeasurements: {
+          latest: [],
+          history: [],
+        },
       }),
     ]);
   });

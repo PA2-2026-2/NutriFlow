@@ -239,7 +239,7 @@ const state = {
       return '—';
     }
 
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
   function formatPercent(value) {
@@ -1333,7 +1333,7 @@ async function toggleUserStatus(user) {
       document.createElement('div');
 
     row.className =
-      'grid gap-4 px-4 py-4 md:grid-cols-[1.25fr_.85fr_.55fr_.6fr_.95fr] md:items-center';
+      'grid gap-x-5 gap-y-3 px-4 py-4 transition-colors hover:bg-[#fbfcfa] sm:grid-cols-2 sm:px-5 2xl:min-h-[76px] 2xl:grid-cols-[minmax(220px,1.4fr)_minmax(140px,.8fr)_minmax(110px,.6fr)_minmax(105px,.65fr)_minmax(250px,1.5fr)] 2xl:items-center 2xl:gap-4 2xl:py-3';
 
     const id = getUserId(user);
 
@@ -1379,18 +1379,8 @@ async function toggleUserStatus(user) {
         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
         : 'bg-red-50 text-red-700 border-red-200';
 
-    const actionClass =
-      active
-        ? 'border-red-200 bg-white text-red-700 hover:bg-red-50'
-        : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50';
-
-    const actionLabel =
-      active
-        ? 'Bloquear'
-        : 'Reativar';
-
     row.innerHTML = `
-      <div class="min-w-0">
+      <div class="min-w-0 sm:col-span-2 2xl:col-span-1">
         <div class="flex items-center gap-3">
           <div
             class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-nutriflow-100 text-xs font-extrabold text-nutriflow-700"
@@ -1420,7 +1410,8 @@ async function toggleUserStatus(user) {
         </div>
       </div>
 
-      <div>
+      <div class="flex items-center justify-between gap-3 2xl:block">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-nutriflow-400 2xl:hidden">Perfil</span>
         <span
           class="inline-flex rounded-full border border-nutriflow-100 bg-nutriflow-50 px-3 py-1 text-xs font-bold text-nutriflow-700"
         >
@@ -1430,7 +1421,8 @@ async function toggleUserStatus(user) {
         </span>
       </div>
 
-      <div>
+      <div class="flex items-center justify-between gap-3 2xl:block">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-nutriflow-400 2xl:hidden">Status</span>
         <span
           class="inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusClass}"
         >
@@ -1438,7 +1430,8 @@ async function toggleUserStatus(user) {
         </span>
       </div>
 
-      <div class="text-sm text-nutriflow-600">
+      <div class="flex items-center justify-between gap-3 text-sm text-nutriflow-600 2xl:block">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-nutriflow-400 2xl:hidden">Criado em</span>
         ${escapeHtml(
           formatDate(
             user.created_at ||
@@ -1447,12 +1440,12 @@ async function toggleUserStatus(user) {
         )}
       </div>
 
-      <div class="flex flex-wrap justify-start gap-2 md:justify-end">
+      <div class="flex flex-wrap items-center gap-2 border-t border-nutriflow-50 pt-3 sm:col-span-2 2xl:col-span-1 2xl:justify-end 2xl:border-0 2xl:pt-0">
   <button
     type="button"
     data-action="edit-user"
     data-user-id="${escapeHtml(String(id))}"
-    class="rounded-xl border border-nutriflow-200 bg-white px-3 py-2 text-xs font-bold text-nutriflow-800 transition hover:bg-nutriflow-50"
+    class="min-w-[76px] rounded-xl border border-nutriflow-200 bg-white px-3 py-2 text-center text-xs font-bold text-nutriflow-800 transition hover:bg-nutriflow-50"
   >
     Editar
   </button>
@@ -1461,7 +1454,7 @@ async function toggleUserStatus(user) {
     type="button"
     data-action="toggle-user-status"
     data-user-id="${escapeHtml(String(id))}"
-    class="rounded-xl border px-3 py-2 text-xs font-bold transition ${
+    class="min-w-[96px] rounded-xl border px-3 py-2 text-center text-xs font-bold transition ${
       active
         ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
         : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
@@ -1469,6 +1462,20 @@ async function toggleUserStatus(user) {
   >
     ${active ? 'Bloquear' : 'Reativar'}
   </button>
+  ${
+    String(getUserId(state.currentUser)) !== String(id)
+      ? `
+        <button
+          type="button"
+          data-action="delete-user"
+          data-user-id="${escapeHtml(String(id))}"
+          class="min-w-[76px] rounded-xl border border-red-200 bg-white px-3 py-2 text-center text-xs font-bold text-red-700 transition hover:bg-red-50"
+        >
+          Excluir
+        </button>
+      `
+      : ''
+  }
 </div>
     `;
 
@@ -1493,6 +1500,12 @@ async function toggleUserStatus(user) {
         user,
         statusButton,
       ),
+    );
+
+    const deleteButton = row.querySelector('[data-action="delete-user"]');
+    deleteButton?.addEventListener(
+      'click',
+      () => handleUserDelete(user, deleteButton),
     );
 
     return row;
@@ -1782,6 +1795,50 @@ async function toggleUserStatus(user) {
           'cursor-not-allowed',
           'opacity-60',
         );
+      }
+    }
+  }
+
+  async function handleUserDelete(user, button) {
+    const id = getUserId(user);
+    if (!id || button?.disabled) {
+      showToast('Não foi possível identificar o usuário.', 'error');
+      return;
+    }
+
+    if (String(getUserId(state.currentUser)) === String(id)) {
+      showToast('A conta administrativa atualmente logada não pode ser excluída.', 'error');
+      return;
+    }
+
+    const name = user.name || user.full_name || user.nome || user.email || 'este usuário';
+    if (!window.confirm(`Excluir permanentemente a conta de "${name}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Excluindo...';
+    }
+
+    try {
+      const result = await apiRequest(
+        `/api/admin/users/${encodeURIComponent(id)}`,
+        { method: 'DELETE' },
+      );
+
+      state.users = state.users.filter(
+        (item) => String(getUserId(item)) !== String(id),
+      );
+      renderUsers();
+      await refreshSummary();
+      showToast(result?.message || 'Usuário excluído com sucesso.', 'success');
+    } catch (error) {
+      console.error('[NutriFlow Admin] Erro ao excluir usuário:', error);
+      showToast(error?.message || 'Não foi possível excluir o usuário.', 'error');
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Excluir';
       }
     }
   }
@@ -2264,9 +2321,63 @@ async function toggleUserStatus(user) {
           </strong>
         </div>
       </div>
+      <button
+        type="button"
+        class="mt-4 rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-label="Remover ${escapeHtml(name)} do catálogo"
+      >
+        Remover alimento
+      </button>
     `;
 
+    const removeButton = element.querySelector('button');
+    removeButton?.addEventListener('click', () => {
+      void handleFoodDelete(food, removeButton);
+    });
+
     return element;
+  }
+
+  async function handleFoodDelete(food, button) {
+    if (!food?.id || button.disabled) {
+      return;
+    }
+
+    const name = food.name || food.nome || 'este alimento';
+    const confirmed = window.confirm(
+      `Remover "${name}" do catálogo? Ele será retirado dos planos que o utilizam. Planos que ficarem sem alimentos também serão removidos.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Removendo...';
+
+    try {
+      const result = await apiRequest(
+        `/api/admin/foods/${encodeURIComponent(food.id)}`,
+        { method: 'DELETE' },
+      );
+
+      await Promise.all([loadFoods(), refreshSummary()]);
+
+      const affectedPlans = Number(result?.affectedPlanCount || 0);
+      const deletedPlans = Number(result?.deletedPlanCount || 0);
+      let message = result?.message || 'Alimento removido com sucesso.';
+      if (affectedPlans > 0) {
+        message += ` ${affectedPlans} plano(s) atualizado(s).`;
+      }
+      if (deletedPlans > 0) {
+        message += ` ${deletedPlans} plano(s) sem outros alimentos removido(s).`;
+      }
+      showToast(message, 'success');
+    } catch (error) {
+      console.error('[NutriFlow Admin] Erro ao remover alimento:', error);
+      showToast(error?.message || 'Não foi possível remover o alimento.', 'error');
+      button.disabled = false;
+      button.textContent = 'Remover alimento';
+    }
   }
 
   async function handleFoodSubmit(event) {
@@ -2301,9 +2412,28 @@ async function toggleUserStatus(user) {
         foodFat?.value || 0,
       );
 
-    if (!name) {
+    if (name.length < 2 || name.length > 100) {
       showToast(
-        'Informe o nome do alimento.',
+        'O nome do alimento deve ter de 2 a 100 caracteres.',
+        'error',
+      );
+      return;
+    }
+
+    const nutritionValues = [
+      ['calorias', calories, null],
+      ['proteína', protein, 100],
+      ['carboidrato', carbs, 100],
+      ['gordura', fat, 100],
+    ];
+    const invalidNutritionValue = nutritionValues.find(
+      ([, value, max]) => !Number.isFinite(value) || value < 0 || (max !== null && value > max),
+    );
+    if (invalidNutritionValue) {
+      showToast(
+        invalidNutritionValue[0] === 'calorias'
+          ? 'Informe calorias como um número maior ou igual a zero por 100g.'
+          : `Informe ${invalidNutritionValue[0]} entre 0 e ${invalidNutritionValue[2]} por 100g.`,
         'error',
       );
       return;

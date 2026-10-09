@@ -22,6 +22,10 @@ model User {
   patientProfile  PatientProfile?
 
   patients PatientProfile[] @relation("NutritionistPatients")
+  mealPlansAsPatient MealPlan[] @relation("PatientMealPlans")
+  mealPlansAsNutritionist MealPlan[] @relation("NutritionistMealPlans")
+  mealEntries PatientMealEntry[]
+  weightEntries PatientWeightEntry[]
 }
 
 model PatientProfile {
@@ -39,4 +43,116 @@ model PatientProfile {
 
   nutritionistId String?
   nutritionist   User?   @relation("NutritionistPatients", fields: [nutritionistId], references: [id])
+
+  measurements PatientMeasurement[]
+}
+
+model PatientMeasurement {
+  id                         String         @id @default(uuid())
+  patientProfileId           String
+  weightKg                   Float
+  heightCm                   Float
+  bodyFatPercent             Float?
+  notes                      String?
+  neckCircumferenceCm        Float?
+  chestCircumferenceCm       Float?
+  waistCircumferenceCm       Float?
+  hipCircumferenceCm         Float?
+  armCircumferenceCm         Float?
+  thighCircumferenceCm       Float?
+  calfCircumferenceCm        Float?
+  tricepsSkinfoldMm          Float?
+  bicepsSkinfoldMm           Float?
+  subscapularSkinfoldMm      Float?
+  suprailiacSkinfoldMm       Float?
+  abdominalSkinfoldMm        Float?
+  thighSkinfoldMm            Float?
+  calfSkinfoldMm             Float?
+  recordedAt                 DateTime       @default(now())
+
+  patientProfile PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([patientProfileId, recordedAt])
+}
+
+model Food {
+  id          String   @id
+  name        String   @unique
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  mealPlanItems MealPlanItem[]
+}
+
+model MealPlan {
+  id             String         @id @default(uuid())
+  patientId      String
+  nutritionistId String
+  title          String
+  notes          String?
+  calories       Float          @default(0)
+  protein        Float          @default(0)
+  carbs          Float          @default(0)
+  fats           Float          @default(0)
+  startDate      DateTime       @default(now())
+  endDate        DateTime
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  patient      User           @relation("PatientMealPlans", fields: [patientId], references: [id], onDelete: Cascade)
+  nutritionist User           @relation("NutritionistMealPlans", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  items        MealPlanItem[]
+
+  @@index([patientId, createdAt])
+  @@index([nutritionistId, createdAt])
+}
+
+model MealPlanItem {
+  id         String   @id @default(uuid())
+  mealPlanId String
+  foodId     String
+  quantity   Float
+  mealTime   String
+
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  food     Food     @relation(fields: [foodId], references: [id], onDelete: Restrict)
+
+  @@index([mealPlanId])
+}
+
+model PatientMealEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  mealType    String
+  title       String
+  description String   @default("")
+  calories    Int
+  protein     Int
+  carbs       Int
+  fats        Int
+  fiber       Int
+  waterMl     Int
+  loggedAt    DateTime
+  createdAt   DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+}
+
+model PatientWeightEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  weightKg  Float
+  recordedAt DateTime
+  note      String   @default("")
+  createdAt DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
 }

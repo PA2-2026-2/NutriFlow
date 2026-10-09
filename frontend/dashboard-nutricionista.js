@@ -157,13 +157,37 @@ async function sendNutritionistChatMessage(payload) {
 
 async function fetchDatabaseData() {
   try {
-    const data = await apiRequest('/api/nutritionist/patients');
-    state.patients = data.patients || [];
+    const [patientsData, foodsData, mealPlansData] = await Promise.all([
+      apiRequest('/api/nutritionist/patients'),
+      apiRequest('/api/nutritionist/foods'),
+      apiRequest('/api/nutritionist/meal-plans'),
+    ]);
+    state.patients = patientsData.patients || [];
+    state.foods = foodsData.foods || [];
+    state.mealPlans = mealPlansData.mealPlans || [];
+    state.assessments = state.patients
+      .flatMap((patient) => (patient.bodyMeasurements?.history || []).map((entry) => {
+        const weight = entry.items.find((item) => item.label === 'Peso');
+        const bodyFat = entry.items.find((item) => item.label === 'Gordura corporal');
+
+        return {
+          id: entry.id,
+          patientId: patient.id,
+          patient: patient.name,
+          weight: weight?.value ?? '--',
+          bodyFat: bodyFat?.value ?? null,
+          date: entry.date,
+          measurements: entry.items.filter(
+            (item) => !['Peso', 'Altura', 'Gordura corporal'].includes(item.label),
+          ),
+        };
+      }))
+      .sort((first, second) => new Date(second.date) - new Date(first.date));
 
     ensureValidPatientSelections();
     renderAll();
     await syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
-  } catch (error) { showToast('Erro ao conectar ao banco de dados.'); }
+  } catch (error) { showToast(error.message || 'Erro ao carregar os dados do painel.'); }
 }
 
 function renderAll() {
@@ -412,12 +436,6 @@ function buildMealTimeOptions(selectedMealTime = 'Almoco') {
   `).join('');
 }
 
-function toDateInputValue(date = new Date()) {
-  const baseDate = date instanceof Date ? date : new Date(date || Date.now());
-  const timezoneOffset = baseDate.getTimezoneOffset() * 60000;
-  return new Date(baseDate.getTime() - timezoneOffset).toISOString().slice(0, 10);
-}
-
 function getSelectedPatient() {
   return state.patients.find((patient) => patient.id === state.selectedPatientId) || state.patients[0] || null;
 }
@@ -425,21 +443,28 @@ function getSelectedPatient() {
 function getAssessmentMeasurementsPayload(options = {}) {
   const allowIncomplete = options.allowIncomplete === true;
 
-  return Array.from(document.querySelectorAll('[data-assessment-measurement-row]')).map((row) => {
-    const label = row.querySelector('[data-assessment-measurement-label]')?.value || '';
-    const value = row.querySelector('[data-assessment-measurement-value]')?.value || '';
-    const unit = row.querySelector('[data-assessment-measurement-unit]')?.value || '';
+  const measurements = {};
+  const rows = Array.from(document.querySelectorAll('[data-assessment-measurement-row]'));
 
-    return {
-      label: label.trim(),
-      value: value.trim(),
-      unit: unit.trim(),
-    };
-  }).filter((measurement) => (
-    allowIncomplete
-      ? (measurement.label || measurement.value || measurement.unit)
-      : (measurement.label && measurement.value)
-  ));
+  for (const row of rows) {
+    const field = row.querySelector('[data-assessment-measurement-label]')?.value || '';
+    const value = row.querySelector('[data-assessment-measurement-value]')?.value || '';
+
+    if (!field || !value) {
+      if (allowIncomplete && (field || value)) {
+        return null;
+      }
+      continue;
+    }
+
+    if (Object.hasOwn(measurements, field)) {
+      return null;
+    }
+
+    measurements[field] = Number(value);
+  }
+
+  return measurements;
 }
 
 function addAssessmentMeasurementRow(measurement = {}) {
@@ -453,11 +478,28 @@ function addAssessmentMeasurementRow(measurement = {}) {
   row.className = 'grid gap-2 rounded-lg border border-white bg-white p-2 shadow-sm md:grid-cols-[1.2fr_140px_110px_auto]';
   row.dataset.assessmentMeasurementRow = 'true';
   row.innerHTML = `
-    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-label type="text" maxlength="40" placeholder="Ex: Cintura" value="${escapeHtml(measurement.label || '')}" />
-    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-value type="number" min="0.1" max="500" step="0.1" placeholder="82.5" value="${escapeHtml(String(measurement.value || ''))}" />
-    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-unit type="text" maxlength="12" placeholder="cm" value="${escapeHtml(measurement.unit || 'cm')}" />
+    <select class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-label>
+      <option value="neckCircumferenceCm">Pescoco (cm)</option>
+      <option value="chestCircumferenceCm">Torax (cm)</option>
+      <option value="waistCircumferenceCm">Cintura (cm)</option>
+      <option value="hipCircumferenceCm">Quadril (cm)</option>
+      <option value="armCircumferenceCm">Braco (cm)</option>
+      <option value="thighCircumferenceCm">Coxa (cm)</option>
+      <option value="calfCircumferenceCm">Panturrilha (cm)</option>
+      <option value="tricepsSkinfoldMm">Dobra tricipital (mm)</option>
+      <option value="bicepsSkinfoldMm">Dobra bicipital (mm)</option>
+      <option value="subscapularSkinfoldMm">Dobra subescapular (mm)</option>
+      <option value="suprailiacSkinfoldMm">Dobra suprailiaca (mm)</option>
+      <option value="abdominalSkinfoldMm">Dobra abdominal (mm)</option>
+      <option value="thighSkinfoldMm">Dobra da coxa (mm)</option>
+      <option value="calfSkinfoldMm">Dobra da panturrilha (mm)</option>
+    </select>
+    <input class="rounded-lg border border-nutriflow-200 px-3 py-2 text-sm font-bold" data-assessment-measurement-value type="number" min="0.1" max="500" step="0.1" placeholder="Valor" value="${escapeHtml(String(measurement.value || ''))}" />
     <button class="rounded-lg border border-red-100 px-3 py-2 text-xs font-bold text-red-500" type="button" data-remove-assessment-measurement>Remover</button>
   `;
+  if (measurement.field) {
+    row.querySelector('[data-assessment-measurement-label]').value = measurement.field;
+  }
 
   row.querySelector('[data-remove-assessment-measurement]')?.addEventListener('click', () => {
     row.remove();
@@ -471,7 +513,6 @@ function resetAssessmentForm() {
 
   const patient = getSelectedPatient();
   const patientSelect = document.getElementById('assessmentPatient');
-  const dateInput = document.getElementById('assessmentDate');
   const weightInput = document.getElementById('assessmentWeight');
   const heightInput = document.getElementById('assessmentHeight');
   const bodyFatInput = document.getElementById('assessmentBodyFat');
@@ -481,16 +522,12 @@ function resetAssessmentForm() {
     patientSelect.value = patient.id;
   }
 
-  if (dateInput) {
-    dateInput.value = toDateInputValue(new Date());
-  }
-
   if (weightInput) {
     weightInput.value = patient?.weight || '';
   }
 
   if (heightInput) {
-    heightInput.value = patient?.height || '';
+    heightInput.value = patient?.height ? Number(patient.height) * 100 : '';
   }
 
   if (bodyFatInput) {
@@ -827,7 +864,7 @@ function renderGeneralLists() {
 
   const plansContainer = document.getElementById('latestMealPlans');
   plansContainer.innerHTML = plans.length ? plans.map(plan => `
-      <div class="bg-white border rounded-xl p-3 shadow-sm relative group">
+      <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
         <p class="text-xs font-bold text-nutriflow-500 uppercase">${plan.patient}</p>
         <p class="text-sm font-bold text-nutriflow-950 mt-1 pr-12">${plan.title}</p>
         <p class="text-xs font-semibold text-nutriflow-600">${plan.calories} kcal - ${plan.protein}g prot - ${plan.carbs || 0}g carb - ${plan.fats || 0}g gord</p>
@@ -841,12 +878,12 @@ function renderGeneralLists() {
 
   const assContainer = document.getElementById('latestAssessments');
   assContainer.innerHTML = asss.length ? asss.map(ass => `
-      <div class="bg-white border rounded-xl p-3 shadow-sm relative group">
+      <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
         <p class="text-xs font-bold text-nutriflow-500 uppercase">${ass.patient}</p>
         <p class="text-sm font-bold text-nutriflow-950 mt-1">Peso: ${ass.weight}kg</p>
-        <p class="text-xs font-semibold text-nutriflow-600">${new Date(ass.date).toLocaleDateString()}</p>
+        ${ass.bodyFat !== null ? `<p class="text-xs font-semibold text-nutriflow-600">Gordura corporal: ${ass.bodyFat}%</p>` : ''}
+        <p class="text-xs font-semibold text-nutriflow-600">${new Date(ass.date).toLocaleDateString('pt-BR')}</p>
         <p class="mt-1 text-xs text-nutriflow-500">${ass.measurements?.length ? `${ass.measurements.length} medidas registradas` : 'Sem medidas complementares'}</p>
-        <button onclick="window.deleteResource('assessments', '${ass.id}')" class="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">🗑️</button>
       </div>
     `).join('') : '<p class="text-sm text-nutriflow-500">Nenhuma avaliação.</p>';
 
@@ -1267,26 +1304,32 @@ document.getElementById('mealPlanForm')?.addEventListener('submit', async (e) =>
   try {
     await apiRequest('/api/nutritionist/meal-plans', { method: 'POST', body: JSON.stringify(payload) });
     showToast('Plano salvo!'); closeModal('mealPlan'); await fetchDatabaseData();
-  } catch(err) { showToast('Erro ao salvar plano.'); }
+  } catch(err) { showToast(err.message || 'Erro ao salvar plano.'); }
 });
 
 document.getElementById('assessmentForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const dateValue = document.getElementById('assessmentDate').value;
-  const recordedAt = dateValue ? new Date(`${dateValue}T12:00:00`) : new Date();
+  const measurements = getAssessmentMeasurementsPayload({ allowIncomplete: true });
+  if (!measurements) {
+    showToast('Complete as medidas adicionadas e nao repita o mesmo tipo.');
+    return;
+  }
+
+  const patientId = document.getElementById('assessmentPatient').value;
   const payload = {
-    patientId: document.getElementById('assessmentPatient').value,
-    weight: document.getElementById('assessmentWeight').value,
-    height: document.getElementById('assessmentHeight').value,
-    bodyFat: document.getElementById('assessmentBodyFat').value,
+    weightKg: Number(document.getElementById('assessmentWeight').value),
+    heightCm: Number(document.getElementById('assessmentHeight').value),
+    bodyFatPercent: Number(document.getElementById('assessmentBodyFat').value),
     notes: document.getElementById('assessmentNotes').value,
-    measurements: getAssessmentMeasurementsPayload(),
-    date: Number.isNaN(recordedAt.getTime()) ? new Date().toISOString() : recordedAt.toISOString()
+    ...measurements,
   };
   try {
-    await apiRequest('/api/nutritionist/assessments', { method: 'POST', body: JSON.stringify(payload) });
+    await apiRequest(`/api/patients/${encodeURIComponent(patientId)}/measurements`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
     showToast('Avaliação salva!'); closeModal('assessment'); await fetchDatabaseData();
-  } catch(err) { showToast('Erro ao salvar avaliação.'); }
+  } catch(err) { showToast(err.message || 'Erro ao salvar avaliação.'); }
 });
 
 

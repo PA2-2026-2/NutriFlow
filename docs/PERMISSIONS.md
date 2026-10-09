@@ -34,7 +34,21 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `PUT /api/users/me` | ✅ | ✅ | ✅ | Atualiza o próprio nome e telefone |
 | `POST /api/users/me/photo` | ✅ | ✅ | ✅ | Envia a própria foto (JPG/PNG, até 2 MB) |
 | `POST /api/patients/me/nutritionist` | ✅ | ❌ | ❌ | Vincula o paciente logado a um nutricionista pelo e-mail dele |
+| `POST /api/patients/:id/measurements` | ❌ | ✅ | ❌ | Registra medidas de paciente vinculado ao nutricionista autenticado |
+| `GET /api/patients/:id/measurements` | ✅ | ✅ | ❌ | Lista medidas em ordem cronológica; paciente consulta apenas as próprias e nutricionista apenas pacientes vinculados |
+| `GET /api/patient/dashboard` | ✅ | ❌ | ❌ | Carrega dados, plano alimentar e históricos do paciente |
+| `POST /api/patient/meals` | ✅ | ❌ | ❌ | Registra uma refeição do paciente |
+| `POST /api/patient/weights` | ✅ | ❌ | ❌ | Registra uma pesagem semanal do paciente |
+| `GET /api/nutritionist/patients` | ❌ | ✅ | ❌ | Lista pacientes vinculados ao nutricionista autenticado |
+| `POST /api/nutritionist/link-patient` | ❌ | ✅ | ❌ | Vincula um paciente pelo e-mail dele |
+| `GET /api/nutritionist/foods` | ❌ | ✅ | ❌ | Lista a base de alimentos para montar planos |
+| `GET /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Lista os planos alimentares do nutricionista |
+| `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
 | `GET /api/admin/users` | ❌ | ❌ | ✅ | Lista usuários (`?role=` e `?search=`) |
+| `GET /api/admin/summary` | ❌ | ❌ | ✅ | Exibe o resumo administrativo |
+| `GET /api/admin/foods` | ❌ | ❌ | ✅ | Lista o catálogo global de alimentos |
+| `POST /api/admin/foods` | ❌ | ❌ | ✅ | Cadastra alimento disponível para planos e registros alimentares |
+| `DELETE /api/admin/foods/:foodId` | ❌ | ❌ | ✅ | Remove alimento do catálogo e atualiza ou remove planos que o utilizavam |
 | `PUT /api/admin/users/:userId` | ❌ | ❌ | ✅ | Edita nome, e-mail e telefone de um usuário |
 | `PATCH /api/admin/users/:userId/status` | ❌ | ❌ | ✅ | Bloqueia/desbloqueia (`{ "isActive": boolean }`) |
 | `DELETE /api/admin/users/:userId` | ❌ | ❌ | ✅ | Remove um usuário |
@@ -45,6 +59,30 @@ Regra adicional do vínculo paciente-nutricionista: o paciente só pode ter um
 nutricionista responsável por vez — vincular de novo substitui o anterior. O
 endpoint retorna `404` se o e-mail informado não pertencer a um nutricionista
 cadastrado, e `403` se o nutricionista estiver inativo.
+
+O endpoint de medidas recebe o ID do usuário do paciente. `weightKg` e
+`heightCm` são obrigatórios; circunferências (`*CircumferenceCm`) e dobras
+cutâneas (`*SkinfoldMm`) são opcionais. Os limites aceitos são peso de 1–500 kg,
+altura de 30–300 cm, circunferências de pescoço/braço/panturrilha de 5–100 cm,
+tórax/cintura/quadril de 20–250 cm, coxa de 10–150 cm e dobras cutâneas de
+1–100 mm. `recordedAt` é definido automaticamente e não pode ser enviado no
+corpo da requisição.
+
+Planos alimentares só podem ser criados para pacientes vinculados ao nutricionista
+autenticado. Os itens referenciam alimentos da base; calorias, proteínas,
+carboidratos e gorduras são calculados no servidor com os valores por 100 g do
+catálogo inicial, e o plano fica ativo por 30 dias.
+
+O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados
+O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados
+pelo administrador ficam disponíveis para nutricionistas criarem planos e para o
+paciente visualizar o catálogo e o plano associado. Ao remover um alimento, ele
+deixa de aparecer no catálogo; seus itens são retirados dos planos e os valores
+nutricionais são recalculados. Planos sem itens restantes também são removidos.
+O cadastro recebe calorias,
+proteínas, carboidratos e gorduras por 100 g; o nome deve ser único, calorias
+devem ser não negativas (sem limite superior) e cada macronutriente fica entre
+0 e 100 g.
 
 ## Ao criar uma rota nova
 

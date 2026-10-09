@@ -9,6 +9,22 @@ class ProfileRepository {
     });
   }
 
+  createMeasurement(patientProfileId, data) {
+    return this.prisma.patientMeasurement.create({
+      data: {
+        patientProfileId,
+        ...data,
+      },
+    });
+  }
+
+  findMeasurementsByPatientProfileId(patientProfileId) {
+    return this.prisma.patientMeasurement.findMany({
+      where: { patientProfileId },
+      orderBy: [{ recordedAt: 'asc' }, { id: 'asc' }],
+    });
+  }
+
   findPatientWithNutritionistByUserId(userId) {
     return this.prisma.patientProfile.findUnique({
       where: { userId },
@@ -23,7 +39,12 @@ class ProfileRepository {
   findPatientsByNutritionistId(nutritionistId) {
     return this.prisma.patientProfile.findMany({
       where: { nutritionistId },
-      include: { user: true },
+      include: {
+        user: true,
+        measurements: {
+          orderBy: { recordedAt: 'desc' },
+        },
+      },
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -45,15 +66,17 @@ class ProfileRepository {
     });
   }
 
-  linkNutritionist(userId, nutritionistId) {
+  linkNutritionist(userId, nutritionistId, profileData = {}) {
     return this.prisma.patientProfile.upsert({
       where: { userId },
       update: {
         nutritionistId,
+        ...profileData,
       },
       create: {
         userId,
         nutritionistId,
+        ...profileData,
       },
       include: {
         nutritionist: true,

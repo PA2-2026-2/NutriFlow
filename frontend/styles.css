@@ -1478,6 +1478,27 @@ main .dashboard-card:nth-of-type(5) {
   line-height: 1.5;
 }
 
+#adminUsersList {
+  scrollbar-color: rgba(96, 112, 88, 0.35) transparent;
+  scrollbar-width: thin;
+}
+
+#adminUsersList::-webkit-scrollbar {
+  width: 0.55rem;
+}
+
+#adminUsersList::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(96, 112, 88, 0.35);
+  background-clip: padding-box;
+}
+
+#adminUsersList::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 112, 88, 0.55);
+  background-clip: padding-box;
+}
+
 .admin-metric-block {
   border-radius: 24px;
   border: 1px solid rgba(202, 219, 191, 0.56);
