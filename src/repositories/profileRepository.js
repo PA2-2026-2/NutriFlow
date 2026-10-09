@@ -18,6 +18,25 @@ class ProfileRepository {
     });
   }
 
+  findMeasurementByIdAndPatientProfileId(id, patientProfileId) {
+    return this.prisma.patientMeasurement.findFirst({
+      where: { id, patientProfileId },
+    });
+  }
+
+  updateMeasurement(patientProfileId, id, data) {
+    return this.prisma.patientMeasurement.update({
+      where: { id, patientProfileId },
+      data,
+    });
+  }
+
+  deleteMeasurement(patientProfileId, id) {
+    return this.prisma.patientMeasurement.deleteMany({
+      where: { id, patientProfileId },
+    }).then(({ count }) => count);
+  }
+
   findMeasurementsByPatientProfileId(patientProfileId) {
     return this.prisma.patientMeasurement.findMany({
       where: { patientProfileId },
