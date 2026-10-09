@@ -114,7 +114,7 @@ function validateMeasurementPayload(payload, { partial = false } = {}) {
 		}
 
 		const value = payload[field];
-		if (partial && value === null && !rules.required) {
+		if (value === null && !rules.required) {
 			data[field] = null;
 			continue;
 		}
@@ -135,10 +135,7 @@ function validateMeasurementPayload(payload, { partial = false } = {}) {
 	}
 
 	if (Object.hasOwn(payload, 'notes')) {
-		if (
-			partial &&
-			payload.notes === null
-		) {
+		if (payload.notes === null) {
 			data.notes = null;
 		} else if (typeof payload.notes !== 'string' || payload.notes.length > 2000) {
 			throw new AppError('As observacoes devem ser um texto de ate 2000 caracteres.', 400);
@@ -342,7 +339,15 @@ class PatientService {
 			throw new AppError('Medida nao encontrada.', 404);
 		}
 
-		return this.profileRepository.findMeasurementById(patientProfile.id, measurementId);
+		const measurement = await this.profileRepository.findMeasurementByIdAndPatientProfileId(
+			measurementId,
+			patientProfile.id,
+		);
+		if (!measurement) {
+			throw new AppError('Medida nao encontrada.', 404);
+		}
+
+		return measurement;
 	}
 
 	async deleteMeasurement(nutritionistId, patientId, measurementId) {
@@ -352,7 +357,7 @@ class PatientService {
 			measurementId,
 		);
 
-		if (result.count === 0) {
+		if (result === 0) {
 			throw new AppError('Medida nao encontrada.', 404);
 		}
 

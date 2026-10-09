@@ -71,6 +71,13 @@ tórax/cintura/quadril de 20–250 cm, coxa de 10–150 cm e dobras cutâneas de
 1–100 mm. `recordedAt` é definido automaticamente e não pode ser enviado no
 corpo da requisição.
 
+Para substituir um registro, `PUT /api/patients/:id/measurements/:measurementId`
+exige peso e altura; campos de medida opcionais omitidos são limpos. Para alterar
+somente alguns campos, use `PATCH`; campos opcionais e observações podem receber
+`null` para serem limpos. A exclusão usa `DELETE` no mesmo caminho e remove
+permanentemente o registro do histórico. As operações são restritas ao
+nutricionista atualmente vinculado ao paciente.
+
 Planos alimentares só podem ser criados para pacientes vinculados ao nutricionista
 autenticado. Os itens referenciam alimentos da base; calorias, proteínas,
 carboidratos e gorduras são calculados no servidor com os valores por 100 g do
