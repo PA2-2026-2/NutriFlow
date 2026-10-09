@@ -35,6 +35,25 @@ class PatientController {
                 response.status(201).json({ measurement: result });
         }
 
+        async updateMeasurement(request, response) {
+                const result = await this.patientService.updateMeasurement(
+                        request.user.sub,
+                        request.params.id,
+                        request.params.measurementId,
+                        request.body || {},
+                );
+                response.status(200).json({ measurement: result });
+        }
+
+        async deleteMeasurement(request, response) {
+                const result = await this.patientService.deleteMeasurement(
+                        request.user.sub,
+                        request.params.id,
+                        request.params.measurementId,
+                );
+                response.status(200).json(result);
+        }
+
         async getMeasurements(request, response) {
                 const result = await this.patientService.getMeasurements(
                         request.user.sub,

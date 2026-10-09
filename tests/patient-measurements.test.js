@@ -289,4 +289,145 @@ describe('POST /api/patients/:id/measurements', () => {
     expect(asPatient.statusCode).toBe(403);
     expect(asAdmin.statusCode).toBe(403);
   });
+
+  it('edita parcialmente uma medida e reflete os valores atualizados no historico', async () => {
+    const patient = await createUserWithRole(app, 'PATIENT');
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const profile = await linkPatient(nutritionist, patient);
+    const measurement = await app.locals.prisma.patientMeasurement.create({
+      data: {
+        patientProfileId: profile.id,
+        weightKg: 72,
+        heightCm: 175,
+        waistCircumferenceCm: 82,
+        notes: 'Registro original',
+      },
+    });
+
+    const response = await request(app)
+      .put(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
+      .set(bearer(nutritionist.token))
+      .send({
+        weightKg: 73,
+        waistCircumferenceCm: null,
+        notes: '  Registro corrigido  ',
+      });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.measurement).toMatchObject({
+      id: measurement.id,
+      weightKg: 73,
+      heightCm: 175,
+      waistCircumferenceCm: null,
+      notes: 'Registro corrigido',
+    });
+
+    const history = await request(app)
+      .get(`/api/patients/${patient.user.id}/measurements`)
+      .set(bearer(patient.token));
+    expect(history.body.measurements).toHaveLength(1);
+    expect(history.body.measurements[0]).toMatchObject({
+      id: measurement.id,
+      weightKg: 73,
+      waistCircumferenceCm: null,
+    });
+  });
+
+  it('remove a medida do historico de evolucao', async () => {
+    const patient = await createUserWithRole(app, 'PATIENT');
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const profile = await linkPatient(nutritionist, patient);
+    const measurement = await app.locals.prisma.patientMeasurement.create({
+      data: {
+        patientProfileId: profile.id,
+        weightKg: 72,
+        heightCm: 175,
+      },
+    });
+
+    const response = await request(app)
+      .delete(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
+      .set(bearer(nutritionist.token));
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toContain('historico de evolucao');
+
+    const history = await request(app)
+      .get(`/api/patients/${patient.user.id}/measurements`)
+      .set(bearer(patient.token));
+    expect(history.body.measurements).toEqual([]);
+    expect(await app.locals.prisma.patientMeasurement.findUnique({
+      where: { id: measurement.id },
+    })).toBeNull();
+  });
+
+  it('permite alterar ou excluir apenas ao nutricionista responsavel', async () => {
+    const patient = await createUserWithRole(app, 'PATIENT');
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const otherNutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const profile = await linkPatient(nutritionist, patient);
+    const measurement = await app.locals.prisma.patientMeasurement.create({
+      data: {
+        patientProfileId: profile.id,
+        weightKg: 72,
+        heightCm: 175,
+      },
+    });
+
+    const update = await request(app)
+      .put(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
+      .set(bearer(otherNutritionist.token))
+      .send({ weightKg: 73 });
+    const deletion = await request(app)
+      .delete(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
+      .set(bearer(otherNutritionist.token));
+
+    expect(update.statusCode).toBe(403);
+    expect(deletion.statusCode).toBe(403);
+    expect((await app.locals.prisma.patientMeasurement.findUnique({
+      where: { id: measurement.id },
+    })).weightKg).toBe(72);
+  });
+
+  it.each([
+    [{}],
+    [{ weightKg: 0 }],
+    [{ heightCm: null }],
+    [{ recordedAt: '2000-01-01T00:00:00.000Z' }],
+  ])('rejeita dados invalidos ao editar medidas: %s', async (payload) => {
+    const patient = await createUserWithRole(app, 'PATIENT');
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const profile = await linkPatient(nutritionist, patient);
+    const measurement = await app.locals.prisma.patientMeasurement.create({
+      data: {
+        patientProfileId: profile.id,
+        weightKg: 72,
+        heightCm: 175,
+      },
+    });
+
+    const response = await request(app)
+      .put(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
+      .set(bearer(nutritionist.token))
+      .send(payload);
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('retorna 404 ao editar ou excluir medida inexistente do paciente', async () => {
+    const patient = await createUserWithRole(app, 'PATIENT');
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    await linkPatient(nutritionist, patient);
+
+    const update = await request(app)
+      .put(`/api/patients/${patient.user.id}/measurements/medida-inexistente`)
+      .set(bearer(nutritionist.token))
+      .send({ weightKg: 73 });
+    const deletion = await request(app)
+      .delete(`/api/patients/${patient.user.id}/measurements/medida-inexistente`)
+      .set(bearer(nutritionist.token));
+
+    expect(update.statusCode).toBe(404);
+    expect(deletion.statusCode).toBe(404);
+  });
 });

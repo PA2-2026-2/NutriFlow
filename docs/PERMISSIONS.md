@@ -35,6 +35,8 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/users/me/photo` | ✅ | ✅ | ✅ | Envia a própria foto (JPG/PNG, até 2 MB) |
 | `POST /api/patients/me/nutritionist` | ✅ | ❌ | ❌ | Vincula o paciente logado a um nutricionista pelo e-mail dele |
 | `POST /api/patients/:id/measurements` | ❌ | ✅ | ❌ | Registra medidas de paciente vinculado ao nutricionista autenticado |
+| `PUT /api/patients/:id/measurements/:measurementId` | ❌ | ✅ | ❌ | Edita medidas de um registro do paciente vinculado ao nutricionista autenticado |
+| `DELETE /api/patients/:id/measurements/:measurementId` | ❌ | ✅ | ❌ | Remove um registro de medidas do histórico de evolução do paciente vinculado |
 | `GET /api/patients/:id/measurements` | ✅ | ✅ | ❌ | Lista medidas em ordem cronológica; paciente consulta apenas as próprias e nutricionista apenas pacientes vinculados |
 | `GET /api/patient/dashboard` | ✅ | ❌ | ❌ | Carrega dados, plano alimentar e históricos do paciente |
 | `POST /api/patient/meals` | ✅ | ❌ | ❌ | Registra uma refeição do paciente |
@@ -67,6 +69,12 @@ altura de 30–300 cm, circunferências de pescoço/braço/panturrilha de 5–10
 tórax/cintura/quadril de 20–250 cm, coxa de 10–150 cm e dobras cutâneas de
 1–100 mm. `recordedAt` é definido automaticamente e não pode ser enviado no
 corpo da requisição.
+
+Para editar um registro, `PUT /api/patients/:id/measurements/:measurementId`
+aceita um ou mais campos de medida existentes, sem exigir peso e altura em toda
+atualização. Campos opcionais podem receber `null` para serem limpos. A exclusão
+usa `DELETE` no mesmo caminho e remove permanentemente o registro do histórico.
+Ambas as operações são restritas ao nutricionista atualmente vinculado ao paciente.
 
 Planos alimentares só podem ser criados para pacientes vinculados ao nutricionista
 autenticado. Os itens referenciam alimentos da base; calorias, proteínas,
