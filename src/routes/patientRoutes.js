@@ -15,6 +15,21 @@ function createPatientRoutes(patientController, authenticate) {
 		authorize('POST /api/patients/:id/measurements'),
 		asyncHandler(patientController.recordMeasurement.bind(patientController)),
 	);
+	router.put(
+		'/:id/measurements/:measurementId',
+		authorize('PUT /api/patients/:id/measurements/:measurementId'),
+		asyncHandler(patientController.updateMeasurement.bind(patientController)),
+	);
+	router.patch(
+		'/:id/measurements/:measurementId',
+		authorize('PATCH /api/patients/:id/measurements/:measurementId'),
+		asyncHandler(patientController.updateMeasurement.bind(patientController)),
+	);
+	router.delete(
+		'/:id/measurements/:measurementId',
+		authorize('DELETE /api/patients/:id/measurements/:measurementId'),
+		asyncHandler(patientController.deleteMeasurement.bind(patientController)),
+	);
 	router.get(
 		'/:id/measurements',
 		authorize('GET /api/patients/:id/measurements'),

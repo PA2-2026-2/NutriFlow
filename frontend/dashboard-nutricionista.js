@@ -31,6 +31,7 @@ const state = {
   isSendingChatMessage: false,
   isLoadingConversation: false,
   patientSearch: '',
+  editingMeasurement: null,
 };
 
 const APPOINTMENT_STATUS_LABELS = {
@@ -377,7 +378,13 @@ function renderPatientProfileModal(patient) {
     measurementsHistoryContainer.innerHTML = bodyMeasurements.history?.length
       ? bodyMeasurements.history.map((group) => `
           <div class="rounded-xl border border-nutriflow-100 bg-nutriflow-50 px-3 py-3">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-nutriflow-500">${escapeHtml(group.dateLabel)}</p>
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-bold uppercase tracking-[0.12em] text-nutriflow-500">${escapeHtml(group.dateLabel)}</p>
+              <div class="flex gap-2">
+                <button type="button" data-edit-measurement-id="${escapeHtml(group.id)}" class="rounded-lg border border-nutriflow-200 bg-white px-2 py-1 text-xs font-bold text-nutriflow-900">Editar</button>
+                <button type="button" data-delete-measurement-id="${escapeHtml(group.id)}" class="rounded-lg border border-red-200 bg-white px-2 py-1 text-xs font-bold text-red-600">Excluir</button>
+              </div>
+            </div>
             <div class="mt-2 flex flex-wrap gap-2">
               ${group.items.map((measurement) => `
                 <span class="rounded-full border border-white bg-white px-3 py-1 text-xs font-bold text-nutriflow-950">
@@ -510,32 +517,85 @@ function addAssessmentMeasurementRow(measurement = {}) {
 
 function resetAssessmentForm() {
   document.getElementById('assessmentForm')?.reset();
+  state.editingMeasurement = null;
+  document.getElementById('assessmentModalTitle').textContent = 'Registrar Avaliação Física';
+  document.getElementById('assessmentSubmitButton').textContent = 'Salvar no Banco';
 
   const patient = getSelectedPatient();
   const patientSelect = document.getElementById('assessmentPatient');
   const weightInput = document.getElementById('assessmentWeight');
   const heightInput = document.getElementById('assessmentHeight');
-  const bodyFatInput = document.getElementById('assessmentBodyFat');
   const measurementsList = document.getElementById('assessmentMeasurementsList');
+
+  if (weightInput) {
+    weightInput.value = '';
+  }
+
+  if (heightInput) {
+    heightInput.value = '';
+  }
 
   if (patientSelect && patient?.id) {
     patientSelect.value = patient.id;
   }
 
-  if (weightInput) {
-    weightInput.value = patient?.weight || '';
-  }
-
-  if (heightInput) {
-    heightInput.value = patient?.height ? Number(patient.height) * 100 : '';
-  }
-
-  if (bodyFatInput) {
-    bodyFatInput.value = patient?.bodyFat || '';
-  }
-
   if (measurementsList) {
     measurementsList.innerHTML = '';
+  }
+}
+
+async function editPatientMeasurement(patientId, measurementId) {
+  try {
+    const response = await apiRequest(`/api/patients/${encodeURIComponent(patientId)}/measurements`);
+    const measurement = (response.measurements || []).find((entry) => entry.id === measurementId);
+
+    if (!measurement) {
+      showToast('Medida nao encontrada no historico.');
+      return;
+    }
+
+    resetAssessmentForm();
+    state.editingMeasurement = { patientId, measurementId };
+    document.getElementById('assessmentModalTitle').textContent = 'Editar Avaliação Física';
+    document.getElementById('assessmentSubmitButton').textContent = 'Salvar alterações';
+    document.getElementById('assessmentPatient').value = patientId;
+    document.getElementById('assessmentWeight').value = measurement.weightKg;
+    document.getElementById('assessmentHeight').value = measurement.heightCm;
+    document.getElementById('assessmentBodyFat').value = measurement.bodyFatPercent ?? '';
+    document.getElementById('assessmentNotes').value = measurement.notes || '';
+
+    for (const [field, value] of Object.entries(measurement)) {
+      if (
+        field.endsWith('CircumferenceCm') ||
+        field.endsWith('SkinfoldMm')
+      ) {
+        if (value !== null && value !== undefined) {
+          addAssessmentMeasurementRow({ field, value });
+        }
+      }
+    }
+
+    openModal('assessment');
+  } catch (error) {
+    showToast(error.message || 'Nao foi possivel carregar a medida.');
+  }
+}
+
+async function deletePatientMeasurement(patientId, measurementId) {
+  if (!window.confirm('Deseja excluir esta medida do historico de evolucao?')) {
+    return;
+  }
+
+  try {
+    await apiRequest(
+      `/api/patients/${encodeURIComponent(patientId)}/measurements/${encodeURIComponent(measurementId)}`,
+      { method: 'DELETE' },
+    );
+    showToast('Medida removida do historico.');
+    await fetchDatabaseData();
+    renderPatientProfileModal(state.patients.find((patient) => patient.id === patientId));
+  } catch (error) {
+    showToast(error.message || 'Nao foi possivel excluir a medida.');
   }
 }
 
@@ -1213,6 +1273,17 @@ function bindButtons() {
     openModal('assessment');
   });
 
+  document.getElementById('patientProfileBodyMeasurementHistory')?.addEventListener('click', (event) => {
+    const editButton = event.target.closest('[data-edit-measurement-id]');
+    const deleteButton = event.target.closest('[data-delete-measurement-id]');
+
+    if (editButton) {
+      void editPatientMeasurement(state.selectedPatientId, editButton.dataset.editMeasurementId);
+    } else if (deleteButton) {
+      void deletePatientMeasurement(state.selectedPatientId, deleteButton.dataset.deleteMeasurementId);
+    }
+  });
+
   document.querySelectorAll('[data-close]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1315,20 +1386,59 @@ document.getElementById('assessmentForm')?.addEventListener('submit', async (e) 
     return;
   }
 
-  const patientId = document.getElementById('assessmentPatient').value;
+  const patientId = state.editingMeasurement?.patientId
+    || document.getElementById('assessmentPatient').value;
   const payload = {
     weightKg: Number(document.getElementById('assessmentWeight').value),
     heightCm: Number(document.getElementById('assessmentHeight').value),
-    bodyFatPercent: Number(document.getElementById('assessmentBodyFat').value),
-    notes: document.getElementById('assessmentNotes').value,
     ...measurements,
   };
+  const bodyFatValue = document.getElementById('assessmentBodyFat').value;
+  const notesValue = document.getElementById('assessmentNotes').value;
+
+  if (state.editingMeasurement) {
+    payload.bodyFatPercent = bodyFatValue ? Number(bodyFatValue) : null;
+    payload.notes = notesValue.trim() || null;
+    for (const field of [
+      'neckCircumferenceCm',
+      'chestCircumferenceCm',
+      'waistCircumferenceCm',
+      'hipCircumferenceCm',
+      'armCircumferenceCm',
+      'thighCircumferenceCm',
+      'calfCircumferenceCm',
+      'tricepsSkinfoldMm',
+      'bicepsSkinfoldMm',
+      'subscapularSkinfoldMm',
+      'suprailiacSkinfoldMm',
+      'abdominalSkinfoldMm',
+      'thighSkinfoldMm',
+      'calfSkinfoldMm',
+    ]) {
+      payload[field] = Object.hasOwn(measurements, field) ? measurements[field] : null;
+    }
+  } else {
+    if (bodyFatValue) {
+      payload.bodyFatPercent = Number(bodyFatValue);
+    }
+    payload.notes = notesValue;
+  }
+
   try {
-    await apiRequest(`/api/patients/${encodeURIComponent(patientId)}/measurements`, {
-      method: 'POST',
+    await apiRequest(
+      state.editingMeasurement
+        ? `/api/patients/${encodeURIComponent(patientId)}/measurements/${encodeURIComponent(state.editingMeasurement.measurementId)}`
+        : `/api/patients/${encodeURIComponent(patientId)}/measurements`,
+      {
+      method: state.editingMeasurement ? 'PATCH' : 'POST',
       body: JSON.stringify(payload),
-    });
-    showToast('Avaliação salva!'); closeModal('assessment'); await fetchDatabaseData();
+      },
+    );
+    showToast(state.editingMeasurement ? 'Avaliação atualizada!' : 'Avaliação salva!');
+    closeModal('assessment');
+    state.editingMeasurement = null;
+    await fetchDatabaseData();
+    renderPatientProfileModal(state.patients.find((patient) => patient.id === patientId));
   } catch(err) { showToast(err.message || 'Erro ao salvar avaliação.'); }
 });
 
