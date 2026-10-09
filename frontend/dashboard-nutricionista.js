@@ -2,6 +2,7 @@ const {
   createApiClient,
   createSessionManager,
   createToastController,
+  cropImageToSquare,
   escapeHtml,
   formatSidebarDate: formatCoreSidebarDate,
   getInitials,
@@ -38,6 +39,7 @@ const APPOINTMENT_STATUS_LABELS = {
   remarcada: 'Remarcada',
   faltou: 'Faltou',
 };
+const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 const toast = document.getElementById('nutritionistToast');
 const toastController = createToastController(toast, { duration: 3000 });
@@ -200,10 +202,48 @@ function renderAll() {
 function renderHeader() {
   const currentUser = state.currentUser || session.getUser() || { name: 'Nutricionista' };
   document.querySelectorAll('[data-nutritionist-name]').forEach(el => el.textContent = currentUser.name);
-  document.querySelectorAll('[data-nutritionist-initial]').forEach(el => el.textContent = getInitials(currentUser.name));
+  document.querySelectorAll('[data-nutritionist-initial]').forEach((element) => {
+    if (currentUser.profilePhotoUrl) {
+      const image = document.createElement('img');
+      image.src = currentUser.profilePhotoUrl;
+      image.alt = `Foto de perfil de ${currentUser.name || 'nutricionista'}`;
+      image.className = 'h-full w-full rounded-[14px] object-cover';
+      image.addEventListener('error', () => {
+        element.textContent = getInitials(currentUser.name) || '--';
+      }, { once: true });
+      element.replaceChildren(image);
+      return;
+    }
+
+    element.textContent = getInitials(currentUser.name) || '--';
+  });
   document.querySelectorAll('[data-nutritionist-email]').forEach(el => el.textContent = currentUser.email || '--');
   document.querySelector('[data-sidebar-date]').textContent = formatCoreSidebarDate();
   document.querySelector('[data-header-greeting]').textContent = `Olá, ${currentUser.name}`;
+}
+
+function renderNutritionistProfilePhoto(user) {
+  const preview = document.getElementById('nutritionistProfilePhotoPreview');
+
+  if (!preview) {
+    return;
+  }
+
+  const initials = getInitials(user?.name) || '--';
+
+  if (!user?.profilePhotoUrl) {
+    preview.textContent = initials;
+    return;
+  }
+
+  const image = document.createElement('img');
+  image.src = user.profilePhotoUrl;
+  image.alt = `Foto de perfil de ${user.name || 'nutricionista'}`;
+  image.className = 'h-full w-full rounded-full object-cover';
+  image.addEventListener('error', () => {
+    preview.textContent = initials;
+  }, { once: true });
+  preview.replaceChildren(image);
 }
 
 function renderPatientsList() {
@@ -1006,7 +1046,56 @@ async function openNutritionistSettings() {
   profileName.value = user.name || '';
   profileEmail.value = user.email || '';
   profilePhone.value = user.phone || '';
+  renderNutritionistProfilePhoto(user);
   openModal('settings');
+}
+
+async function handleNutritionistPhotoUpload() {
+  const input = document.getElementById('nutritionistProfilePhotoInput');
+  const file = input?.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    showToast('Selecione uma imagem JPG ou PNG.');
+    input.value = '';
+    return;
+  }
+
+  try {
+    const croppedPhoto = await cropImageToSquare(file);
+
+    if (croppedPhoto.size > MAX_PROFILE_PHOTO_UPLOAD_BYTES) {
+      showToast('Não foi possível ajustar a foto ao limite de envio.');
+      return;
+    }
+
+    const response = await apiRequest('/api/users/me/photo', {
+      method: 'POST',
+      headers: { 'Content-Type': croppedPhoto.type },
+      body: await croppedPhoto.arrayBuffer(),
+    });
+    const user = {
+      ...state.currentUser,
+      ...(response.user || {}),
+      profilePhotoUrl:
+        response.profilePhotoUrl ||
+        response.user?.profilePhotoUrl ||
+        state.currentUser?.profilePhotoUrl ||
+        null,
+    };
+
+    state.currentUser = session.persistUser(user);
+    renderNutritionistProfilePhoto(user);
+    renderHeader();
+    showToast(response.message || 'Foto atualizada com sucesso.');
+  } catch (error) {
+    showToast(error.message || 'Não foi possível atualizar a foto.');
+  } finally {
+    input.value = '';
+  }
 }
 
 async function handleNutritionistProfileSubmit(event) {
@@ -1060,6 +1149,7 @@ function bindButtons() {
   });
 
   document.getElementById('settingsForm')?.addEventListener('submit', handleNutritionistProfileSubmit);
+  document.getElementById('nutritionistProfilePhotoInput')?.addEventListener('change', handleNutritionistPhotoUpload);
 
   document.getElementById('btnOpenLinkPatient')?.addEventListener('click', () => {
     openModal('linkPatient');

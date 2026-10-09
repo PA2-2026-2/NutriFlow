@@ -117,6 +117,8 @@ const WEEKLY_WEIGHT_LIMITS = {
   min: 20,
   max: 350,
 };
+const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 2 * 1024 * 1024;
+const cropProfilePhoto = window.NutriFlowCore.cropImageToSquare;
 
 function getSessionToken() {
   return localStorage.getItem('nutriflow.token');
@@ -162,6 +164,30 @@ function getInitials(name) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || '')
     .join('');
+}
+
+function renderProfilePhotoPreview(patient) {
+  const preview = document.getElementById('profilePhotoPreview');
+
+  if (!preview) {
+    return;
+  }
+
+  const initials = getInitials(patient?.name) || '--';
+
+  if (!patient?.profilePhotoUrl) {
+    preview.textContent = initials;
+    return;
+  }
+
+  const image = document.createElement('img');
+  image.src = patient.profilePhotoUrl;
+  image.alt = `Foto de perfil de ${patient.name || 'paciente'}`;
+  image.className = 'h-full w-full rounded-full object-cover';
+  image.addEventListener('error', () => {
+    preview.textContent = initials;
+  }, { once: true });
+  preview.replaceChildren(image);
 }
 
 function getFirstName(name) {
@@ -889,11 +915,25 @@ function renderHeader() {
   const patientInitials = getInitials(patient.name) || '--';
   const nutritionistName = nutritionist.name || 'Sem Nutricionista';
 
+  renderProfilePhotoPreview(patient);
+
   document.querySelectorAll('[data-user-name]').forEach((element) => {
     element.textContent = patientName;
   });
 
   document.querySelectorAll('[data-user-initial]').forEach((element) => {
+    if (patient.profilePhotoUrl) {
+      const image = document.createElement('img');
+      image.src = patient.profilePhotoUrl;
+      image.alt = `Foto de perfil de ${patientName}`;
+      image.className = 'h-full w-full rounded-[14px] object-cover';
+      image.addEventListener('error', () => {
+        element.replaceChildren(document.createTextNode(patientInitials));
+      }, { once: true });
+      element.replaceChildren(image);
+      return;
+    }
+
     element.textContent = patientInitials;
   });
 
@@ -1914,6 +1954,7 @@ function bindWeightModalEvents() {
 function bindEvents() {
   logoutButton?.addEventListener('click', clearSessionAndRedirect);
   patientProfileButton?.addEventListener('click', openPatientSettingsModal);
+  document.getElementById('profilePhotoInput')?.addEventListener('change', handlePatientPhotoUpload);
   patientGlobalSearch?.addEventListener('input', applyPatientGlobalSearch);
   addMealButton?.addEventListener('click', () => handleAddMeal());
   quickAddMealButton?.addEventListener('click', () => handleAddMeal({ templateKey: 'lanche-rapido' }));
@@ -1996,6 +2037,7 @@ async function openPatientSettingsModal() {
   document.getElementById('profileHeightInput').value = patient.height || '';
   document.getElementById('profileObjectiveInput').value = patient.objective || '';
   document.getElementById('profileRestrictionsInput').value = patient.restrictions || '';
+  renderProfilePhotoPreview(patient);
 
   const modal = document.getElementById('patientSettingsModal');
   modal.classList.remove('hidden');
@@ -2024,20 +2066,45 @@ async function handlePatientPhotoUpload() {
   }
 
   try {
-    const buffer = await file.arrayBuffer();
+    const croppedPhoto = await cropProfilePhoto(file);
+
+    if (croppedPhoto.size > MAX_PROFILE_PHOTO_UPLOAD_BYTES) {
+      showToast('Não foi possível ajustar a foto ao limite de envio.');
+      return;
+    }
 
     const result = await apiRequest('/api/users/me/photo', {
       method: 'POST',
       headers: {
-        'Content-Type': file.type,
+        'Content-Type': croppedPhoto.type,
       },
-      body: buffer,
+      body: await croppedPhoto.arrayBuffer(),
     });
 
+    const updatedUser = {
+      ...state.currentUser,
+      ...(result.user || {}),
+      profilePhotoUrl:
+        result.profilePhotoUrl ||
+        result.user?.profilePhotoUrl ||
+        state.currentUser?.profilePhotoUrl ||
+        null,
+    };
+    persistCurrentUser(updatedUser);
+
+    if (state.dashboard?.patient) {
+      state.dashboard.patient = {
+        ...state.dashboard.patient,
+        ...updatedUser,
+      };
+    }
+
+    renderHeader();
     showToast(result.message || 'Foto atualizada com sucesso!');
-    input.value = '';
   } catch (error) {
     showToast(error.message || 'Nao foi possivel atualizar a foto.');
+  } finally {
+    input.value = '';
   }
 }
 async function handlePatientSettingsSubmit(e) {
@@ -2101,4 +2168,3 @@ function renderChallenges() {
 }
 
 init();
-
