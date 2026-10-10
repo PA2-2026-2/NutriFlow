@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>NutriFlow | Dashboard do Nutricionista</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -19,7 +19,7 @@
 <body class="dashboard-body nutritionist-body text-nutriflow-950 font-sans">
   <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(21,53,93,.12),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(111,150,86,.18),transparent_26%)]"></div>
   
-  <div class="relative mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-4 py-4 md:px-6 xl:gap-6">
+  <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-4 py-4 md:px-6 xl:gap-6">
     <aside class="dashboard-sidebar nutritionist-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[280px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col overflow-y-auto">
       <div>
         <a href="/dashboard-nutricionista.html#dashboard" class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-2xl bg-white/12"><span class="inline-block h-3 w-3 rounded-full bg-white"></span></span><div><p class="text-lg font-extrabold tracking-[-0.05em]">NutriFlow</p><p class="text-[10px] text-white/68 uppercase">Workspace Nutri</p></div></a>
@@ -60,6 +60,12 @@
     </div>
   </div>
 </header>
+
+      <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel da nutricionista">
+        <a class="mobile-nav-pill is-active" href="#pacientes">Pacientes</a>
+        <a class="mobile-nav-pill" href="#plano-alimentar">Planos e agenda</a>
+        <a class="mobile-nav-pill" href="#desafios">Desafios</a>
+      </nav>
 
       <main class="mt-6 space-y-6 pb-6">
         <section id="pacientes" class="grid gap-6 2xl:grid-cols-[1.3fr_.7fr]">
@@ -117,7 +123,7 @@
           </article>
         </section>
         
-        <section class="grid gap-6">
+        <section id="desafios" class="grid gap-6">
           <article class="dashboard-surface rounded-[24px] p-5">
             <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold">Desafios Ativos</h2><button id="btnOpenChallenge" class="text-xs bg-nutriflow-200 px-3 py-1 rounded-md font-bold">Novo Desafio</button></div>
             <div id="challengesList" class="space-y-3"></div>

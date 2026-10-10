@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>NutriFlow | Dashboard do paciente</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -43,7 +43,7 @@
 <body class="dashboard-body text-nutriflow-950 font-sans">
   <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(21,53,93,.10),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(111,150,86,.16),transparent_28%)]"></div>
 
-  <div class="relative mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 px-4 py-4 md:gap-6 md:px-6 lg:px-8">
+  <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 px-4 py-4 md:gap-6 md:px-6 lg:px-8">
     
     <aside class="dashboard-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[290px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col overflow-y-auto">
       <div>
@@ -116,6 +116,15 @@
           </div>
         </div>
       </header>
+
+      <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel do paciente">
+        <a class="mobile-nav-pill is-active" href="#visao-geral">Visão geral</a>
+        <a class="mobile-nav-pill" href="#refeicoes">Refeições</a>
+        <a class="mobile-nav-pill" href="#historico">Histórico</a>
+        <a class="mobile-nav-pill" href="#plano">Plano alimentar</a>
+        <a class="mobile-nav-pill" href="#medidas">Medidas</a>
+        <a class="mobile-nav-pill" href="#peso">Peso</a>
+      </nav>
 
       <main class="mt-6 space-y-6 pb-6">
         <section id="visao-geral" class="grid gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.85fr)]">

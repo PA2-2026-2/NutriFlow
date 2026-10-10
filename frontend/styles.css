@@ -3282,3 +3282,314 @@ main .dashboard-card:nth-of-type(5) {
     gap: 8px;
   }
 }
+
+.dashboard-layout {
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+}
+
+.mobile-dashboard-nav {
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-dashboard-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-dashboard-nav > a {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.dashboard-body {
+  overflow-x: clip;
+}
+
+.dashboard-body main,
+.dashboard-body main > section,
+.dashboard-body main article,
+.dashboard-body main nf-stat-card,
+.dashboard-body main nf-workspace-chip,
+.dashboard-body main nf-metric-block,
+.dashboard-body main nf-report-card {
+  min-width: 0;
+}
+
+.dashboard-body img,
+.dashboard-body canvas,
+.dashboard-body svg {
+  max-width: 100%;
+}
+
+.dashboard-body input,
+.dashboard-body select,
+.dashboard-body textarea,
+.nf-field input,
+.nf-field select,
+.nf-field textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nf-modal-overlay {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.nf-modal-card {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#floatingChat {
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 8rem);
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    gap: 0;
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .dashboard-layout > .min-w-0 {
+    width: 100%;
+  }
+
+  .dashboard-layout header.dashboard-surface {
+    position: relative;
+    top: auto;
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  .dashboard-layout header.dashboard-surface > div {
+    min-width: 0;
+  }
+
+  .dashboard-layout header h1 {
+    font-size: clamp(1.45rem, 6vw, 1.9rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-layout header p {
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-layout header .dashboard-search {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-layout header button {
+    min-height: 44px;
+    min-width: 0;
+  }
+
+  .dashboard-layout main {
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .dashboard-layout main .dashboard-surface {
+    border-radius: 1.25rem;
+  }
+
+  .mobile-nav-pill {
+    min-height: 44px;
+    padding: 0.7rem 0.9rem;
+    scroll-snap-align: start;
+  }
+
+  .dashboard-body .nf-modal-overlay {
+    align-items: flex-start;
+  }
+
+  .dashboard-body .nf-modal-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    border-radius: 1.25rem;
+    padding: 1rem;
+  }
+
+  .dashboard-body .nf-modal-card button,
+  .dashboard-body .nf-modal-card [type="submit"],
+  .dashboard-body .nf-modal-card [type="button"] {
+    min-height: 44px;
+  }
+
+  #floatingChat {
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+    width: min(24rem, calc(100vw - 1.5rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    height: min(28rem, calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  }
+
+  #btnToggleChat {
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .landing-body .landing-shell {
+    width: calc(100% - 1rem);
+    margin-top: max(0.5rem, env(safe-area-inset-top));
+    margin-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    border-radius: 1.5rem;
+  }
+
+  .landing-body .landing-topbar {
+    gap: 0.75rem;
+  }
+
+  .landing-body .landing-topbar > div:last-child {
+    display: flex;
+    width: 100%;
+  }
+
+  .landing-body .landing-topbar > div:last-child button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .landing-body .landing-nav {
+    width: 100%;
+    scroll-snap-type: x proximity;
+  }
+
+  .landing-body .landing-hero-panel {
+    border-radius: 1.5rem;
+    padding: 1.25rem;
+  }
+
+  .landing-body .landing-hero-copy h1 {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+    line-height: 0.98;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-layout {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .dashboard-layout header.dashboard-surface {
+    padding: 0.875rem;
+  }
+
+  .dashboard-layout header > div > div:last-child {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .dashboard-layout header .dashboard-search {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-layout header > div > div:last-child > button {
+    justify-content: center;
+  }
+
+  .dashboard-layout header [aria-label="Abrir meu perfil"] {
+    grid-column: 1;
+  }
+
+  .dashboard-layout header #quickAddMealButton {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-layout header #logoutButton,
+  .dashboard-layout header #adminLogoutButton {
+    grid-column: 2;
+  }
+
+  .nutritionist-body #pacientes > article:first-child > div:first-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .nutritionist-body #pacientes > article:first-child > div:first-child > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nutritionist-body #pacientes > article:first-child > div:first-child > div > button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-layout main .dashboard-card,
+  .dashboard-layout main article.dashboard-surface {
+    padding: 1rem;
+  }
+
+  .dashboard-layout main .dashboard-card h2,
+  .dashboard-layout main article.dashboard-surface h2 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .dashboard-body .nf-modal-overlay {
+    padding:
+      max(0.5rem, env(safe-area-inset-top))
+      max(0.5rem, env(safe-area-inset-right))
+      max(0.5rem, env(safe-area-inset-bottom))
+      max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .dashboard-body .nf-modal-card {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .dashboard-body .nf-modal-card form > .flex.justify-end {
+    flex-direction: column-reverse;
+  }
+
+  .dashboard-body .nf-modal-card form > .flex.justify-end > button {
+    width: 100%;
+  }
+
+  .landing-body .landing-shell > main {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .dashboard-body button,
+  .dashboard-body a,
+  .landing-body button,
+  .landing-body a {
+    touch-action: manipulation;
+  }
+
+  .dashboard-body input,
+  .dashboard-body select,
+  .dashboard-body textarea {
+    font-size: 16px;
+  }
+}
