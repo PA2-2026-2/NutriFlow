@@ -40,13 +40,23 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `DELETE /api/patients/:id/measurements/:measurementId` | ❌ | ✅ | ❌ | Remove a medida do histórico de evolução do paciente vinculado |
 | `GET /api/patients/:id/measurements` | ✅ | ✅ | ❌ | Lista medidas em ordem cronológica; paciente consulta apenas as próprias e nutricionista apenas pacientes vinculados |
 | `GET /api/patient/dashboard` | ✅ | ❌ | ❌ | Carrega dados, plano alimentar e históricos do paciente |
+| `GET /api/patient/chat` | ✅ | ❌ | ❌ | Alias compatível para carregar a conversa do paciente vinculado |
 | `POST /api/patient/meals` | ✅ | ❌ | ❌ | Registra uma refeição do paciente |
+| `POST /api/patient/messages` | ✅ | ❌ | ❌ | Alias compatível para enviar mensagem ao nutricionista vinculado |
 | `POST /api/patient/weights` | ✅ | ❌ | ❌ | Registra uma pesagem semanal do paciente |
 | `GET /api/nutritionist/patients` | ❌ | ✅ | ❌ | Lista pacientes vinculados ao nutricionista autenticado |
 | `POST /api/nutritionist/link-patient` | ❌ | ✅ | ❌ | Vincula um paciente pelo e-mail dele |
 | `GET /api/nutritionist/foods` | ❌ | ✅ | ❌ | Lista a base de alimentos para montar planos |
 | `GET /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Lista os planos alimentares do nutricionista |
 | `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
+| `GET /chat/messages` | ✅ | ✅ | ❌ | Carrega mensagens entre participantes com vínculo ativo e marca recebidas como lidas |
+| `GET /api/chat/messages` | ✅ | ✅ | ❌ | Alias da consulta de conversa |
+| `POST /chat/messages` | ✅ | ✅ | ❌ | Envia mensagem de texto para paciente/nutricionista com vínculo ativo |
+| `POST /api/chat/messages` | ✅ | ✅ | ❌ | Alias da rota de envio de mensagens |
+| `GET /chat/conversations` | ✅ | ✅ | ❌ | Lista conversas dos vínculos ativos, última mensagem e quantidade de não lidas |
+| `GET /api/chat/conversations` | ✅ | ✅ | ❌ | Alias da listagem de conversas |
+| `GET /chat/conversations/:conversationId/messages` | ✅ | ✅ | ❌ | Histórico cronológico paginado; somente participantes vinculados |
+| `GET /api/chat/conversations/:conversationId/messages` | ✅ | ✅ | ❌ | Alias do histórico paginado |
 | `GET /api/admin/users` | ❌ | ❌ | ✅ | Lista usuários (`?role=` e `?search=`) |
 | `GET /api/admin/summary` | ❌ | ❌ | ✅ | Exibe o resumo administrativo |
 | `GET /api/admin/foods` | ❌ | ❌ | ✅ | Lista o catálogo global de alimentos |
@@ -62,6 +72,12 @@ Regra adicional do vínculo paciente-nutricionista: o paciente só pode ter um
 nutricionista responsável por vez — vincular de novo substitui o anterior. O
 endpoint retorna `404` se o e-mail informado não pertencer a um nutricionista
 cadastrado, e `403` se o nutricionista estiver inativo.
+
+O envio de mensagens aceita apenas `recipientId` e `content`; o remetente é sempre
+o usuário autenticado. A conversa só pode ser iniciada entre paciente e
+nutricionista atualmente vinculados, e a mensagem começa com status `UNREAD`.
+Ao consultar a conversa, somente seus participantes têm acesso e as mensagens
+recebidas com status `UNREAD` passam para `READ`, com `readAt` definido pelo servidor.
 
 O endpoint de medidas recebe o ID do usuário do paciente. `weightKg` e
 `heightCm` são obrigatórios; circunferências (`*CircumferenceCm`) e dobras

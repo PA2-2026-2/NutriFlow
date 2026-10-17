@@ -25,11 +25,14 @@ const state = {
   activeFilterId: null, 
   activeChallengeId: null, 
   mealPlans: [], assessments: [], appointments: [], challenges: [], messages: [], foods: [], reminders: [],
-  chatPatientId: null,
-  activeConversation: null,
-  lastConversationSignature: '',
-  isSendingChatMessage: false,
-  isLoadingConversation: false,
+  chatConversations: [],
+  workspaceConversationId: null,
+  workspaceMessages: [],
+  workspacePagination: null,
+  workspacePage: 1,
+  workspaceRequestId: 0,
+  isLoadingWorkspace: false,
+  isSendingWorkspaceMessage: false,
   patientSearch: '',
   editingMeasurement: null,
 };
@@ -44,47 +47,17 @@ const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 const toast = document.getElementById('nutritionistToast');
 const toastController = createToastController(toast, { duration: 3000 });
-const chatModal = document.getElementById('floatingChat');
-const chatMessages = document.getElementById('chatMessages');
-const chatForm = document.getElementById('chatForm');
-const chatInput = document.getElementById('chatInput');
-const chatSubmitButton = document.getElementById('chatSubmitBtn');
-const chatPatientSelect = document.getElementById('chatPatientSelect');
 const nutritionistPatientSearch = document.getElementById('nutritionistPatientSearch');
+const conversationList = document.getElementById('conversationList');
+const workspaceMessages = document.getElementById('workspaceMessages');
+const workspaceMessageInput = document.getElementById('workspaceMessageInput');
+const workspaceMessageSubmit = document.getElementById('workspaceMessageSubmit');
+const workspaceMessageForm = document.getElementById('workspaceMessageForm');
+const loadOlderMessagesButton = document.getElementById('loadOlderMessages');
 let nutritionistChatSyncIntervalId = null;
-let nutritionistChatSyncInFlight = false;
-
-if (chatInput) {
-  chatInput.maxLength = 500;
-}
 
 function showToast(message) { toastController.show(message); }
 function ensureNutritionistAccess() { return session.ensureAuthenticated(); }
-
-function getChatConversationMetaElement() {
-  let element = document.getElementById('chatConversationMeta');
-
-  if (element) {
-    return element;
-  }
-
-  const headerGroup = document.querySelector('#floatingChat h3')?.parentElement;
-
-  if (!headerGroup) {
-    return null;
-  }
-
-  element = document.createElement('p');
-  element.id = 'chatConversationMeta';
-  element.className = 'mt-1 text-[11px] text-white/65';
-  headerGroup.appendChild(element);
-  return element;
-}
-
-function clearActiveConversation() {
-  state.activeConversation = null;
-  state.lastConversationSignature = '';
-}
 
 function ensureValidPatientSelections() {
   const patientIds = new Set(state.patients.map((patient) => patient.id));
@@ -92,8 +65,6 @@ function ensureValidPatientSelections() {
   if (!state.patients.length) {
     state.selectedPatientId = null;
     state.activeFilterId = null;
-    state.chatPatientId = null;
-    clearActiveConversation();
     return;
   }
 
@@ -105,54 +76,184 @@ function ensureValidPatientSelections() {
     state.activeFilterId = null;
   }
 
-  if (!patientIds.has(state.chatPatientId)) {
-    state.chatPatientId = state.selectedPatientId;
-    clearActiveConversation();
+}
+
+async function fetchChatConversations() {
+  return apiRequest('/api/chat/conversations');
+}
+
+async function fetchChatHistory(conversationId, page = 1) {
+  const query = new URLSearchParams({ page: String(page), limit: '50' });
+  return apiRequest(`/api/chat/conversations/${encodeURIComponent(conversationId)}/messages?${query}`);
+}
+
+function formatConversationTimestamp(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function renderWorkspaceConversationList() {
+  if (!conversationList) return;
+  const conversations = state.chatConversations;
+  const totalUnread = conversations.reduce((sum, conversation) => sum + Number(conversation.unreadCount || 0), 0);
+  const badge = document.getElementById('sidebarUnreadBadge');
+  const summary = document.getElementById('conversationUnreadSummary');
+
+  if (badge) {
+    badge.textContent = totalUnread > 99 ? '99+' : String(totalUnread);
+    badge.classList.toggle('hidden', totalUnread === 0);
+  }
+  if (summary) {
+    summary.textContent = totalUnread
+      ? `${totalUnread} mensagem${totalUnread === 1 ? '' : 'ns'} não lida${totalUnread === 1 ? '' : 's'}`
+      : `${conversations.length} conversa${conversations.length === 1 ? '' : 's'}`;
   }
 
-  if (state.activeConversation && state.activeConversation.patient?.id !== state.chatPatientId) {
-    clearActiveConversation();
-  }
-}
-
-function getChatPatient() {
-  return state.patients.find((patient) => patient.id === state.chatPatientId) || null;
-}
-
-function buildConversationSignature(conversation) {
-  const messages = Array.isArray(conversation?.messages) ? conversation.messages : [];
-  const latestMessage = messages[messages.length - 1] || null;
-
-  return JSON.stringify({
-    patientId: conversation?.patient?.id || '',
-    count: messages.length,
-    latestId: latestMessage?.id || '',
-    latestRole: latestMessage?.senderRole || '',
-    latestTime: latestMessage?.timeLabel || '',
-    pendingMessages: conversation?.patient?.pendingMessages || 0,
-  });
-}
-
-function updateChatPatientSummary(conversation) {
-  const patient = state.patients.find((item) => item.id === conversation?.patient?.id);
-
-  if (!patient || !conversation?.patient) {
+  if (!conversations.length) {
+    conversationList.innerHTML = '<p class="p-5 text-sm leading-6 text-nutriflow-600">Nenhum paciente vinculado para conversar.</p>';
     return;
   }
 
-  patient.pendingMessages = conversation.patient.pendingMessages || 0;
-  patient.lastMessageTime = conversation.patient.latestMessageTime || '';
+  conversationList.innerHTML = conversations.map((conversation) => {
+    const patient = conversation.patient || {};
+    const selected = conversation.id === state.workspaceConversationId;
+    const unreadCount = Number(conversation.unreadCount || 0);
+    const lastMessage = conversation.lastMessage;
+    const preview = lastMessage?.content || 'Conversa ainda sem mensagens';
+    return `
+      <button type="button" data-conversation-id="${escapeHtml(conversation.id)}" class="flex w-full items-start gap-3 px-4 py-4 text-left transition hover:bg-nutriflow-50 ${selected ? 'bg-nutriflow-50' : ''}">
+        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-nutriflow-200 text-xs font-extrabold text-nutriflow-900">${escapeHtml(getInitials(patient.name) || 'P')}</span>
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between gap-2">
+            <span class="truncate text-sm font-extrabold text-nutriflow-950">${escapeHtml(patient.name || 'Paciente')}</span>
+            <span class="shrink-0 text-[10px] text-nutriflow-500">${escapeHtml(formatConversationTimestamp(lastMessage?.createdAt))}</span>
+          </span>
+          <span class="mt-1 block truncate text-xs ${unreadCount ? 'font-bold text-nutriflow-800' : 'text-nutriflow-600'}">${escapeHtml(preview)}</span>
+        </span>
+        ${unreadCount ? `<span class="mt-1 grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-nutriflow-700 px-1 text-[10px] font-extrabold text-white">${unreadCount > 99 ? '99+' : unreadCount}</span>` : ''}
+      </button>
+    `;
+  }).join('');
 }
 
-async function fetchConversation(patientId) {
-  return apiRequest(`/api/nutritionist/conversation?patientId=${encodeURIComponent(patientId)}`);
+function renderWorkspaceMessages(options = {}) {
+  const conversation = state.chatConversations.find((item) => item.id === state.workspaceConversationId);
+  const name = document.getElementById('workspaceConversationName');
+  const meta = document.getElementById('workspaceConversationMeta');
+  const olderButton = loadOlderMessagesButton;
+
+  if (name) name.textContent = conversation?.patient?.name || 'Selecione um paciente';
+  if (meta) {
+    const unread = Number(conversation?.unreadCount || 0);
+    meta.textContent = conversation
+      ? (unread ? `${unread} mensagem${unread === 1 ? '' : 'ns'} não lida${unread === 1 ? '' : 's'}` : 'Conversa privada com paciente vinculado')
+      : 'O histórico aparecerá aqui.';
+  }
+
+  const isDisabled = !conversation || state.isSendingWorkspaceMessage;
+  if (workspaceMessageInput) {
+    workspaceMessageInput.disabled = isDisabled;
+    workspaceMessageInput.placeholder = conversation ? `Mensagem para ${conversation.patient.name}...` : 'Selecione um paciente para responder...';
+  }
+  if (workspaceMessageSubmit) workspaceMessageSubmit.disabled = isDisabled;
+  if (olderButton) {
+    olderButton.classList.toggle('hidden', !state.workspacePagination || state.workspacePage >= state.workspacePagination.totalPages);
+    olderButton.disabled = state.isLoadingWorkspace;
+  }
+
+  if (!workspaceMessages) return;
+  if (!conversation) {
+    workspaceMessages.innerHTML = '<p class="m-auto text-center text-sm text-nutriflow-500">Selecione um paciente para abrir a conversa.</p>';
+    return;
+  }
+  if (state.isLoadingWorkspace && !state.workspaceMessages.length) {
+    workspaceMessages.innerHTML = '<p class="m-auto text-center text-sm text-nutriflow-500">Carregando histórico...</p>';
+    return;
+  }
+  if (!state.workspaceMessages.length) {
+    workspaceMessages.innerHTML = '<p class="m-auto text-center text-sm text-nutriflow-500">Nenhuma mensagem nesta conversa. Envie a primeira mensagem abaixo.</p>';
+    return;
+  }
+
+  workspaceMessages.innerHTML = state.workspaceMessages.map((message) => {
+    const isMine = message.senderId === state.currentUser?.id;
+    return `
+      <article class="max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isMine ? 'ml-auto bg-nutriflow-800 text-white' : 'mr-auto border border-nutriflow-100 bg-white text-nutriflow-950'}">
+        <p class="mb-1 text-[10px] font-bold uppercase tracking-wide ${isMine ? 'text-white/65' : 'text-nutriflow-500'}">${isMine ? 'Você' : escapeHtml(message.senderName || conversation.patient.name)} · ${escapeHtml(formatConversationTimestamp(message.createdAt))}</p>
+        <p class="whitespace-pre-wrap break-words text-sm leading-6">${escapeHtml(message.content)}</p>
+      </article>
+    `;
+  }).join('');
+
+  if (options.scrollToEnd) workspaceMessages.scrollTop = workspaceMessages.scrollHeight;
 }
 
-async function sendNutritionistChatMessage(payload) {
-  return apiRequest('/api/nutritionist/messages', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+async function loadConversationWorkspace(options = {}) {
+  if (state.isLoadingWorkspace) return;
+  state.isLoadingWorkspace = true;
+  const requestId = ++state.workspaceRequestId;
+  renderWorkspaceConversationList();
+  renderWorkspaceMessages();
+
+  try {
+    const result = await fetchChatConversations();
+    if (requestId !== state.workspaceRequestId) return;
+    state.chatConversations = result.conversations || [];
+    if (!state.chatConversations.some((item) => item.id === state.workspaceConversationId)) {
+      state.workspaceConversationId = state.chatConversations[0]?.id || null;
+      state.workspaceMessages = [];
+      state.workspacePagination = null;
+      state.workspacePage = 1;
+    }
+    renderWorkspaceConversationList();
+
+    if (state.workspaceConversationId && options.loadMessages !== false) {
+      const history = await fetchChatHistory(state.workspaceConversationId, 1);
+      if (requestId !== state.workspaceRequestId) return;
+      state.workspaceMessages = history.messages || [];
+      state.workspacePagination = history.pagination || null;
+      state.workspacePage = history.pagination?.page || 1;
+      const selectedConversation = state.chatConversations.find((item) => item.id === state.workspaceConversationId);
+      if (selectedConversation && history.unreadCount) selectedConversation.unreadCount = 0;
+      renderWorkspaceConversationList();
+      renderWorkspaceMessages({ scrollToEnd: options.scrollToEnd === true });
+    }
+  } catch (error) {
+    if (!options.silent) showToast(error.message || 'Não foi possível carregar os bate-papos.');
+  } finally {
+    if (requestId === state.workspaceRequestId) {
+      state.isLoadingWorkspace = false;
+      renderWorkspaceMessages();
+    }
+  }
+}
+
+async function loadOlderConversationMessages() {
+  if (!state.workspaceConversationId || !state.workspacePagination || state.workspacePage >= state.workspacePagination.totalPages) return;
+  const previousHeight = workspaceMessages?.scrollHeight || 0;
+  const nextPage = state.workspacePage + 1;
+  state.isLoadingWorkspace = true;
+  renderWorkspaceMessages();
+  try {
+    const result = await fetchChatHistory(state.workspaceConversationId, nextPage);
+    state.workspaceMessages = [...(result.messages || []), ...state.workspaceMessages];
+    state.workspacePage = result.pagination?.page || nextPage;
+    state.workspacePagination = result.pagination || state.workspacePagination;
+    renderWorkspaceMessages();
+    if (workspaceMessages) workspaceMessages.scrollTop = workspaceMessages.scrollHeight - previousHeight;
+  } catch (error) {
+    showToast(error.message || 'Não foi possível carregar mensagens anteriores.');
+  } finally {
+    state.isLoadingWorkspace = false;
+    renderWorkspaceMessages();
+  }
 }
 
 
@@ -187,7 +288,10 @@ async function fetchDatabaseData() {
 
     ensureValidPatientSelections();
     renderAll();
-    await syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
+    await loadConversationWorkspace({
+      loadMessages: window.location.hash === '#conversas',
+      silent: true,
+    });
   } catch (error) { showToast(error.message || 'Erro ao carregar os dados do painel.'); }
 }
 
@@ -197,7 +301,7 @@ function renderAll() {
   renderSelectedPatient();
   renderGeneralLists();
   populatePatientSelects();
-  renderChatPanel();
+  renderWorkspaceConversationList();
 }
 
 function renderHeader() {
@@ -300,10 +404,7 @@ function renderPatientsList() {
       if (!e.target.closest('button')) {
         state.selectedPatientId = patient.id;
         state.activeFilterId = patient.id; 
-        state.chatPatientId = patient.id;
-        clearActiveConversation();
         renderAll(); 
-        void syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
       }
     });
     list.appendChild(row);
@@ -691,157 +792,6 @@ function resetMealPlanBuilder(plan = null) {
   updateMealPlanTotals();
 }
 
-function getPendingMessagesLabel(count) {
-  if (!count) {
-    return 'Conversa em dia.';
-  }
-
-  return count === 1
-    ? '1 mensagem aguardando resposta.'
-    : `${count} mensagens aguardando resposta.`;
-}
-
-function syncChatComposerState(patient) {
-  const isLoadingLocked = state.isLoadingConversation && !state.activeConversation;
-  const isDisabled = !patient || state.isSendingChatMessage || isLoadingLocked;
-
-  if (chatInput) {
-    chatInput.disabled = isDisabled;
-    chatInput.placeholder = patient
-      ? `Responder ${patient.name}...`
-      : 'Selecione um paciente para iniciar o chat';
-  }
-
-  if (chatSubmitButton) {
-    chatSubmitButton.disabled = isDisabled;
-    chatSubmitButton.textContent = state.isSendingChatMessage ? 'Enviando...' : 'Enviar';
-    chatSubmitButton.classList.toggle('opacity-50', isDisabled);
-    chatSubmitButton.classList.toggle('cursor-not-allowed', isDisabled);
-  }
-}
-
-function renderChatPanel(options = {}) {
-  const patient = getChatPatient();
-  const conversation = state.activeConversation;
-  const messages = Array.isArray(conversation?.messages) ? conversation.messages : [];
-  const metaElement = getChatConversationMetaElement();
-
-  if (chatPatientSelect && chatPatientSelect.value !== (state.chatPatientId || '')) {
-    chatPatientSelect.value = state.chatPatientId || '';
-  }
-
-  if (metaElement) {
-    if (!patient) {
-      metaElement.textContent = 'Selecione um paciente para carregar a conversa.';
-    } else if (state.isLoadingConversation && !conversation) {
-      metaElement.textContent = `Carregando conversa com ${patient.name}...`;
-    } else if (conversation?.patient?.pendingMessages) {
-      metaElement.textContent = getPendingMessagesLabel(conversation.patient.pendingMessages);
-    } else if (conversation?.patient?.latestMessageTime) {
-      metaElement.textContent = `Ultima atividade: ${conversation.patient.latestMessageTime}`;
-    } else {
-      metaElement.textContent = `Sem mensagens com ${patient.name} ainda.`;
-    }
-  }
-
-  syncChatComposerState(patient);
-
-  if (!chatMessages) {
-    return;
-  }
-
-  if (!patient) {
-    chatMessages.innerHTML = '<p class="mt-10 text-center text-xs text-nutriflow-500">Selecione um paciente para iniciar.</p>';
-    return;
-  }
-
-  if (state.isLoadingConversation && !conversation) {
-    chatMessages.innerHTML = '<p class="mt-10 text-center text-xs font-bold uppercase tracking-[0.12em] text-nutriflow-500">Carregando conversa...</p>';
-    return;
-  }
-
-  if (!messages.length) {
-    chatMessages.innerHTML = `
-      <div class="rounded-[24px] border border-dashed border-nutriflow-200 bg-white p-5 text-sm leading-7 text-nutriflow-600">
-        Nenhuma mensagem com ${escapeHtml(patient.name)} ainda. Use o campo abaixo para iniciar a conversa.
-      </div>
-    `;
-    return;
-  }
-
-  chatMessages.innerHTML = messages.map((message) => {
-    const isNutritionistMessage = message.senderRole === 'NUTRITIONIST';
-    const senderName = message.senderName || (isNutritionistMessage ? state.currentUser?.name : patient.name);
-
-    return `
-      <div class="chat-row${isNutritionistMessage ? ' is-user' : ''}">
-        ${isNutritionistMessage ? '' : `<div class="chat-avatar">${escapeHtml(getInitials(patient.name))}</div>`}
-        <div class="chat-bubble${isNutritionistMessage ? ' is-user' : ''}">
-          <p class="${isNutritionistMessage ? 'text-xs font-semibold uppercase tracking-[0.14em] text-white/60' : 'text-xs font-semibold uppercase tracking-[0.14em] text-nutriflow-500'}">
-            ${escapeHtml(senderName)} - ${escapeHtml(message.timeLabel || 'agora')}
-          </p>
-          <p class="mt-2 text-sm leading-7">${escapeHtml(message.content)}</p>
-          ${!isNutritionistMessage && message.pending ? '<span class="mt-2 inline-flex rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700">Aguardando resposta</span>' : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  if (options.scrollToEnd !== false) {
-    window.requestAnimationFrame(() => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-  }
-}
-
-async function syncNutritionistRealtimeChat(options = {}) {
-  const patientId = String(options.patientId || state.chatPatientId || '').trim();
-
-  if (!patientId || nutritionistChatSyncInFlight || !session.getToken() || (document.hidden && !options.allowHidden)) {
-    return;
-  }
-
-  const requestedPatientId = patientId;
-  nutritionistChatSyncInFlight = true;
-  state.isLoadingConversation = true;
-
-  if (options.forceRender) {
-    renderChatPanel();
-  }
-
-  try {
-    const conversation = await fetchConversation(requestedPatientId);
-
-    if (state.chatPatientId && state.chatPatientId !== requestedPatientId && !options.overrideSelection) {
-      return;
-    }
-
-    state.chatPatientId = requestedPatientId;
-    updateChatPatientSummary(conversation);
-
-    const nextSignature = buildConversationSignature(conversation);
-    const shouldRender = options.forceRender || nextSignature !== state.lastConversationSignature || !state.activeConversation;
-
-    state.activeConversation = conversation;
-    state.lastConversationSignature = nextSignature;
-
-    if (shouldRender) {
-      renderPatientsList();
-      renderSelectedPatient();
-      populatePatientSelects();
-      renderChatPanel();
-    }
-  } catch (error) {
-    if (!options.silent && error.message !== 'Sessao invalida.') {
-      showToast(error.message || 'Nao foi possivel carregar a conversa.');
-    }
-  } finally {
-    state.isLoadingConversation = false;
-    nutritionistChatSyncInFlight = false;
-    renderChatPanel({ scrollToEnd: false });
-  }
-}
-
 function stopNutritionistRealtimeChat() {
   if (!nutritionistChatSyncIntervalId) {
     return;
@@ -857,7 +807,11 @@ function startNutritionistRealtimeChat() {
   }
 
   nutritionistChatSyncIntervalId = window.setInterval(() => {
-    void syncNutritionistRealtimeChat({ silent: true });
+    void loadConversationWorkspace({
+      loadMessages: window.location.hash === '#conversas',
+      silent: true,
+      scrollToEnd: false,
+    });
   }, 3500);
 }
 
@@ -868,54 +822,6 @@ function syncNutritionistRealtimeAvailability() {
   }
 
   startNutritionistRealtimeChat();
-}
-
-async function handleNutritionistChatSubmit(event) {
-  event.preventDefault();
-
-  const patient = getChatPatient();
-  const content = chatInput?.value.trim() || '';
-
-  if (!patient) {
-    showToast('Selecione um paciente para enviar a mensagem.');
-    return;
-  }
-
-  if (!content) {
-    showToast('Digite uma mensagem para enviar.');
-    chatInput?.focus();
-    return;
-  }
-
-  state.isSendingChatMessage = true;
-  renderChatPanel();
-
-  try {
-    const result = await sendNutritionistChatMessage({
-      patientId: patient.id,
-      content,
-    });
-
-    if (chatInput) {
-      chatInput.value = '';
-    }
-
-    await syncNutritionistRealtimeChat({
-      patientId: patient.id,
-      forceRender: true,
-      allowHidden: true,
-      silent: true,
-      overrideSelection: true,
-    });
-
-    showToast(result.message || 'Resposta enviada para o paciente.');
-  } catch (error) {
-    showToast(error.message || 'Nao foi possivel enviar a resposta.');
-  } finally {
-    state.isSendingChatMessage = false;
-    renderChatPanel();
-    chatInput?.focus();
-  }
 }
 
 function renderGeneralLists() {
@@ -1008,16 +914,13 @@ function populatePatientSelects() {
     return `<option value="${patient.id}">${escapeHtml(label)}</option>`;
   }).join('');
 
-  ['mealPlanPatient', 'assessmentPatient', 'appointmentPatient', 'chatPatientSelect', 'challengePatient', 'addPartPatient'].forEach(id => {
+  ['mealPlanPatient', 'assessmentPatient', 'appointmentPatient', 'challengePatient', 'addPartPatient'].forEach(id => {
     const el = document.getElementById(id);
     if(el) {
-      if (id === 'chatPatientSelect') el.innerHTML = '<option value="">Selecione um paciente...</option>' + options;
-      else if (id === 'challengePatient') el.innerHTML = '<option value="">Todos os pacientes (Geral)</option>' + options;
+      if (id === 'challengePatient') el.innerHTML = '<option value="">Todos os pacientes (Geral)</option>' + options;
       else el.innerHTML = options;
       
-      if (id === 'chatPatientSelect') {
-        el.value = state.chatPatientId || '';
-      } else if (state.selectedPatientId && id !== 'challengePatient' && id !== 'addPartPatient') {
+      if (state.selectedPatientId && id !== 'challengePatient' && id !== 'addPartPatient') {
         el.value = state.selectedPatientId;
       }
     }
@@ -1195,7 +1098,6 @@ async function handleNutritionistProfileSubmit(event) {
 
 window.openPatientProfile = function(patientId) {
   state.selectedPatientId = patientId;
-  state.chatPatientId = patientId;
   renderSelectedPatient();
   renderPatientProfileModal(state.patients.find(p => p.id === patientId));
   openModal('patientProfile');
@@ -1306,32 +1208,10 @@ function bindButtons() {
     window.location.href = 'index.html';
   });
 
-  chatPatientSelect?.addEventListener('change', (event) => {
-    state.chatPatientId = event.target.value || null;
-
-    clearActiveConversation();
-    renderChatPanel();
-
-    if (state.chatPatientId) {
-      void syncNutritionistRealtimeChat({
-        forceRender: true,
-        allowHidden: true,
-        silent: true,
-      });
-    }
-  });
-
-
-  chatForm?.addEventListener(
-    'submit',
-    handleNutritionistChatSubmit
-  );
-
-
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      void syncNutritionistRealtimeChat({
-        forceRender: true,
+      void loadConversationWorkspace({
+        loadMessages: window.location.hash === '#conversas',
         silent: true,
       });
     }
@@ -1486,46 +1366,79 @@ document.getElementById('addParticipantForm')?.addEventListener('submit', async 
 });
 
 
-function openChatModal() {
-  if (!chatModal) {
-    return;
-  }
+function renderNutritionistPage() {
+  const showConversations = window.location.hash === '#conversas';
+  const dashboard = document.getElementById('nutritionistDashboard');
+  const conversationPage = document.getElementById('conversationPage');
+  dashboard?.classList.toggle('hidden', showConversations);
+  conversationPage?.classList.toggle('hidden', !showConversations);
 
-  if (!state.chatPatientId && state.selectedPatientId) {
-    state.chatPatientId = state.selectedPatientId;
-  }
+  document.querySelectorAll('[data-dashboard-page="conversations"]').forEach((link) => {
+    link.classList.toggle('bg-white/12', showConversations);
+    link.classList.toggle('text-white', showConversations);
+    link.classList.toggle('text-white/75', !showConversations);
+    link.classList.toggle('is-active', showConversations);
+  });
 
-  chatModal.classList.remove('chat-hidden');
-  chatModal.classList.add('chat-visible');
-  renderChatPanel();
-  void syncNutritionistRealtimeChat({ forceRender: true, allowHidden: true, silent: true });
+  if (showConversations) void loadConversationWorkspace({ scrollToEnd: true });
 }
 
-function closeChatModal() {
-  if (!chatModal) {
+async function handleWorkspaceMessageSubmit(event) {
+  event.preventDefault();
+  const conversationId = state.workspaceConversationId;
+  const content = workspaceMessageInput?.value.trim() || '';
+  if (!conversationId) {
+    showToast('Selecione uma conversa antes de enviar.');
     return;
   }
+  if (!content) {
+    showToast('Digite uma mensagem para enviar.');
+    workspaceMessageInput?.focus();
+    return;
+  }
+  if (content.length > 2000 || state.isSendingWorkspaceMessage) return;
 
-  chatModal.classList.add('chat-hidden');
-  chatModal.classList.remove('chat-visible');
+  state.isSendingWorkspaceMessage = true;
+  renderWorkspaceMessages();
+  try {
+    await apiRequest('/api/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify({ recipientId: conversationId, content }),
+    });
+    workspaceMessageInput.value = '';
+    await loadConversationWorkspace({ scrollToEnd: true });
+    showToast('Mensagem enviada.');
+  } catch (error) {
+    showToast(error.message || 'Não foi possível enviar a mensagem.');
+  } finally {
+    state.isSendingWorkspaceMessage = false;
+    renderWorkspaceMessages();
+    workspaceMessageInput?.focus();
+  }
 }
 
-document.getElementById('btnToggleChat')?.addEventListener('click', () => {
-  if (chatModal?.classList.contains('chat-hidden')) {
-    openChatModal();
-    return;
-  }
-
-  closeChatModal();
+conversationList?.addEventListener('click', (event) => {
+  const conversationButton = event.target.closest('[data-conversation-id]');
+  if (!conversationButton) return;
+  state.workspaceConversationId = conversationButton.dataset.conversationId;
+  state.workspaceMessages = [];
+  state.workspacePagination = null;
+  state.workspacePage = 1;
+  renderWorkspaceConversationList();
+  renderWorkspaceMessages();
+  void loadConversationWorkspace({ scrollToEnd: true });
 });
 
-document.getElementById('btnCloseChat')?.addEventListener('click', closeChatModal);
+workspaceMessageForm?.addEventListener('submit', handleWorkspaceMessageSubmit);
+loadOlderMessagesButton?.addEventListener('click', () => void loadOlderConversationMessages());
+window.addEventListener('hashchange', renderNutritionistPage);
 
 
 async function init() {
   if (!ensureNutritionistAccess()) return;
   renderHeader();
   bindButtons();
+  renderNutritionistPage();
   syncNutritionistRealtimeAvailability();
   await fetchDatabaseData();
 }

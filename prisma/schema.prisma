@@ -26,6 +26,8 @@ model User {
   mealPlansAsNutritionist MealPlan[] @relation("NutritionistMealPlans")
   mealEntries PatientMealEntry[]
   weightEntries PatientWeightEntry[]
+  sentMessages ChatMessage[] @relation("ChatMessageSender")
+  receivedMessages ChatMessage[] @relation("ChatMessageRecipient")
 }
 
 model PatientProfile {
@@ -155,4 +157,20 @@ model PatientWeightEntry {
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, recordedAt])
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  recipientId String
+  content     String
+  status      String   @default("UNREAD")
+  createdAt   DateTime @default(now())
+  readAt      DateTime?
+
+  sender    User @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("ChatMessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, status, createdAt])
 }

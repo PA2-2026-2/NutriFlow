@@ -23,6 +23,9 @@ let patientProfileSyncIntervalId = null;
 const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
+if (chatInput) {
+  chatInput.maxLength = 2000;
+}
 const logoutButton = document.getElementById('logoutButton');
 const patientProfileButton = document.getElementById('patientProfileButton');
 const patientGlobalSearch = document.getElementById('patientGlobalSearch');
@@ -790,7 +793,11 @@ async function getPatientDashboard() {
 }
 
 async function getPatientChat() {
-  return apiRequest('/api/patient/chat');
+  const recipientId = getNutritionistData().id;
+  if (!recipientId) {
+    return { chat: { responseTimeLabel: 'Sem nutricionista vinculada', quickReplies: [], messages: [] } };
+  }
+  return apiRequest(`/api/chat/messages?recipientId=${encodeURIComponent(recipientId)}`);
 }
 
 async function createMealEntry(payload = {}) {
@@ -808,9 +815,9 @@ async function createWeeklyWeightEntry(payload = {}) {
 }
 
 async function sendPatientMessage(payload) {
-  return apiRequest('/api/patient/messages', {
+  return apiRequest('/api/chat/messages', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ recipientId: getNutritionistData().id, ...payload }),
   });
 }
 
@@ -1810,7 +1817,8 @@ async function handleChatSubmit(event) {
     const result = await sendPatientMessage({ content });
     chatInput.value = '';
     await refreshDashboard();
-    showToast(result.message || 'Mensagem enviada para sua nutricionista.');
+    await syncPatientRealtimeChat({ forceRender: true });
+    showToast(typeof result.message === 'string' ? result.message : 'Mensagem enviada para sua nutricionista.');
   } catch (error) {
     showToast(error.message || 'Nao foi possivel enviar sua mensagem.');
   } finally {

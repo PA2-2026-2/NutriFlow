@@ -12,11 +12,13 @@ const { UserController } = require('./controllers/userController');
 const { PatientController } = require('./controllers/patientController');
 const { PatientDashboardController } = require('./controllers/patientDashboardController');
 const { MealPlanController } = require('./controllers/mealPlanController');
+const { ChatController } = require('./controllers/chatController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
 const { ProfileRepository } = require('./repositories/profileRepository');
 const { PatientDashboardRepository } = require('./repositories/patientDashboardRepository');
 const { MealPlanRepository } = require('./repositories/mealPlanRepository');
+const { ChatRepository } = require('./repositories/chatRepository');
 
 const { AuthService } = require('./services/authService');
 const { AdminService } = require('./services/adminService');
@@ -24,6 +26,7 @@ const { UserService } = require('./services/userService');
 const { PatientService } = require('./services/patientService');
 const { PatientDashboardService } = require('./services/patientDashboardService');
 const { MealPlanService } = require('./services/mealPlanService');
+const { ChatService } = require('./services/chatService');
 const { SessionService } = require('./services/sessionService');
 const { PasswordService } = require('./services/passwordService');
 const { TokenService } = require('./services/tokenService');
@@ -34,6 +37,7 @@ const { createUserRoutes } = require('./routes/userRoutes');
 const { createPatientRoutes } = require('./routes/patientRoutes');
 const { createPatientDashboardRoutes } = require('./routes/patientDashboardRoutes');
 const { createNutritionistRoutes } = require('./routes/nutritionistRoutes');
+const { createChatRoutes } = require('./routes/chatRoutes');
 const { PhotoStorage } = require('./infra/photoStorage');
 
 const FRONTEND_ROUTE_ALIASES = new Map([
@@ -138,6 +142,7 @@ function createDependencies(appConfig, overrides = {}) {
     new MealPlanRepository(prisma),
     profileRepository,
   );
+  const chatService = new ChatService(new ChatRepository(prisma));
 
   return {
     prisma,
@@ -147,6 +152,7 @@ function createDependencies(appConfig, overrides = {}) {
     patientController: new PatientController(patientService),
     patientDashboardController: new PatientDashboardController(patientDashboardService),
     mealPlanController: new MealPlanController(mealPlanService),
+    chatController: new ChatController(chatService),
     authenticate: createAuthMiddleware(
       tokenService,
       sessionService,
@@ -169,6 +175,7 @@ function createApp(options = {}) {
     patientController,
     patientDashboardController,
     mealPlanController,
+    chatController,
     authenticate,
   } = createDependencies(appConfig, options);
 
@@ -221,12 +228,22 @@ function createApp(options = {}) {
 
   app.use(
     '/api/patient',
-    createPatientDashboardRoutes(patientDashboardController, authenticate)
+    createPatientDashboardRoutes(patientDashboardController, chatController, authenticate)
   );
 
   app.use(
     '/api/nutritionist',
     createNutritionistRoutes(patientController, mealPlanController, authenticate)
+  );
+
+  app.use(
+    '/chat',
+    createChatRoutes(chatController, authenticate, '/chat')
+  );
+
+  app.use(
+    '/api/chat',
+    createChatRoutes(chatController, authenticate, '/api/chat')
   );
 
   app.use(
