@@ -1883,13 +1883,23 @@ async function handleNutritionistLink(event) {
 }
 
 function bindNavigationState() {
-  document.querySelectorAll('.mobile-nav-pill').forEach((button) => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('.mobile-nav-pill').forEach((item) => {
-        item.classList.remove('is-active');
-      });
-      button.classList.add('is-active');
-    });
+  window.addEventListener('hashchange', renderPatientPage);
+  renderPatientPage();
+}
+
+function renderPatientPage() {
+  const pages = [...document.querySelectorAll('[data-dashboard-page]')];
+  const links = document.querySelectorAll('.sidebar-link, .mobile-nav-pill');
+  const requestedPage = window.location.hash.slice(1);
+  const activePage = pages.some((page) => page.id === requestedPage)
+    ? requestedPage
+    : 'visao-geral';
+
+  pages.forEach((page) => {
+    page.classList.toggle('hidden', page.id !== activePage);
+  });
+  links.forEach((link) => {
+    link.classList.toggle('is-active', link.getAttribute('href') === `#${activePage}`);
   });
 }
 
@@ -1995,7 +2005,7 @@ async function init() {
 
   renderHeader();
   bindEvents();
-  window.NutriFlowUi?.setupSectionNavigation({ linkSelector: '.sidebar-link, .mobile-nav-pill' });
+  renderPatientPage();
   patientProfileSyncIntervalId = window.setInterval(
     () => void refreshCurrentUserProfile(),
     30000,

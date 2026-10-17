@@ -47,7 +47,7 @@
     
     <aside class="dashboard-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[290px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col overflow-y-auto">
       <div>
-        <a href="index.html" class="flex items-center gap-3">
+        <a href="/dashboard.html" class="flex items-center gap-3">
           <span class="grid h-11 w-11 place-items-center rounded-full bg-white/12 shadow-lg shadow-black/10">
             <span class="inline-block h-4 w-4 rounded-full bg-white"></span>
           </span>
@@ -127,7 +127,7 @@
       </nav>
 
       <main class="mt-6 space-y-6 pb-6">
-        <section id="visao-geral" class="grid gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.85fr)]">
+        <section id="visao-geral" class="dashboard-page grid gap-6 2xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,.85fr)]" data-dashboard-page>
           <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
@@ -217,9 +217,8 @@
           </article>
         </section>
 
-        <section class="grid gap-6 2xl:grid-cols-12">
-          <div class="grid min-w-0 gap-6 2xl:col-span-7">
-            <article id="refeicoes" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
+        <section id="refeicoes" class="dashboard-page hidden" data-dashboard-page>
+            <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <span class="glass-pill">Registro de refeições</span>
@@ -229,8 +228,10 @@
               </div>
               <div id="mealList" class="meal-timeline mt-8 space-y-4"></div>
             </article>
+          </section>
 
-            <article id="historico" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
+          <section id="historico" class="dashboard-page hidden" data-dashboard-page>
+            <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex items-center justify-between gap-4">
                 <div>
                   <span class="glass-pill">Histórico alimentar</span>
@@ -244,10 +245,10 @@
                 <div id="historyList" class="divide-y divide-nutriflow-100 bg-white text-sm font-medium"></div>
               </div>
             </article>
-          </div>
+        </section>
 
-          <div class="grid min-w-0 gap-6 2xl:col-span-5">
-            <article id="plano" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
+        <section id="plano" class="dashboard-page hidden" data-dashboard-page>
+            <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex items-center justify-between gap-4">
                 <div>
                   <span class="glass-pill">Plano alimentar</span>
@@ -256,8 +257,10 @@
               </div>
               <div id="planSections" class="mt-6 space-y-4"></div>
             </article>
+          </section>
 
-            <article id="medidas" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
+          <section id="medidas" class="dashboard-page hidden" data-dashboard-page>
+            <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex items-center justify-between gap-4">
                 <div>
                   <span class="glass-pill">Avaliacao corporal</span>
@@ -272,8 +275,10 @@
                 <div id="bodyMeasurementsHistoryList" class="divide-y divide-nutriflow-100 text-sm font-medium"></div>
               </div>
             </article>
+          </section>
 
-            <article id="peso" class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
+          <section id="peso" class="dashboard-page hidden" data-dashboard-page>
+            <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <span class="glass-pill">Evolução de peso</span>
@@ -303,7 +308,6 @@
                 <div id="weightHistoryList" class="divide-y divide-nutriflow-100 text-sm font-medium"></div>
               </div>
             </article>
-          </div>
         </section>
 
       </main>
