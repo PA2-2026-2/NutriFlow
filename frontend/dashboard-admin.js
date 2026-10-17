@@ -2958,30 +2958,42 @@ async function toggleUserStatus(user) {
         '.sidebar-link, .mobile-nav-pill',
       );
 
-    links.forEach(
-      (link) => {
-        link.addEventListener(
-          'click',
-          () => {
-            document
-              .querySelectorAll(
-                '.sidebar-link.is-active, .mobile-nav-pill.is-active',
-              )
-              .forEach(
-                (item) => {
-                  item.classList.remove(
-                    'is-active',
-                  );
-                },
-              );
+    function renderAdminPage() {
+      const screenIds = [
+        'visao-geral',
+        'usuarios',
+        'alimentos',
+      ];
+      const requestedScreen =
+        window.location.hash.slice(1);
+      const activeScreen = screenIds.includes(
+        requestedScreen,
+      )
+        ? requestedScreen
+        : 'visao-geral';
 
-            link.classList.add(
-              'is-active',
-            );
-          },
+      document
+        .querySelectorAll('[data-admin-screen]')
+        .forEach((screen) => {
+          screen.classList.toggle(
+            'hidden',
+            screen.dataset.adminScreen !== activeScreen,
+          );
+        });
+
+      links.forEach((link) => {
+        link.classList.toggle(
+          'is-active',
+          link.getAttribute('href') === `#${activeScreen}`,
         );
-      },
+      });
+    }
+
+    window.addEventListener(
+      'hashchange',
+      renderAdminPage,
     );
+    renderAdminPage();
   }
 
   /* =========================================================

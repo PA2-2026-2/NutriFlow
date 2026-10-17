@@ -405,6 +405,7 @@ function renderPatientsList() {
         state.selectedPatientId = patient.id;
         state.activeFilterId = patient.id; 
         renderAll(); 
+        window.openPatientProfile(patient.id);
       }
     });
     list.appendChild(row);
@@ -872,7 +873,8 @@ function renderGeneralLists() {
       : '<p class="text-sm text-nutriflow-500">Sem lembretes de consulta nas próximas 24h.</p>';
   }
 
-  agendaContainer.innerHTML = apps.length ? apps.map(app => `
+  if (agendaContainer) {
+    agendaContainer.innerHTML = apps.length ? apps.map(app => `
       <div class="bg-white border rounded-xl p-3 shadow-sm flex justify-between items-center relative group">
         <div>
           <p class="text-sm font-bold text-nutriflow-950">${escapeHtml(app.patient)}</p>
@@ -888,6 +890,7 @@ function renderGeneralLists() {
         </div>
       </div>
     `).join('') : '<p class="text-sm text-nutriflow-500">Sem agenda.</p>';
+  }
 
   const challContainer = document.getElementById('challengesList');
   if (challContainer) {
@@ -1367,17 +1370,31 @@ document.getElementById('addParticipantForm')?.addEventListener('submit', async 
 
 
 function renderNutritionistPage() {
-  const showConversations = window.location.hash === '#conversas';
+  const requestedPage = window.location.hash.slice(1);
+  const showConversations = requestedPage === 'conversas';
+  const pageIds = ['pacientes', 'plano-alimentar', 'avaliacoes'];
+  const activePage = pageIds.includes(requestedPage) ? requestedPage : 'pacientes';
   const dashboard = document.getElementById('nutritionistDashboard');
   const conversationPage = document.getElementById('conversationPage');
   dashboard?.classList.toggle('hidden', showConversations);
   conversationPage?.classList.toggle('hidden', !showConversations);
+
+  document.querySelectorAll('[data-dashboard-view]').forEach((page) => {
+    page.classList.toggle('hidden', page.id !== activePage);
+  });
 
   document.querySelectorAll('[data-dashboard-page="conversations"]').forEach((link) => {
     link.classList.toggle('bg-white/12', showConversations);
     link.classList.toggle('text-white', showConversations);
     link.classList.toggle('text-white/75', !showConversations);
     link.classList.toggle('is-active', showConversations);
+  });
+  document.querySelectorAll('[data-dashboard-page="patients"], [data-dashboard-page="plans"], [data-dashboard-page="assessments"]').forEach((link) => {
+    const isActive = link.getAttribute('href') === `#${activePage}`;
+    link.classList.toggle('bg-white/12', isActive);
+    link.classList.toggle('text-white', isActive);
+    link.classList.toggle('text-white/75', !isActive);
+    link.classList.toggle('is-active', isActive);
   });
 
   if (showConversations) void loadConversationWorkspace({ scrollToEnd: true });

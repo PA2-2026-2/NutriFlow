@@ -109,7 +109,7 @@
         <!-- LOGO -->
 
         <a
-          href="index.html"
+          href="/dashboard-admin.html#visao-geral"
           class="flex items-center gap-3"
         >
 
@@ -321,47 +321,6 @@
 
           </a>
 
-
-          <!-- MÉTRICAS -->
-
-          <a
-            href="#metricas"
-            class="sidebar-link"
-          >
-
-            <span class="sidebar-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                class="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path d="M12 20V10"></path>
-                <path d="M18 20V4"></path>
-                <path d="M6 20v-4"></path>
-              </svg>
-
-            </span>
-
-            <span>
-
-              <span
-                class="block text-sm font-semibold"
-              >
-                Métricas
-              </span>
-
-              <span
-                class="block text-xs text-white/55"
-              >
-                Leitura executiva
-              </span>
-
-            </span>
-
-          </a>
 
         </nav>
 
@@ -667,13 +626,6 @@
             Alimentos
           </a>
 
-          <a
-            href="#metricas"
-            class="mobile-nav-pill"
-          >
-            Métricas
-          </a>
-
         </div>
 
       </div>
@@ -690,10 +642,6 @@
 
         <!-- STATUS -->
 
-        <div
-          id="adminStatusMessage"
-          class="hidden rounded-[22px] border border-nutriflow-100 bg-white/90 px-5 py-4 text-sm font-semibold text-nutriflow-700 shadow-[0_16px_32px_rgba(28,38,24,.08)]"
-        ></div>
 
 
         <!-- =================================================
@@ -703,6 +651,7 @@
         <section
           id="visao-geral"
           class="grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7"
+          data-admin-screen="visao-geral"
         >
 
           <nf-stat-card
@@ -769,6 +718,7 @@
 
         <section
           class="workspace-banner admin-workspace-grid"
+          data-admin-screen="visao-geral"
         >
 
           <nf-workspace-chip
@@ -820,6 +770,7 @@
         <section
           id="usuarios"
           class="space-y-6"
+          data-admin-screen="usuarios"
         >
 
 
@@ -1183,6 +1134,7 @@
         <section
           id="alimentos"
           class="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]"
+          data-admin-screen="alimentos"
         >
 
 
@@ -1501,6 +1453,7 @@
         <section
           id="metricas"
           class="grid gap-6 xl:grid-cols-[1.1fr_.9fr]"
+          data-admin-screen="visao-geral"
         >
 
 

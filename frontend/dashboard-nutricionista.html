@@ -20,6 +20,21 @@
         <a href="/dashboard-nutricionista.html#dashboard" class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-2xl bg-white/12"><span class="inline-block h-3 w-3 rounded-full bg-white"></span></span><div><p class="text-lg font-extrabold tracking-[-0.05em]">NutriFlow</p><p class="text-[10px] text-white/68 uppercase">Workspace Nutri</p></div></a>
         <div class="mt-8 rounded-[20px] border border-white/12 bg-white/8 p-4"><p class="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Painel de hoje</p><p class="mt-2 text-2xl font-bold tracking-[-0.06em]" data-sidebar-date>06 Mar</p></div>
         <nav class="mt-6 space-y-1">
+          <a href="#pacientes" data-dashboard-page="patients" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">♙</span><span>Meus Pacientes</span>
+          </a>
+          <a href="#plano-alimentar" data-dashboard-page="plans" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">▤</span><span>Últimos Planos</span>
+          </a>
+          <a href="#avaliacoes" data-dashboard-page="assessments" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">▧</span><span>Últimas Avaliações</span>
+          </a>
+          <span aria-disabled="true" class="flex cursor-default items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/45">
+            <span aria-hidden="true">◷</span><span>Agenda</span>
+          </span>
+          <span aria-disabled="true" class="flex cursor-default items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/45">
+            <span aria-hidden="true">◇</span><span>Desafios Ativos</span>
+          </span>
           <a href="#conversas" data-dashboard-page="conversations" class="flex items-center justify-between gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span class="flex items-center gap-3"><span aria-hidden="true">✉</span><span>Bate-papos</span></span>
             <span id="sidebarUnreadBadge" class="hidden min-w-6 rounded-full bg-amber-300 px-2 py-0.5 text-center text-[11px] font-extrabold text-nutriflow-950"></span>
@@ -61,14 +76,16 @@
 </header>
 
       <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel da nutricionista">
-        <a class="mobile-nav-pill is-active" href="#pacientes">Pacientes</a>
-        <a class="mobile-nav-pill" href="#plano-alimentar">Planos e agenda</a>
-        <a class="mobile-nav-pill" href="#desafios">Desafios</a>
+        <a class="mobile-nav-pill is-active" href="#pacientes" data-dashboard-page="patients">Meus Pacientes</a>
+        <a class="mobile-nav-pill" href="#plano-alimentar" data-dashboard-page="plans">Últimos Planos</a>
+        <a class="mobile-nav-pill" href="#avaliacoes" data-dashboard-page="assessments">Últimas Avaliações</a>
+        <span class="mobile-nav-pill cursor-default opacity-50" aria-disabled="true">Agenda</span>
+        <span class="mobile-nav-pill cursor-default opacity-50" aria-disabled="true">Desafios Ativos</span>
         <a class="mobile-nav-pill" href="#conversas" data-dashboard-page="conversations">Bate-papos</a>
       </nav>
 
       <main id="nutritionistDashboard" class="mt-6 space-y-6 pb-6">
-        <section id="pacientes" class="grid gap-6 2xl:grid-cols-[1.3fr_.7fr]">
+        <section id="pacientes" class="dashboard-view grid gap-6 2xl:grid-cols-[1.3fr_.7fr]" data-dashboard-view>
           <article class="dashboard-surface rounded-[24px] p-5">
             <div class="flex justify-between items-center mb-4">
               <h2 class="text-lg font-bold">Meus Pacientes</h2>
@@ -101,32 +118,17 @@
           </article>
         </section>
 
-        <section id="plano-alimentar" class="grid gap-6 lg:grid-cols-3">
+        <section id="plano-alimentar" class="dashboard-view hidden" data-dashboard-view>
           <article class="dashboard-surface rounded-[24px] p-5">
             <h2 class="text-lg font-bold mb-4">Últimos Planos</h2>
             <div id="latestMealPlans" class="max-h-[284px] space-y-3 overflow-y-auto pr-2"></div>
           </article>
+        </section>
+
+        <section id="avaliacoes" class="dashboard-view hidden" data-dashboard-view>
           <article class="dashboard-surface rounded-[24px] p-5">
             <h2 class="text-lg font-bold mb-4">Últimas Avaliações</h2>
             <div id="latestAssessments" class="max-h-[284px] space-y-3 overflow-y-auto pr-2"></div>
-          </article>
-          <article class="dashboard-surface rounded-[24px] p-5">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-bold">Agenda</h2>
-              <button id="btnOpenAppointment" class="text-xs bg-nutriflow-200 px-3 py-1 rounded-md font-bold">Agendar</button>
-            </div>
-            <div class="mb-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
-              <p class="text-[11px] font-bold uppercase tracking-[0.14em] text-amber-700">Lembretes</p>
-              <div id="appointmentRemindersList" class="mt-2 space-y-2"></div>
-            </div>
-            <div id="appointmentsList" class="space-y-3"></div>
-          </article>
-        </section>
-        
-        <section id="desafios" class="grid gap-6">
-          <article class="dashboard-surface rounded-[24px] p-5">
-            <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold">Desafios Ativos</h2><button id="btnOpenChallenge" class="text-xs bg-nutriflow-200 px-3 py-1 rounded-md font-bold">Novo Desafio</button></div>
-            <div id="challengesList" class="space-y-3"></div>
           </article>
         </section>
       </main>
