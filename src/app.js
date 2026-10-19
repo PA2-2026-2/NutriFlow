@@ -116,22 +116,32 @@ function createCorsMiddleware(appConfig) {
   };
 }
 
-function frontendAliases(request, response, next) {
-  if (!['GET', 'HEAD'].includes(request.method)) {
-    return next();
-  }
+function frontendAliases(frontendDir) {
+  return (request, response, next) => {
+    if (!['GET', 'HEAD'].includes(request.method)) {
+      return next();
+    }
 
-  const alias = FRONTEND_ROUTE_ALIASES.get(request.path);
+    const alias = FRONTEND_ROUTE_ALIASES.get(request.path);
 
-  if (!alias) {
-    return next();
-  }
+    if (!alias) {
+      return next();
+    }
 
-  const query = request.originalUrl.includes('?')
-    ? request.originalUrl.slice(request.originalUrl.indexOf('?'))
-    : '';
+    const query = request.originalUrl.includes('?')
+      ? request.originalUrl.slice(request.originalUrl.indexOf('?'))
+      : '';
 
-  response.redirect(302, `${alias}${query}`);
+    if (request.path === '/dashboard/') {
+      return response.redirect(308, `/dashboard${query}`);
+    }
+
+    if (alias === '/dashboard.html') {
+      return response.sendFile(path.join(frontendDir, 'dashboard.html'));
+    }
+
+    return response.redirect(302, `${alias}${query}`);
+  };
 }
 
 function createDependencies(appConfig, overrides = {}) {
@@ -303,7 +313,7 @@ function createApp(options = {}) {
     );
   }
 
-  app.use(frontendAliases);
+  app.use(frontendAliases(frontendDir));
   app.use(express.static(frontendDir));
 
   app.get('/', (request, response) => {

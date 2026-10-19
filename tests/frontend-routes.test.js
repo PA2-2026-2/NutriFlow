@@ -1,0 +1,39 @@
+const request = require('supertest');
+const { createApp } = require('../src/app');
+
+describe('rotas do frontend', () => {
+  const app = createApp();
+
+  it('serve o dashboard diretamente em /dashboard sem alterar a URL', async () => {
+    const response = await request(app).get('/dashboard');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers.location).toBeUndefined();
+    expect(response.text).toContain('<title>NutriFlow | Dashboard do paciente</title>');
+    expect(response.text).toContain('src="dashboard.js"');
+  });
+
+  it('mantém a raiz da página no diretório do frontend para recursos relativos', async () => {
+    const dashboard = await request(app).get('/dashboard');
+    const stylesheet = await request(app).get('/styles.css');
+    const script = await request(app).get('/dashboard.js');
+
+    expect(dashboard.statusCode).toBe(200);
+    expect(stylesheet.statusCode).toBe(200);
+    expect(script.statusCode).toBe(200);
+  });
+
+  it('normaliza /dashboard/ sem redirecionar para o nome do arquivo', async () => {
+    const response = await request(app).get('/dashboard/');
+
+    expect(response.statusCode).toBe(308);
+    expect(response.headers.location).toBe('/dashboard');
+  });
+
+  it('preserva os demais aliases do frontend', async () => {
+    const response = await request(app).get('/home');
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/index.html');
+  });
+});

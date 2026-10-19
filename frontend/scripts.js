@@ -143,7 +143,7 @@ function saveSession(data) {
 }
 
 function redirectToDashboard() {
-  window.location.assign('dashboard.html');
+  window.location.assign('/dashboard');
 }
 
 function isPatientProfile(profile) {
@@ -163,7 +163,7 @@ function isAdminProfile(profile) {
 
 function getDashboardRoute(profile) {
   if (isPatientProfile(profile)) {
-    return 'dashboard.html';
+    return '/dashboard';
   }
 
   if (isNutritionistProfile(profile)) {
