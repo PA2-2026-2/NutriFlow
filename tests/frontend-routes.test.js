@@ -30,6 +30,36 @@ describe('rotas do frontend', () => {
     expect(response.headers.location).toBe('/dashboard');
   });
 
+  it('redireciona a URL antiga do paciente para a rota limpa', async () => {
+    const response = await request(app).get('/dashboard.html');
+
+    expect(response.statusCode).toBe(308);
+    expect(response.headers.location).toBe('/dashboard');
+  });
+
+  it('serve o painel da nutricionista diretamente na rota limpa', async () => {
+    const response = await request(app).get('/dashboard-nutricionista');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers.location).toBeUndefined();
+    expect(response.text).toContain('<title>NutriFlow | Dashboard do Nutricionista</title>');
+    expect(response.text).toContain('src="dashboard-nutricionista.js"');
+  });
+
+  it('redireciona a URL antiga do painel da nutricionista para a rota limpa', async () => {
+    const response = await request(app).get('/dashboard-nutricionista.html');
+
+    expect(response.statusCode).toBe(308);
+    expect(response.headers.location).toBe('/dashboard-nutricionista');
+  });
+
+  it('normaliza /dashboard-nutricionista/ sem expor o arquivo HTML', async () => {
+    const response = await request(app).get('/dashboard-nutricionista/');
+
+    expect(response.statusCode).toBe(308);
+    expect(response.headers.location).toBe('/dashboard-nutricionista');
+  });
+
   it('preserva os demais aliases do frontend', async () => {
     const response = await request(app).get('/home');
 

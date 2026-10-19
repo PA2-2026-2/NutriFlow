@@ -167,7 +167,7 @@ function getDashboardRoute(profile) {
   }
 
   if (isNutritionistProfile(profile)) {
-    return 'dashboard-nutricionista.html';
+    return '/dashboard-nutricionista';
   }
 
   if (isAdminProfile(profile)) {

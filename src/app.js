@@ -50,8 +50,10 @@ const FRONTEND_ROUTE_ALIASES = new Map([
   ['/home/ui.js', '/ui.js'],
   ['/dashboard', '/dashboard.html'],
   ['/dashboard/', '/dashboard.html'],
+  ['/dashboard.html', '/dashboard.html'],
   ['/dashboard-nutricionista', '/dashboard-nutricionista.html'],
   ['/dashboard-nutricionista/', '/dashboard-nutricionista.html'],
+  ['/dashboard-nutricionista.html', '/dashboard-nutricionista.html'],
   ['/dashboard-admin', '/dashboard-admin.html'],
   ['/dashboard-admin/', '/dashboard-admin.html'],
   ['/Nutricionista/dashboard-nutricionista.html', '/dashboard-nutricionista.html'],
@@ -132,12 +134,22 @@ function frontendAliases(frontendDir) {
       ? request.originalUrl.slice(request.originalUrl.indexOf('?'))
       : '';
 
-    if (request.path === '/dashboard/') {
-      return response.redirect(308, `/dashboard${query}`);
+    if (request.path === '/dashboard/' || request.path === '/dashboard-nutricionista/') {
+      return response.redirect(308, `${request.path.slice(0, -1)}${query}`);
     }
 
-    if (alias === '/dashboard.html') {
-      return response.sendFile(path.join(frontendDir, 'dashboard.html'));
+    if (
+      request.path === '/dashboard.html' ||
+      (alias === '/dashboard-nutricionista.html' &&
+        request.path !== '/dashboard-nutricionista')
+    ) {
+      const cleanPath =
+        request.path === '/dashboard.html' ? '/dashboard' : '/dashboard-nutricionista';
+      return response.redirect(308, `${cleanPath}${query}`);
+    }
+
+    if (alias === '/dashboard.html' || alias === '/dashboard-nutricionista.html') {
+      return response.sendFile(path.join(frontendDir, alias.slice(1)));
     }
 
     return response.redirect(302, `${alias}${query}`);
