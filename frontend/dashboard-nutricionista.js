@@ -43,7 +43,7 @@ const APPOINTMENT_STATUS_LABELS = {
   remarcada: 'Remarcada',
   faltou: 'Faltou',
 };
-const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 2 * 1024 * 1024;
+const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 const toast = document.getElementById('nutritionistToast');
 const toastController = createToastController(toast, { duration: 3000 });
@@ -1028,8 +1028,8 @@ async function handleNutritionistPhotoUpload() {
     return;
   }
 
-  if (!['image/jpeg', 'image/png'].includes(file.type)) {
-    showToast('Selecione uma imagem JPG ou PNG.');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    showToast('Selecione uma imagem JPEG, PNG ou WebP.');
     input.value = '';
     return;
   }

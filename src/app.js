@@ -39,6 +39,7 @@ const { createPatientDashboardRoutes } = require('./routes/patientDashboardRoute
 const { createNutritionistRoutes } = require('./routes/nutritionistRoutes');
 const { createChatRoutes } = require('./routes/chatRoutes');
 const { PhotoStorage } = require('./infra/photoStorage');
+const { SupabasePhotoStorage } = require('./infra/supabasePhotoStorage');
 
 const FRONTEND_ROUTE_ALIASES = new Map([
   ['/home', '/index.html'],
@@ -168,19 +169,26 @@ function createDependencies(appConfig, overrides = {}) {
 
   const sessionService = new SessionService();
 
+  const photoStorage =
+    overrides.photoStorage ||
+    (appConfig.photoStorageProvider === 'supabase'
+      ? new SupabasePhotoStorage({
+          url: appConfig.supabaseUrl,
+          secretKey: appConfig.supabaseSecretKey,
+          bucket: appConfig.supabaseBucket,
+        })
+      : new PhotoStorage({
+          uploadsDir: appConfig.uploadsDir,
+          enabled: appConfig.photoStorageProvider === 'local',
+        }));
+
   const authService = new AuthService(
     repository,
     passwordService,
     tokenService,
-    sessionService
+    sessionService,
+    photoStorage
   );
-
-  const photoStorage =
-    overrides.photoStorage ||
-    new PhotoStorage({
-      uploadsDir: appConfig.uploadsDir,
-      enabled: appConfig.photoStorageProvider === 'local',
-    });
 
   const adminService = new AdminService(
     new AdminRepository(prisma),
@@ -200,7 +208,7 @@ function createDependencies(appConfig, overrides = {}) {
     new MealPlanRepository(prisma),
     profileRepository,
   );
-  const chatService = new ChatService(new ChatRepository(prisma));
+  const chatService = new ChatService(new ChatRepository(prisma), photoStorage);
 
   return {
     prisma,

@@ -8,9 +8,15 @@ const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
 const tokenSecret =
   process.env.TOKEN_SECRET || 'nutriflow-dev-secret-change-me';
 
+const hasSupabaseUrl = Boolean(process.env.SUPABASE_URL);
+const hasSupabaseSecretKey = Boolean(process.env.SUPABASE_SECRET_KEY);
 const photoStorageProvider =
   process.env.PHOTO_STORAGE_PROVIDER ||
-  (nodeEnv === 'production' ? 'disabled' : 'local');
+  (hasSupabaseUrl && hasSupabaseSecretKey
+    ? 'supabase'
+    : nodeEnv === 'production'
+      ? 'disabled'
+      : 'local');
 
 function parseAllowedOrigins(value) {
   return String(value || '')
@@ -60,9 +66,9 @@ if (nodeEnv === 'production') {
   }
 }
 
-if (!['local', 'disabled'].includes(photoStorageProvider)) {
+if (!['local', 'disabled', 'supabase'].includes(photoStorageProvider)) {
   throw new Error(
-    'PHOTO_STORAGE_PROVIDER deve ser "local" ou "disabled".'
+    'PHOTO_STORAGE_PROVIDER deve ser "local", "disabled" ou "supabase".'
   );
 }
 
@@ -70,6 +76,28 @@ if (nodeEnv === 'production' && photoStorageProvider === 'local') {
   throw new Error(
     'O armazenamento local de fotos não é persistente em produção.'
   );
+}
+
+if (photoStorageProvider === 'supabase') {
+  if (!hasSupabaseUrl || !hasSupabaseSecretKey) {
+    throw new Error(
+      'SUPABASE_URL e SUPABASE_SECRET_KEY devem estar configuradas para armazenamento Supabase.'
+    );
+  }
+
+  let supabaseUrl;
+  try {
+    supabaseUrl = new URL(process.env.SUPABASE_URL);
+  } catch {
+    throw new Error('SUPABASE_URL deve ser uma URL HTTP(S) válida.');
+  }
+
+  if (
+    !['http:', 'https:'].includes(supabaseUrl.protocol) ||
+    (nodeEnv === 'production' && supabaseUrl.protocol !== 'https:')
+  ) {
+    throw new Error('SUPABASE_URL deve usar HTTPS em produção.');
+  }
 }
 
 const config = {
@@ -80,11 +108,14 @@ const config = {
   uploadsDir: process.env.UPLOADS_DIR
     ? path.resolve(process.env.UPLOADS_DIR)
     : path.join(__dirname, '..', 'uploads'),
-  maxPhotoSizeBytes: 2 * 1024 * 1024,
+  maxPhotoSizeBytes: 5 * 1024 * 1024,
   tokenSecret,
   databaseUrl,
   corsAllowedOrigins,
   photoStorageProvider,
+  supabaseUrl: process.env.SUPABASE_URL,
+  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY,
+  supabaseBucket: 'nutriflow-images',
 };
 
 module.exports = {

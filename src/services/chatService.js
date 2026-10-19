@@ -1,12 +1,14 @@
 const { AppError } = require('../errors/appError');
 const { ROLES } = require('../constants/roles');
+const { getPhotoUrl } = require('../utils/photoPresenter');
 
 const MAX_MESSAGE_LENGTH = 2000;
 const MESSAGE_FIELDS = new Set(['recipientId', 'content']);
 
 class ChatService {
-	constructor(repository) {
+	constructor(repository, photoStorage) {
 		this.repository = repository;
+		this.photoStorage = photoStorage;
 	}
 
 	async getAuthorizedPair(userId, recipientId) {
@@ -124,7 +126,10 @@ class ChatService {
 					id: patient.id,
 					name: patient.name,
 					email: patient.email,
-					profilePhotoUrl: patient.profilePhotoUrl || null,
+					profilePhotoUrl: await getPhotoUrl(
+						this.photoStorage,
+						patient.profilePhotoUrl,
+					),
 				},
 				lastMessage: latestMessage ? this.presentMessage(latestMessage) : null,
 				unreadCount,

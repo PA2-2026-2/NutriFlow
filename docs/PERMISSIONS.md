@@ -32,7 +32,7 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /api/auth/me` | ✅ | ✅ | ✅ | Dados do usuário autenticado |
 | `GET /api/users/me` | ✅ | ✅ | ✅ | Dados do próprio perfil |
 | `PUT /api/users/me` | ✅ | ✅ | ✅ | Atualiza o próprio nome e telefone |
-| `POST /api/users/me/photo` | ✅ | ✅ | ✅ | Envia a própria foto (JPG/PNG, até 2 MB) |
+| `POST /api/users/me/photo` | ✅ | ✅ | ✅ | Envia a própria foto (JPEG/PNG/WebP, até 5 MB) |
 | `POST /api/patients/me/nutritionist` | ✅ | ❌ | ❌ | Vincula o paciente logado a um nutricionista pelo e-mail dele |
 | `POST /api/patients/:id/measurements` | ❌ | ✅ | ❌ | Registra medidas de paciente vinculado ao nutricionista autenticado |
 | `PUT /api/patients/:id/measurements/:measurementId` | ❌ | ✅ | ❌ | Substitui os dados da medida de paciente vinculado; peso e altura são obrigatórios |

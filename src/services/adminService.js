@@ -1,6 +1,7 @@
 const { AppError } = require('../errors/appError');
 const { normalizeRole, toRoleLabel } = require('../constants/roles');
 const { isValidEmail, normalizePhone } = require('../utils/validators');
+const { presentPhoto } = require('../utils/photoPresenter');
 
 function normalizeEmail(email) {
 	return String(email || '').trim().toLowerCase();
@@ -60,7 +61,13 @@ class AdminService {
 			role,
 		});
 
-		return { users: users.map(toManagedUser) };
+		return {
+			users: await Promise.all(
+				users.map((user) =>
+					presentPhoto(this.photoStorage, toManagedUser(user)),
+				),
+			),
+		};
 	}
 
 	async getSummary() {
@@ -229,7 +236,7 @@ class AdminService {
 
 		return {
 			message: 'Usuario atualizado com sucesso.',
-			user: toManagedUser(updated),
+			user: await presentPhoto(this.photoStorage, toManagedUser(updated)),
 		};
 	}
 
@@ -262,7 +269,7 @@ class AdminService {
 			message: payload.isActive
 				? 'Usuario reativado com sucesso.'
 				: 'Usuario bloqueado com sucesso.',
-			user: toManagedUser(updated),
+			user: await presentPhoto(this.photoStorage, toManagedUser(updated)),
 		};
 	}
 

@@ -1,21 +1,32 @@
 const { AppError } = require('../errors/appError');
 const { normalizePhone } = require('../utils/validators');
 const { toPublicUser } = require('../utils/userPresenter');
+const { presentPhoto } = require('../utils/photoPresenter');
 
 const MAX_NAME_LENGTH = 100;
 
 const PHOTO_SIGNATURES = [
   { extension: 'png', bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
   { extension: 'jpg', bytes: [0xff, 0xd8, 0xff] },
+  {
+    extension: 'webp',
+    matches: (buffer) =>
+      buffer.length >= 16 &&
+      buffer.toString('ascii', 0, 4) === 'RIFF' &&
+      buffer.toString('ascii', 8, 12) === 'WEBP' &&
+      ['VP8 ', 'VP8L', 'VP8X'].includes(buffer.toString('ascii', 12, 16)),
+  },
 ];
 
 function detectImageExtension(buffer) {
-  const match = PHOTO_SIGNATURES.find(({ bytes }) =>
-    buffer.length >= bytes.length &&
-    bytes.every((byte, index) => buffer[index] === byte),
+  const match = PHOTO_SIGNATURES.find(({ bytes, matches }) =>
+    matches
+      ? matches(buffer)
+      : buffer.length >= bytes.length &&
+        bytes.every((byte, index) => buffer[index] === byte),
   );
 
-  return match ? match.extension : null;
+  return match?.extension || null;
 }
 
 function normalizeOptionalText(value) {
@@ -64,7 +75,7 @@ class UserService {
       throw new AppError('Usuario nao encontrado.', 404);
     }
 
-    const publicUser = toPublicUser(user);
+    const publicUser = await presentPhoto(this.photoStorage, toPublicUser(user));
 
     if (this.profileRepository) {
       const patientProfile = user.profile === 'PATIENT'
@@ -193,7 +204,7 @@ class UserService {
       );
     }
 
-    const publicUser = toPublicUser(updated);
+    const publicUser = await presentPhoto(this.photoStorage, toPublicUser(updated));
 
     if (this.profileRepository) {
       const patientProfile = updated.profile === 'PATIENT'
@@ -238,7 +249,7 @@ class UserService {
 
     if (!extension) {
       throw new AppError(
-        'Formato de imagem invalido. Use JPG ou PNG.',
+        'Formato de imagem invalido. Use JPEG, PNG ou WebP.',
         415,
       );
     }
@@ -270,10 +281,14 @@ class UserService {
 
     await this.photoStorage.remove(previousPhotoUrl).catch(() => {});
 
+    const profilePhotoUrl = await this.photoStorage.getUrl(
+      updated.profilePhotoUrl,
+    );
+
     return {
       message: 'Foto de perfil atualizada com sucesso.',
-      profilePhotoUrl: updated.profilePhotoUrl,
-      user: toPublicUser(updated),
+      profilePhotoUrl,
+      user: await presentPhoto(this.photoStorage, toPublicUser(updated)),
     };
   }
 }

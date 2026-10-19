@@ -10,6 +10,7 @@ const PNG_1X1 = Buffer.from(
   'base64',
 );
 const JPEG_FAKE = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
+const WEBP_FAKE = Buffer.from('RIFFxxxxWEBPVP8 ');
 
 
 describe('POST /api/users/me/photo', () => {
@@ -62,11 +63,14 @@ describe('POST /api/users/me/photo', () => {
     expect(file.headers['x-content-type-options']).toBe('nosniff');
   });
 
-  it('deve aceitar JPEG', async () => {
-    const response = await upload(account.token, JPEG_FAKE, 'image/jpeg');
+  it('deve aceitar JPEG e WebP', async () => {
+    const jpeg = await upload(account.token, JPEG_FAKE, 'image/jpeg');
+    const webp = await upload(account.token, WEBP_FAKE, 'image/webp');
 
-    expect(response.statusCode).toBe(200);
-    expect(response.body.profilePhotoUrl).toMatch(/\.jpg$/);
+    expect(jpeg.statusCode).toBe(200);
+    expect(jpeg.body.profilePhotoUrl).toMatch(/\.jpg$/);
+    expect(webp.statusCode).toBe(200);
+    expect(webp.body.profilePhotoUrl).toMatch(/\.webp$/);
   });
 
   it('deve substituir a foto antiga (removendo o arquivo anterior)', async () => {
@@ -86,11 +90,13 @@ describe('POST /api/users/me/photo', () => {
   it('deve recusar formatos que nao sao JPG/PNG (415)', async () => {
     const gif = await upload(account.token, Buffer.from('GIF89a-fake'), 'image/gif');
     const webp = await upload(account.token, Buffer.from('RIFFxxxxWEBP'), 'image/webp');
+    const invalidWebp = await upload(account.token, Buffer.from('not a webp image'), 'image/webp');
     const pdf = await upload(account.token, Buffer.from('%PDF-1.4'), 'application/pdf');
     const text = await upload(account.token, 'ola', 'text/plain');
 
     expect(gif.statusCode).toBe(415);
     expect(webp.statusCode).toBe(415);
+    expect(invalidWebp.statusCode).toBe(415);
     expect(pdf.statusCode).toBe(415);
     expect(text.statusCode).toBe(415);
   });
@@ -103,7 +109,7 @@ describe('POST /api/users/me/photo', () => {
   });
 
   it('deve recusar arquivo acima do limite (413)', async () => {
-    const tooBig = Buffer.concat([PNG_1X1, Buffer.alloc(2 * 1024 * 1024 + 10, 7)]);
+    const tooBig = Buffer.concat([PNG_1X1, Buffer.alloc(5 * 1024 * 1024 + 10, 7)]);
 
     const response = await upload(account.token, tooBig, 'image/png');
 

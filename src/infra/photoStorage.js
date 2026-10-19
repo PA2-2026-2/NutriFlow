@@ -4,7 +4,7 @@ const path = require('path');
 const { AppError } = require('../errors/appError');
 
 const PUBLIC_BASE_PATH = '/uploads/profile-photos';
-const SAFE_FILENAME = /^[A-Za-z0-9-]+\.(jpg|png)$/;
+const SAFE_FILENAME = /^[A-Za-z0-9-]+\.(jpg|png|webp)$/;
 
 
 class PhotoStorage {
@@ -32,8 +32,10 @@ class PhotoStorage {
     return { filename, url: `${PUBLIC_BASE_PATH}/${filename}` };
   }
 
-  
-  
+  async getUrl(url) {
+    return url || null;
+  }
+
   async remove(url) {
     if (!this.enabled) {
       return;

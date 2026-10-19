@@ -1,6 +1,6 @@
 const { AppError } = require('../errors/appError');
 
-const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png'];
+const PHOTO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 class UserController {
   constructor(userService) {
@@ -25,7 +25,7 @@ class UserController {
   async updatePhoto(request, response) {
     if (request.is(PHOTO_MIME_TYPES) === false) {
       throw new AppError(
-        'Formato nao suportado. Envie image/jpeg ou image/png.',
+        'Formato nao suportado. Envie JPEG, PNG ou WebP.',
         415,
       );
     }

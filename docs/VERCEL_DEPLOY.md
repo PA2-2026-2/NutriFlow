@@ -17,7 +17,9 @@ adicione ao Git nem compartilhe em logs:
 | `DATABASE_URL` | URL PostgreSQL com TLS conforme exigido pelo provedor | `file:./dev.db` |
 | `TOKEN_SECRET` | Segredo aleatório com pelo menos 32 caracteres | Pode omitir para usar o segredo local padrão |
 | `CORS_ALLOWED_ORIGINS` | Opcional; lista separada por vírgula de origens HTTPS para clientes em outros domínios | Opcional |
-| `PHOTO_STORAGE_PROVIDER` | `disabled` até configurar armazenamento persistente | `local` (padrão) |
+| `PHOTO_STORAGE_PROVIDER` | `supabase` (automático quando as duas variáveis Supabase existem) | `local` (padrão) |
+| `SUPABASE_URL` | URL HTTPS do projeto Supabase | Opcional |
+| `SUPABASE_SECRET_KEY` | Chave secreta do projeto; somente backend | Opcional |
 
 O CORS não é necessário para o frontend hospedado na mesma origem. Se outro
 domínio precisar acessar a API, inclua somente a origem HTTPS exata em
@@ -77,15 +79,24 @@ fluxos funcionais antes de trocar o tráfego.
 
 ## Fotos de perfil
 
-Uploads locais e `uploads/` são adequados somente a desenvolvimento/testes;
-o disco da função Vercel não é persistente. Em produção, o padrão
-`PHOTO_STORAGE_PROVIDER=disabled` impede gravações efêmeras, responde HTTP
-503 a novos envios e não serve o diretório local. URLs salvas não são
-reescritas nem removidas. Escolha e configure um serviço compatível com
-armazenamento de objetos antes de habilitar fotos em produção, incluindo
-migração dos arquivos existentes e atualização coordenada das URLs; essa
-integração depende da escolha do provedor/credenciais e ainda não está
-implementada.
+Em produção, configure `SUPABASE_URL` e `SUPABASE_SECRET_KEY` na Vercel para os
+ambientes necessários. Com ambas configuradas, o provider `supabase` é
+selecionado automaticamente; também pode ser definido explicitamente com
+`PHOTO_STORAGE_PROVIDER=supabase`. A aplicação usa o bucket privado
+`nutriflow-images` e requer que ele aceite JPEG, PNG e WebP, com limite de
+5 MB. A chave secreta só é lida no backend. Não torne o bucket público nem
+coloque essa chave no frontend.
+
+O PostgreSQL mantém somente a chave do objeto em `profilePhotoUrl`. Para exibir
+as imagens, a API gera URLs assinadas com validade de uma hora. Uploads e
+assinaturas são realizados pela função Express e não dependem de disco local,
+compatibilizando com a Vercel. O provider `local` continua disponível para
+desenvolvimento e testes; não use esse provider em produção.
+
+Esta integração não migra, apaga ou reescreve fotos já existentes. Se o banco
+contiver URLs locais antigas, planeje separadamente a cópia desses arquivos
+para o bucket e a atualização das referências após backup e validação; nenhum
+dado de produção é alterado automaticamente.
 
 ## Deploy e verificação
 

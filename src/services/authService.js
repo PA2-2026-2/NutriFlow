@@ -1,6 +1,7 @@
 const { AppError } = require('../errors/appError');
 const { SELF_REGISTRATION_ROLES, normalizeRole } = require('../constants/roles');
 const { toPublicUser } = require('../utils/userPresenter');
+const { presentPhoto } = require('../utils/photoPresenter');
 
 function normalizeEmail(email) {
 	return String(email || '').trim().toLowerCase();
@@ -11,11 +12,12 @@ function normalizeText(value) {
 }
 
 class AuthService {
-	constructor(userRepository, passwordService, tokenService, sessionService) {
+	constructor(userRepository, passwordService, tokenService, sessionService, photoStorage) {
 		this.userRepository = userRepository;
 		this.passwordService = passwordService;
 		this.tokenService = tokenService;
 		this.sessionService = sessionService;
+		this.photoStorage = photoStorage;
 	}
 
 	async register(payload) {
@@ -65,7 +67,7 @@ class AuthService {
 		return {
 			message: 'Cadastro realizado com sucesso.',
 			token: this.tokenService.create(user),
-			user: toPublicUser(user),
+			user: await presentPhoto(this.photoStorage, toPublicUser(user)),
 		};
 	}
 
@@ -102,7 +104,7 @@ class AuthService {
 		return {
 			message: 'Login realizado com sucesso.',
 			token: this.tokenService.create(user),
-			user: toPublicUser(user),
+			user: await presentPhoto(this.photoStorage, toPublicUser(user)),
 		};
 	}
 
@@ -127,7 +129,9 @@ class AuthService {
 			throw new AppError('Usuario nao encontrado.', 404);
 		}
 
-		return { user: toPublicUser(user) };
+		return {
+			user: await presentPhoto(this.photoStorage, toPublicUser(user)),
+		};
 	}
 }
 

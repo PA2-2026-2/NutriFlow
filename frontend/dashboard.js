@@ -120,7 +120,7 @@ const WEEKLY_WEIGHT_LIMITS = {
   min: 20,
   max: 350,
 };
-const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 2 * 1024 * 1024;
+const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 5 * 1024 * 1024;
 const cropProfilePhoto = window.NutriFlowCore.cropImageToSquare;
 
 function getSessionToken() {
@@ -2077,8 +2077,8 @@ async function handlePatientPhotoUpload() {
     return;
   }
 
-  if (!['image/jpeg', 'image/png'].includes(file.type)) {
-    showToast('Selecione uma imagem JPG ou PNG.');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    showToast('Selecione uma imagem JPEG, PNG ou WebP.');
     input.value = '';
     return;
   }
