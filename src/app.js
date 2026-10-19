@@ -60,29 +60,60 @@ const FRONTEND_ROUTE_ALIASES = new Map([
   ['/nutricionista/dashboard-nutricionista.js', '/dashboard-nutricionista.js'],
 ]);
 
-function cors(request, response, next) {
-  response.setHeader(
-    'Access-Control-Allow-Origin',
-    request.headers.origin || '*'
-  );
+function createCorsMiddleware(appConfig) {
+  const allowedOrigins = new Set(appConfig.corsAllowedOrigins || []);
 
-  response.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET,POST,PUT,PATCH,DELETE,OPTIONS'
-  );
-
-  response.setHeader(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization'
-  );
-
-  response.setHeader('Vary', 'Origin');
-
-  if (request.method === 'OPTIONS') {
-    return response.status(204).end();
+  function isSameOrigin(origin, requestOrigin) {
+    try {
+      return new URL(origin).origin === new URL(requestOrigin).origin;
+    } catch {
+      return false;
+    }
   }
 
-  next();
+  return (request, response, next) => {
+    const origin = request.headers.origin;
+    const isDevelopment = appConfig.nodeEnv !== 'production';
+    const forwardedProtocol = request.get('x-forwarded-proto')
+      ?.split(',')[0]
+      .trim();
+    const requestProtocol = forwardedProtocol || request.protocol;
+    const requestHost = request.get('host');
+    const requestOrigin = requestHost
+      ? `${requestProtocol}://${requestHost}`
+      : '';
+
+    response.setHeader('Vary', 'Origin');
+
+    if (origin) {
+      if (isDevelopment) {
+        response.setHeader('Access-Control-Allow-Origin', '*');
+      } else if (
+        allowedOrigins.has(origin) ||
+        (requestOrigin && isSameOrigin(origin, requestOrigin))
+      ) {
+        response.setHeader('Access-Control-Allow-Origin', origin);
+      } else {
+        return response.status(403).json({ message: 'Origem não autorizada.' });
+      }
+    }
+
+    response.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET,POST,PUT,PATCH,DELETE,OPTIONS'
+    );
+
+    response.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization'
+    );
+
+    if (request.method === 'OPTIONS') {
+      return response.status(204).end();
+    }
+
+    next();
+  };
 }
 
 function frontendAliases(request, response, next) {
@@ -122,7 +153,12 @@ function createDependencies(appConfig, overrides = {}) {
     sessionService
   );
 
-  const photoStorage = new PhotoStorage({ uploadsDir: appConfig.uploadsDir });
+  const photoStorage =
+    overrides.photoStorage ||
+    new PhotoStorage({
+      uploadsDir: appConfig.uploadsDir,
+      enabled: appConfig.photoStorageProvider === 'local',
+    });
 
   const adminService = new AdminService(
     new AdminRepository(prisma),
@@ -186,11 +222,11 @@ function createApp(options = {}) {
   app.locals.config = appConfig;
   app.locals.prisma = prisma;
 
-  app.use(cors);
+  app.use(createCorsMiddleware(appConfig));
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false }));
 
-  app.get('/health', async (request, response, next) => {
+  app.get('/health', async (request, response) => {
     try {
       await prisma.$queryRaw`SELECT 1`;
 
@@ -200,7 +236,16 @@ function createApp(options = {}) {
         database: 'connected',
       });
     } catch (error) {
-      next(error);
+      console.error('Verificação de saúde: banco indisponível.', {
+        name: error.name || 'Error',
+        code: error.code || 'UNKNOWN',
+      });
+
+      response.status(503).json({
+        status: 'ERROR',
+        environment: appConfig.nodeEnv || 'development',
+        database: 'disconnected',
+      });
     }
   });
 
@@ -246,15 +291,17 @@ function createApp(options = {}) {
     createChatRoutes(chatController, authenticate, '/api/chat')
   );
 
-  app.use(
-    '/uploads',
-    express.static(appConfig.uploadsDir, {
-      index: false,
-      setHeaders: (response) => {
-        response.setHeader('X-Content-Type-Options', 'nosniff');
-      },
-    })
-  );
+  if (appConfig.photoStorageProvider === 'local') {
+    app.use(
+      '/uploads',
+      express.static(appConfig.uploadsDir, {
+        index: false,
+        setHeaders: (response) => {
+          response.setHeader('X-Content-Type-Options', 'nosniff');
+        },
+      })
+    );
+  }
 
   app.use(frontendAliases);
   app.use(express.static(frontendDir));

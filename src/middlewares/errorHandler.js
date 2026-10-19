@@ -44,8 +44,18 @@ function errorHandler(error, request, response, next) {
 	const statusCode =
 		error instanceof AppError ? error.statusCode : 500;
 
+	if (!(error instanceof AppError)) {
+		console.error('Erro interno do servidor.', {
+			name: error.name || 'Error',
+			code: error.code || 'UNKNOWN',
+		});
+	}
+
 	response.status(statusCode).json({
-		message: error.message || 'Erro interno do servidor.',
+		message:
+			error instanceof AppError
+				? error.message
+				: 'Erro interno do servidor.',
 	});
 }
 

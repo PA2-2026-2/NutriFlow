@@ -1,10 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const { PrismaClient } = require('@prisma/client');
 
 function resolveSqlitePath(databaseUrl) {
   if (!databaseUrl.startsWith('file:')) {
-    throw new Error('DATABASE_URL invalida. Use o formato file:./caminho/do/banco.db');
+    throw new Error('A URL do banco não é SQLite.');
   }
 
   const filePath = databaseUrl.slice(5);
@@ -22,7 +21,21 @@ function ensureDatabaseDirectory(databaseUrl) {
 }
 
 function createPrismaClient(databaseUrl) {
-  ensureDatabaseDirectory(databaseUrl);
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL não está configurada.');
+  }
+
+  const isSqlite = databaseUrl.startsWith('file:');
+
+  if (isSqlite) {
+    ensureDatabaseDirectory(databaseUrl);
+  } else if (!/^postgres(?:ql)?:\/\//i.test(databaseUrl)) {
+    throw new Error('DATABASE_URL deve usar SQLite ou PostgreSQL.');
+  }
+
+  const { PrismaClient } = isSqlite
+    ? require('../../prisma/generated/sqlite')
+    : require('@prisma/client');
 
   return new PrismaClient({
     datasources: {

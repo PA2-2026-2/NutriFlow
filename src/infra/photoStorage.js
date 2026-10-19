@@ -1,17 +1,26 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { AppError } = require('../errors/appError');
 
 const PUBLIC_BASE_PATH = '/uploads/profile-photos';
 const SAFE_FILENAME = /^[A-Za-z0-9-]+\.(jpg|png)$/;
 
 
 class PhotoStorage {
-  constructor({ uploadsDir }) {
+  constructor({ uploadsDir, enabled = true }) {
     this.directory = path.join(uploadsDir, 'profile-photos');
+    this.enabled = enabled;
   }
 
   async save(userId, buffer, extension) {
+    if (!this.enabled) {
+      throw new AppError(
+        'O envio de fotos está indisponível até configurar armazenamento persistente.',
+        503,
+      );
+    }
+
     await fs.promises.mkdir(this.directory, { recursive: true });
 
     const filename = `${userId}-${crypto.randomBytes(8).toString('hex')}.${extension}`;
@@ -26,6 +35,10 @@ class PhotoStorage {
   
   
   async remove(url) {
+    if (!this.enabled) {
+      return;
+    }
+
     const value = String(url || '');
 
     if (!value.startsWith(`${PUBLIC_BASE_PATH}/`)) {

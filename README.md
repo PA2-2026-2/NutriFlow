@@ -17,3 +17,5 @@ npm run dev
 ```
 
 O servidor inicia por padrão em `http://127.0.0.1:3000`. A raiz exibe a aplicação web; `GET /health` verifica a API e a conexão com o banco. Para executar a suíte de testes, use `npm test`.
+
+O guia de preparação de produção na Vercel, PostgreSQL, migração dos dados e armazenamento de fotos está em [docs/VERCEL_DEPLOY.md](docs/VERCEL_DEPLOY.md).
