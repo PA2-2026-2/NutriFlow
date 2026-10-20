@@ -1,0 +1,252 @@
+(function initNutriFlowCore() {
+  const PROFILE_PHOTO_DIMENSIONS = 512;
+
+  function safeParse(jsonValue) {
+    try {
+      return jsonValue ? JSON.parse(jsonValue) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function getInitials(name, fallback = '--') {
+    const initials = String(name || '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .join('');
+
+    return initials || fallback;
+  }
+
+  async function cropImageToSquare(file) {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    try {
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error('Nao foi possivel ler a imagem selecionada.'));
+        image.src = objectUrl;
+      });
+
+      const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
+
+      if (!sourceSize) {
+        throw new Error('A imagem selecionada possui dimensoes invalidas.');
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = PROFILE_PHOTO_DIMENSIONS;
+      canvas.height = PROFILE_PHOTO_DIMENSIONS;
+
+      const context = canvas.getContext('2d');
+
+      if (!context) {
+        throw new Error('Nao foi possivel preparar a imagem para o avatar.');
+      }
+
+      const sourceX = (image.naturalWidth - sourceSize) / 2;
+      const sourceY = (image.naturalHeight - sourceSize) / 2;
+      context.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceSize,
+        sourceSize,
+        0,
+        0,
+        PROFILE_PHOTO_DIMENSIONS,
+        PROFILE_PHOTO_DIMENSIONS,
+      );
+
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Nao foi possivel preparar a imagem para o avatar.'));
+              return;
+            }
+
+            resolve(blob);
+          },
+          file.type,
+          0.9,
+        );
+      });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  function formatSidebarDate(options = {}) {
+    const {
+      date = new Date(),
+      locale = 'pt-BR',
+      stripPeriod = false,
+    } = options;
+
+    const formatted = new Intl.DateTimeFormat(locale, {
+      day: '2-digit',
+      month: 'short',
+    }).format(date);
+
+    return stripPeriod ? formatted.replace('.', '') : formatted;
+  }
+
+  function createSessionManager(options = {}) {
+    const {
+      tokenKey = 'nutriflow.token',
+      userKey = 'nutriflow.user',
+      lastAuthKey = 'nutriflow.lastAuthAt',
+      redirectTo = 'index.html',
+      storage = window.localStorage,
+      onClear = null,
+    } = options;
+
+    function getToken() {
+      return storage.getItem(tokenKey);
+    }
+
+    function getUser() {
+      return safeParse(storage.getItem(userKey));
+    }
+
+    function persistUser(user) {
+      if (!user) {
+        return null;
+      }
+
+      storage.setItem(userKey, JSON.stringify(user));
+      return user;
+    }
+
+    async function clear() {
+      if (typeof onClear === 'function') {
+        onClear();
+      }
+
+      try {
+        await window.NutriFlowSignOut?.();
+      } catch (error) {
+        console.error('Não foi possível encerrar a sessão Supabase.', error);
+      }
+
+      storage.removeItem(tokenKey);
+      storage.removeItem(userKey);
+      storage.removeItem(lastAuthKey);
+      window.location.replace(redirectTo);
+    }
+
+    function ensureAuthenticated() {
+      if (!getToken()) {
+        clear();
+        return false;
+      }
+
+      return true;
+    }
+
+    return {
+      clear,
+      ensureAuthenticated,
+      getToken,
+      getUser,
+      persistUser,
+    };
+  }
+
+  function createToastController(element, options = {}) {
+    const { duration = 2400 } = options;
+    let timeoutId = null;
+
+    function show(message) {
+      if (!element || !message) {
+        return;
+      }
+
+      element.textContent = message;
+      element.classList.remove('hidden');
+      element.classList.add('is-visible');
+
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        element.classList.remove('is-visible');
+        element.classList.add('hidden');
+      }, duration);
+    }
+
+    return { show };
+  }
+
+  function createApiClient(options = {}) {
+    const {
+      request = window.NutriFlowApi?.request,
+      getToken = () => null,
+      onUnauthorized = null,
+      invalidResponseMessage = 'Resposta invalida do servidor.',
+      defaultErrorMessage = 'Nao foi possivel concluir a operacao.',
+    } = options;
+
+    return async function apiRequest(url, requestOptions = {}) {
+      if (typeof request !== 'function') {
+        throw new Error('Cliente HTTP indisponivel.');
+      }
+
+      const headers = new Headers(requestOptions.headers || {});
+      const token = getToken();
+
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+
+      if (requestOptions.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+
+      const response = await request(url, {
+        ...requestOptions,
+        headers,
+      });
+
+      const data = await response.json().catch(() => ({
+        message: invalidResponseMessage,
+      }));
+
+      if (response.status === 401 || response.status === 403) {
+        if (typeof onUnauthorized === 'function') {
+          onUnauthorized(data.message, response, data);
+        }
+
+        throw new Error(data.message || 'Sessao invalida.');
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || defaultErrorMessage);
+      }
+
+      return data;
+    };
+  }
+
+  window.NutriFlowCore = {
+    createApiClient,
+    createSessionManager,
+    createToastController,
+    cropImageToSquare,
+    escapeHtml,
+    formatSidebarDate,
+    getInitials,
+    safeParse,
+  };
+})();

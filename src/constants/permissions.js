@@ -1,0 +1,80 @@
+const { ROLES } = require('./roles');
+
+
+const ANY_ROLE = Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST, ROLES.ADMIN]);
+const ADMIN_ONLY = Object.freeze([ROLES.ADMIN]);
+const PATIENT_ONLY = Object.freeze([ROLES.PATIENT]);
+const NUTRITIONIST_ONLY = Object.freeze([ROLES.NUTRITIONIST]);
+
+
+const PUBLIC_ROUTES = Object.freeze([
+  'GET /health',
+  'POST /api/auth/register',
+  'POST /api/auth/login',
+  'POST /api/auth/logout',
+]);
+
+
+const PROTECTED_ROUTES = Object.freeze({
+  'GET /api/auth/me': ANY_ROLE,
+
+  'GET /api/users/me': ANY_ROLE,
+  'PUT /api/users/me': ANY_ROLE,
+  'POST /api/users/me/photo': ANY_ROLE,
+
+  'POST /api/patients/me/nutritionist': PATIENT_ONLY,
+  'POST /api/patients/:id/measurements': NUTRITIONIST_ONLY,
+  'PUT /api/patients/:id/measurements/:measurementId': NUTRITIONIST_ONLY,
+  'PATCH /api/patients/:id/measurements/:measurementId': NUTRITIONIST_ONLY,
+  'DELETE /api/patients/:id/measurements/:measurementId': NUTRITIONIST_ONLY,
+  'GET /api/patients/:id/measurements': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/patient/dashboard': PATIENT_ONLY,
+  'GET /api/patient/chat': PATIENT_ONLY,
+  'POST /api/patient/meals': PATIENT_ONLY,
+  'POST /api/patient/messages': PATIENT_ONLY,
+  'POST /api/patient/weights': PATIENT_ONLY,
+  'GET /api/nutritionist/patients': NUTRITIONIST_ONLY,
+  'GET /api/nutritionist/foods': NUTRITIONIST_ONLY,
+  'GET /api/nutritionist/meal-plans': NUTRITIONIST_ONLY,
+  'POST /api/nutritionist/meal-plans': NUTRITIONIST_ONLY,
+  'POST /api/nutritionist/link-patient': NUTRITIONIST_ONLY,
+
+  'POST /chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'POST /api/chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /chat/messages/:messageId/audio': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/chat/messages/:messageId/audio': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /chat/conversations': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/chat/conversations': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /chat/conversations/:conversationId/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/chat/conversations/:conversationId/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+
+  'GET /api/admin/users': ADMIN_ONLY,
+  'GET /api/admin/summary': ADMIN_ONLY,
+  'GET /api/admin/foods': ADMIN_ONLY,
+  'POST /api/admin/foods': ADMIN_ONLY,
+  'DELETE /api/admin/foods/:foodId': ADMIN_ONLY,
+  'PUT /api/admin/users/:userId': ADMIN_ONLY,
+  'PATCH /api/admin/users/:userId/status': ADMIN_ONLY,
+  'DELETE /api/admin/users/:userId': ADMIN_ONLY,
+});
+
+function getAllowedRoles(routeKey) {
+  const roles = PROTECTED_ROUTES[routeKey];
+
+  if (!roles) {
+    throw new Error(
+      `Rota sem permissao declarada na matriz (src/constants/permissions.js): ${routeKey}`,
+    );
+  }
+
+  return roles;
+}
+
+module.exports = {
+  ROLES,
+  PUBLIC_ROUTES,
+  PROTECTED_ROUTES,
+  getAllowedRoles,
+};

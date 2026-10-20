@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmação de e-mail | NutriFlow</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nutriflow: {
+              50: '#f3f7f1',
+              200: '#cadbbf',
+              700: '#4f6b3d',
+              800: '#425734',
+              950: '#1c2618'
+            }
+          },
+          boxShadow: { card: '0 18px 40px rgba(28,38,24,.10)' }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen bg-nutriflow-50 text-nutriflow-950">
+  <main class="mx-auto flex min-h-screen max-w-xl items-center px-6 py-12">
+    <section class="w-full rounded-[32px] bg-white p-8 shadow-card">
+      <h1 class="text-3xl font-extrabold">Confirmação de e-mail</h1>
+      <p id="confirmationMessage" class="mt-4 text-nutriflow-700" role="status" aria-live="polite">
+        Verificando o link de confirmação...
+      </p>
+      <form id="resendConfirmationForm" class="mt-6 hidden space-y-4" novalidate>
+        <label class="block">
+          <span class="mb-2 block text-sm font-medium">E-mail</span>
+          <input id="confirmationEmail" class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3" type="email" required autocomplete="email" />
+        </label>
+        <button class="w-full rounded-full bg-nutriflow-950 px-5 py-4 text-sm font-semibold text-white" type="submit">Solicitar novo e-mail</button>
+      </form>
+      <a class="mt-6 inline-block font-semibold text-nutriflow-800 underline" href="/?auth=login">Ir para o login</a>
+    </section>
+  </main>
+  <script src="/api/vendor/supabase.js"></script>
+  <script src="/api.js"></script>
+  <script src="/auth-client.js"></script>
+  <script src="/auth-confirmation.js"></script>
+</body>
+</html>

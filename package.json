@@ -1,0 +1,47 @@
+{
+  "name": "nutriflow",
+  "version": "1.0.0",
+  "description": "NutriFlow é uma plataforma digital de acompanhamento nutricional que conecta pacientes a nutricionistas",
+  "keywords": [],
+  "homepage": "https://github.com/PA2-2026-2/NutriFlow#readme",
+  "bugs": {
+    "url": "https://github.com/PA2-2026-2/NutriFlow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PA2-2026-2/NutriFlow.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "postinstall": "npm run prisma:generate:production",
+    "vercel-build": "npm run prisma:generate:production && npm run db:migrate:deploy",
+    "prisma:generate": "npm run prisma:generate:production && npm run prisma:generate:dev",
+    "prisma:generate:production": "prisma generate --schema=prisma/schema.prisma",
+    "prisma:generate:dev": "prisma generate --schema=prisma/schema.sqlite.prisma",
+    "db:push": "prisma db push --schema=prisma/schema.sqlite.prisma",
+    "db:migrate:deploy": "node scripts/prisma-migrate-deploy.js",
+    "db:migrate:diff": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
+    "db:migrate:data": "node scripts/migrate-sqlite-to-postgres.js",
+    "db:seed": "node prisma/seed.js",
+    "test": "npm run prisma:generate && node scripts/run-tests.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.118.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "prisma": "^6.19.3",
+    "supertest": "^7.2.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
