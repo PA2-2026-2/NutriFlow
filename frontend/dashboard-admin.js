@@ -2973,11 +2973,26 @@ async function toggleUserStatus(user) {
       ];
       const requestedScreen =
         window.location.hash.slice(1);
+      const storedScreen =
+        window.history.state?.nutriflowDashboardPage;
       const activeScreen = screenIds.includes(
         requestedScreen,
       )
         ? requestedScreen
-        : 'visao-geral';
+        : screenIds.includes(storedScreen)
+          ? storedScreen
+          : 'visao-geral';
+
+      if (window.location.hash || storedScreen !== activeScreen) {
+        window.history.replaceState(
+          {
+            ...window.history.state,
+            nutriflowDashboardPage: activeScreen,
+          },
+          '',
+          `${window.location.pathname}${window.location.search}`,
+        );
+      }
 
       document
         .querySelectorAll('[data-admin-screen]')
@@ -2996,10 +3011,32 @@ async function toggleUserStatus(user) {
       });
     }
 
-    window.addEventListener(
-      'hashchange',
-      renderAdminPage,
-    );
+    links.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const requestedScreen = link.getAttribute('href')?.slice(1);
+        const screenIds = ['visao-geral', 'usuarios', 'alimentos'];
+
+        if (!screenIds.includes(requestedScreen)) {
+          return;
+        }
+
+        event.preventDefault();
+        if (window.history.state?.nutriflowDashboardPage === requestedScreen) {
+          return;
+        }
+
+        window.history.pushState(
+          {
+            ...window.history.state,
+            nutriflowDashboardPage: requestedScreen,
+          },
+          '',
+          `${window.location.pathname}${window.location.search}`,
+        );
+        renderAdminPage();
+      });
+    });
+    window.addEventListener('popstate', renderAdminPage);
     renderAdminPage();
   }
 

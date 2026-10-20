@@ -336,7 +336,7 @@ async function fetchDatabaseData() {
     ensureValidPatientSelections();
     renderAll();
     await loadConversationWorkspace({
-      loadMessages: window.location.hash === '#conversas',
+      loadMessages: isNutritionistConversationPage(),
       silent: true,
     });
   } catch (error) { showToast(error.message || 'Erro ao carregar os dados do painel.'); }
@@ -856,7 +856,7 @@ function startNutritionistRealtimeChat() {
 
   nutritionistChatSyncIntervalId = window.setInterval(() => {
     void loadConversationWorkspace({
-      loadMessages: window.location.hash === '#conversas',
+      loadMessages: isNutritionistConversationPage(),
       silent: true,
       scrollToEnd: false,
     });
@@ -1261,7 +1261,7 @@ function bindButtons() {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       void loadConversationWorkspace({
-        loadMessages: window.location.hash === '#conversas',
+        loadMessages: isNutritionistConversationPage(),
         silent: true,
       });
     }
@@ -1418,9 +1418,23 @@ document.getElementById('addParticipantForm')?.addEventListener('submit', async 
 
 function renderNutritionistPage() {
   const requestedPage = window.location.hash.slice(1);
-  const showConversations = requestedPage === 'conversas';
-  const pageIds = ['pacientes', 'plano-alimentar', 'avaliacoes'];
-  const activePage = pageIds.includes(requestedPage) ? requestedPage : 'pacientes';
+  const storedPage = window.history.state?.nutriflowDashboardPage;
+  const pageIds = ['pacientes', 'plano-alimentar', 'avaliacoes', 'conversas'];
+  const activePage = pageIds.includes(requestedPage)
+    ? requestedPage
+    : pageIds.includes(storedPage)
+      ? storedPage
+      : 'pacientes';
+  const showConversations = activePage === 'conversas';
+
+  if (window.location.hash || storedPage !== activePage) {
+    window.history.replaceState(
+      { ...window.history.state, nutriflowDashboardPage: activePage },
+      '',
+      `${window.location.pathname}${window.location.search}`,
+    );
+  }
+
   const dashboard = document.getElementById('nutritionistDashboard');
   const conversationPage = document.getElementById('conversationPage');
   dashboard?.classList.toggle('hidden', showConversations);
@@ -1451,6 +1465,11 @@ function renderNutritionistPage() {
   });
 
   if (showConversations) void loadConversationWorkspace({ scrollToEnd: true });
+}
+
+function isNutritionistConversationPage() {
+  return window.location.hash === '#conversas'
+    || window.history.state?.nutriflowDashboardPage === 'conversas';
 }
 
 function discardWorkspaceVoiceDraft() {
@@ -1630,7 +1649,29 @@ conversationList?.addEventListener('click', (event) => {
 
 workspaceMessageForm?.addEventListener('submit', handleWorkspaceMessageSubmit);
 loadOlderMessagesButton?.addEventListener('click', () => void loadOlderConversationMessages());
-window.addEventListener('hashchange', renderNutritionistPage);
+document.querySelectorAll('[data-dashboard-page][href^="#"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const requestedPage = link.getAttribute('href').slice(1);
+    const pageIds = ['pacientes', 'plano-alimentar', 'avaliacoes', 'conversas'];
+
+    if (!pageIds.includes(requestedPage)) {
+      return;
+    }
+
+    event.preventDefault();
+    if (window.history.state?.nutriflowDashboardPage === requestedPage) {
+      return;
+    }
+
+    window.history.pushState(
+      { ...window.history.state, nutriflowDashboardPage: requestedPage },
+      '',
+      `${window.location.pathname}${window.location.search}`,
+    );
+    renderNutritionistPage();
+  });
+});
+window.addEventListener('popstate', renderNutritionistPage);
 
 
 async function init() {
