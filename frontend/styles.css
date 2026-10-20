@@ -708,6 +708,31 @@ body.modal-open {
 }
 
 @media (max-width: 768px) {
+  .landing-body #loginModal {
+    height: 100dvh;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scroll-padding-block: 1rem;
+    -webkit-overflow-scrolling: touch;
+    padding:
+      max(0.75rem, env(safe-area-inset-top))
+      max(0.75rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom))
+      max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .landing-body #loginModal > div {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .landing-body #loginModal .auth-layout {
+    min-height: 0;
+  }
+
   .chart-bars {
     gap: 8px;
     height: 140px;
@@ -2167,6 +2192,12 @@ main .dashboard-card:nth-of-type(5) {
   text-transform: uppercase;
 }
 
+.landing-brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .landing-nav {
   display: flex;
   align-items: center;
@@ -3300,6 +3331,28 @@ main .dashboard-card:nth-of-type(5) {
   display: none;
 }
 
+.dashboard-mobile-action-icon {
+  display: none;
+}
+
+.dashboard-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1c2618;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.dashboard-header-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .mobile-dashboard-nav > a {
   flex: 0 0 auto;
   scroll-snap-align: start;
@@ -3375,8 +3428,76 @@ main .dashboard-card:nth-of-type(5) {
     border-radius: 1.25rem;
   }
 
+  .dashboard-layout header.dashboard-header {
+    overflow: visible;
+  }
+
   .dashboard-layout header.dashboard-surface > div {
     min-width: 0;
+  }
+
+  .dashboard-layout header.dashboard-header > .dashboard-header-content {
+    position: static;
+  }
+
+  .dashboard-header-title {
+    min-width: 0;
+  }
+
+  .dashboard-mobile-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: calc(100% - 6rem);
+    margin-bottom: 0.75rem;
+    color: #1c2618;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    text-decoration: none;
+  }
+
+  .dashboard-mobile-brand img {
+    flex: 0 0 auto;
+  }
+
+  .dashboard-layout header.dashboard-header .dashboard-header-actions {
+    display: contents;
+  }
+
+  .dashboard-header-account-actions {
+    position: absolute;
+    top: 0.875rem;
+    right: 0.875rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .dashboard-layout header.dashboard-header .dashboard-header-account-actions > button {
+    display: grid;
+    width: 2.5rem;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    min-height: 2.5rem;
+    flex: 0 0 2.5rem;
+    place-items: center;
+    padding: 0;
+    border-radius: 999px;
+  }
+
+  .dashboard-profile-avatar,
+  .dashboard-profile-copy,
+  .dashboard-mobile-action-label {
+    display: none !important;
+  }
+
+  .dashboard-mobile-action-icon {
+    display: block;
+    width: 1.2rem;
+    height: 1.2rem;
   }
 
   .dashboard-layout header h1 {

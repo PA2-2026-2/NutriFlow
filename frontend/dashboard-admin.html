@@ -408,34 +408,26 @@
       ==================================================== -->
 
       <header
-        class="dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6"
+        class="dashboard-header dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6"
       >
 
         <div
-          class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
+          class="dashboard-header-content flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
         >
 
 
           <!-- TÍTULO -->
 
-          <div
-            class="flex items-center gap-4"
-          >
+          <div class="dashboard-header-title">
 
             <!-- LOGO MOBILE -->
 
             <a
               href="index.html"
-              class="flex items-center gap-3 xl:hidden"
+              class="dashboard-mobile-brand xl:hidden"
             >
 
-              <span
-                class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-nutriflow-500 to-nutriflow-700 text-white"
-              >
-                <span
-                  class="inline-block h-4 w-4 rounded-full bg-white"
-                ></span>
-              </span>
+              <img src="/favicon.png" alt="" class="h-10 w-10 object-contain" />
 
               <div>
 
@@ -456,7 +448,7 @@
             </a>
 
 
-            <div>
+            <div class="dashboard-header-greeting">
 
               <p
                 class="text-xs font-semibold uppercase tracking-[0.18em] text-nutriflow-600"
@@ -485,9 +477,7 @@
 
           <!-- AÇÕES -->
 
-          <div
-            class="flex flex-col gap-3 lg:flex-row lg:items-center"
-          >
+          <div class="dashboard-header-actions flex flex-col gap-3 lg:flex-row lg:items-center">
 
 
             <!-- BUSCA -->
@@ -528,25 +518,25 @@
 
             <!-- PERFIL -->
 
-            <button
-              id="adminProfileButton"
-              type="button"
-              class="flex items-center gap-3 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 text-left shadow-[0_12px_24px_rgba(28,38,24,.06)] transition hover:-translate-y-0.5 hover:bg-nutriflow-50 focus:outline-none focus:ring-2 focus:ring-nutriflow-300"
-              title="Meu Perfil"
-              aria-label="Abrir meu perfil"
-            >
-
-              <div
-                id="adminAvatar"
-                class="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-nutriflow-500 to-nutriflow-700 text-sm font-bold text-white"
+            <div class="dashboard-header-account-actions">
+              <button
+                id="adminProfileButton"
+                type="button"
+                class="flex items-center gap-3 rounded-[20px] border border-nutriflow-200 bg-white px-3 py-2 text-left shadow-[0_12px_24px_rgba(28,38,24,.06)] transition hover:-translate-y-0.5 hover:bg-nutriflow-50 focus:outline-none focus:ring-2 focus:ring-nutriflow-300"
+                title="Meu Perfil"
+                aria-label="Abrir meu perfil"
               >
-                --
-              </div>
+
+                <div
+                  id="adminAvatar"
+                  class="dashboard-profile-avatar grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-nutriflow-500 to-nutriflow-700 text-sm font-bold text-white"
+                >
+                  --
+                </div>
+                <svg class="dashboard-mobile-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg>
 
 
-              <div
-                class="min-w-0 pr-2"
-              >
+                <div class="dashboard-profile-copy min-w-0 pr-2">
 
                 <p
                   id="adminName"
@@ -568,22 +558,24 @@
                   Meu Perfil
                 </p>
 
-              </div>
+                </div>
 
-            </button>
+              </button>
 
 
             <!-- LOGOUT -->
 
-            <button
-              id="adminLogoutButton"
-              type="button"
-              class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-600 shadow-sm transition hover:bg-red-100"
-              title="Sair"
-              aria-label="Sair"
-            >
-              Sair
-            </button>
+              <button
+                id="adminLogoutButton"
+                type="button"
+                class="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-600 shadow-sm transition hover:bg-red-100"
+                title="Sair"
+                aria-label="Sair"
+              >
+                <svg class="dashboard-mobile-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path></svg>
+                <span class="dashboard-mobile-action-label">Sair</span>
+              </button>
+            </div>
 
           </div>
 

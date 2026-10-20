@@ -1383,17 +1383,23 @@ function renderNutritionistPage() {
     page.classList.toggle('hidden', page.id !== activePage);
   });
 
-  document.querySelectorAll('[data-dashboard-page="conversations"]').forEach((link) => {
+  document.querySelectorAll('.nutritionist-sidebar [data-dashboard-page="conversations"]').forEach((link) => {
     link.classList.toggle('bg-white/12', showConversations);
     link.classList.toggle('text-white', showConversations);
     link.classList.toggle('text-white/75', !showConversations);
-    link.classList.toggle('is-active', showConversations);
   });
-  document.querySelectorAll('[data-dashboard-page="patients"], [data-dashboard-page="plans"], [data-dashboard-page="assessments"]').forEach((link) => {
+  document.querySelectorAll('.nutritionist-sidebar [data-dashboard-page="patients"], .nutritionist-sidebar [data-dashboard-page="plans"], .nutritionist-sidebar [data-dashboard-page="assessments"]').forEach((link) => {
     const isActive = link.getAttribute('href') === `#${activePage}`;
     link.classList.toggle('bg-white/12', isActive);
     link.classList.toggle('text-white', isActive);
     link.classList.toggle('text-white/75', !isActive);
+  });
+
+  document.querySelectorAll('[data-dashboard-page="conversations"]').forEach((link) => {
+    link.classList.toggle('is-active', showConversations);
+  });
+  document.querySelectorAll('[data-dashboard-page="patients"], [data-dashboard-page="plans"], [data-dashboard-page="assessments"]').forEach((link) => {
+    const isActive = link.getAttribute('href') === `#${activePage}`;
     link.classList.toggle('is-active', isActive);
   });
 

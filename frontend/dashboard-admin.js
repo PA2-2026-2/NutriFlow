@@ -663,8 +663,14 @@ const state = {
       renderSummary(
         state.summary,
       );
+      return true;
 
     } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
+        session.clear();
+        return false;
+      }
+
       console.error(
         '[NutriFlow Admin] Erro ao carregar resumo:',
         error,
@@ -675,6 +681,7 @@ const state = {
           'Não foi possível carregar o resumo administrativo.',
         'error',
       );
+      return true;
     }
   }
 
@@ -3169,19 +3176,16 @@ async function toggleUserStatus(user) {
   ========================================================== */
 
   async function initialize() {
-    const currentUser =
-      state.currentUser;
-
-    /*
-     * Proteção básica da página.
-     */
-
-    if (!currentUser) {
-      window.location.href =
-        'index.html?auth=login';
-
+    if (!session.getToken() || !state.currentUser) {
+      session.clear();
       return;
     }
+
+    if (!(await refreshSummary())) {
+      return;
+    }
+
+    const currentUser = state.currentUser;
 
     setHeader(
       currentUser,
@@ -3198,7 +3202,6 @@ async function toggleUserStatus(user) {
      */
 
     await Promise.allSettled([
-      refreshSummary(),
       loadUsers(),
       loadFoods(),
     ]);
