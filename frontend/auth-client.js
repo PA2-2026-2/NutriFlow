@@ -1,4 +1,8 @@
 (function configureNutriFlowAuth(globalScope) {
+  const isPasswordRecoveryPage =
+    globalScope.location?.pathname === '/reset-password' ||
+    globalScope.location?.pathname === '/reset-password.html';
+
   globalScope.NutriFlowAuthReady = (async () => {
     const hadNutriFlowSession = Boolean(
       globalScope.localStorage.getItem('nutriflow.token'),
@@ -17,7 +21,7 @@
     const client = globalScope.supabase.createClient(data.url, data.anonKey, {
       auth: {
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: !isPasswordRecoveryPage,
         flowType: 'implicit',
         persistSession: true,
         storageKey: 'nutriflow.supabase.session',
