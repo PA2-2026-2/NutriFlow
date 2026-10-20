@@ -220,7 +220,7 @@ class AuthService {
 		};
 	}
 
-	async requestPasswordReset(payload, redirectOrigin) {
+	async requestPasswordReset(payload) {
 		const email = normalizeEmail(payload.email);
 		if (!isValidEmail(email)) {
 			throw new AppError('Informe um endereço de e-mail válido.', 400);
@@ -228,7 +228,7 @@ class AuthService {
 
 		const { error } = await this.requireSupabaseAuth().resetPasswordForEmail(
 			email,
-			{ redirectTo: this.getRedirectUrl('/reset-password', redirectOrigin || this.appBaseUrl) },
+			{ redirectTo: this.getRedirectUrl('/reset-password') },
 		);
 
 		if (error) {

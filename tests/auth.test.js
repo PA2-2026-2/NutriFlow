@@ -242,18 +242,18 @@ describe('autenticação por Supabase e perfis Prisma', () => {
     ]);
   });
 
-  it('usa a origem HTTPS da aplicação ao solicitar recuperação em domínio customizado', async () => {
+  it('usa a origem canônica configurada mesmo quando o navegador acessa outro hostname', async () => {
     const email = uniqueEmail();
     const response = await request(app)
       .post('/api/auth/password-reset')
-      .set('Origin', 'https://nutriflowconsultorio.online')
-      .set('Host', 'nutriflowconsultorio.online')
+      .set('Origin', 'https://www.nutriflowconsultorio.online')
+      .set('Host', 'www.nutriflowconsultorio.online')
       .set('x-forwarded-proto', 'https')
       .send({ email });
 
     expect(response.statusCode).toBe(200);
     expect(app.locals.supabaseAuthClient.mock.resetRequests[0].options.redirectTo)
-      .toBe('https://nutriflowconsultorio.online/reset-password');
+      .toBe(new URL('/reset-password', `${app.locals.config.appBaseUrl}/`).toString());
   });
 
   it('rejeita e-mail inválido na recuperação e permite reenviar confirmação com resposta genérica', async () => {

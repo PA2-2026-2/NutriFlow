@@ -26,12 +26,11 @@ O CORS não é necessário para o frontend hospedado na mesma origem. Se outro
 domínio precisar acessar a API, inclua somente a origem HTTPS exata em
 `CORS_ALLOWED_ORIGINS`. Origens não autorizadas recebem HTTP 403. Em produção,
 a aplicação falha na inicialização se `DATABASE_URL` não for PostgreSQL ou
-`SUPABASE_URL`/`SUPABASE_ANON_KEY` estiverem ausentes. Em solicitações de
-recuperação feitas pelo frontend na mesma origem, o redirect enviado ao Supabase
-usa a origem HTTPS da própria requisição, evitando retornar a um hostname
-temporário de deployment da Vercel. Para chamadas cross-origin ou outros
-redirects, `APP_BASE_URL` é a origem canônica; configure-a com o domínio público
-da aplicação.
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` estiverem ausentes. Configure
+`APP_BASE_URL` com a origem canônica pública da aplicação; os redirects de
+autenticação usam essa origem configurada, não o hostname pelo qual o navegador
+acessou a aplicação. Se o Supabase tiver cadastrado o domínio sem `www`, defina
+`APP_BASE_URL` com esse mesmo domínio sem `www`.
 Não configure `SUPABASE_SECRET_KEY` no navegador; a chave administrativa não
 é usada nos fluxos de autenticação.
 
@@ -41,7 +40,7 @@ Não configure `SUPABASE_SECRET_KEY` no navegador; a chave administrativa não
    email**. A aplicação recusa novos cadastros se o Supabase devolver uma
    sessão imediatamente, e o login/backend também exigem `email_confirmed_at`.
 2. Em **Authentication → URL Configuration**, configure o `Site URL` para o
-   domínio público da aplicação. Inclua estas URLs exatas em
+   domínio público configurado em `APP_BASE_URL`. Inclua estas URLs exatas em
    **Redirect URLs**:
    - `http://127.0.0.1:3000/auth/confirm`
    - `http://127.0.0.1:3000/reset-password`
