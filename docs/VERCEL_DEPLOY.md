@@ -43,9 +43,11 @@ a aplicação falha na inicialização se `DATABASE_URL` não for PostgreSQL ou
    transfere registros do SQLite. Não use `db push` no banco de produção.
    No deployment Vercel, o comando `vercel-build` gera o Prisma Client do
    schema PostgreSQL e executa `prisma migrate deploy` antes de publicar a
-   função. Configure uma `DATABASE_URL` apropriada para cada ambiente Vercel
-   (Production, Preview e Development); o build aplica migrations no banco
-   selecionado para aquele ambiente.
+   função. Se uma execução concorrente estiver segurando o advisory lock do
+   PostgreSQL, o deploy repete a migração até quatro vezes com espera crescente;
+   outros erros continuam falhando imediatamente. Configure uma `DATABASE_URL`
+   apropriada para cada ambiente Vercel (Production, Preview e Development);
+   o build aplica migrations no banco selecionado para aquele ambiente.
 3. O schema PostgreSQL é `prisma/schema.prisma`. O schema SQLite separado
    (`prisma/schema.sqlite.prisma`) gera um client local para manter testes e
    desenvolvimento sem alterar a cópia SQLite atual.

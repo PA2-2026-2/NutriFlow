@@ -24,7 +24,7 @@
     "prisma:generate:production": "prisma generate --schema=prisma/schema.prisma",
     "prisma:generate:dev": "prisma generate --schema=prisma/schema.sqlite.prisma",
     "db:push": "prisma db push --schema=prisma/schema.sqlite.prisma",
-    "db:migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "db:migrate:deploy": "node scripts/prisma-migrate-deploy.js",
     "db:migrate:diff": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
     "db:migrate:data": "node scripts/migrate-sqlite-to-postgres.js",
     "db:seed": "node prisma/seed.js",

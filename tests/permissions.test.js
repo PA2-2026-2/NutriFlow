@@ -29,6 +29,17 @@ describe('matriz de permissoes', () => {
     for (const role of ALL_ROLES) {
       accounts[role] = await createUserWithRole(app, role);
     }
+
+    await app.locals.prisma.patientProfile.upsert({
+      where: { userId: accounts[ROLES.PATIENT].user.id },
+      create: {
+        userId: accounts[ROLES.PATIENT].user.id,
+        nutritionistId: accounts[ROLES.NUTRITIONIST].user.id,
+      },
+      update: {
+        nutritionistId: accounts[ROLES.NUTRITIONIST].user.id,
+      },
+    });
   });
 
   afterAll(async () => {
@@ -74,9 +85,15 @@ describe('matriz de permissoes', () => {
     for (const role of ALL_ROLES) {
       if (allowed.includes(role)) {
         it(`permite ${role} (nao retorna 401/403)`, async () => {
-          const routePath = routeKey.includes('GET /api/patients/:id/measurements') && role === ROLES.PATIENT
+          let routePath = routeKey.includes('GET /api/patients/:id/measurements') && role === ROLES.PATIENT
             ? routeKey.split(' ')[1].replace(':id', accounts[role].user.id)
             : null;
+          if (routeKey.includes('/chat/conversations/:conversationId/messages')) {
+            routePath = routeKey.split(' ')[1].replace(
+              ':conversationId',
+              accounts[ROLES.PATIENT].user.id,
+            );
+          }
           if (
             role === ROLES.PATIENT &&
             ['/api/patient/meals', '/api/patient/weights'].includes(routeKey.split(' ')[1])

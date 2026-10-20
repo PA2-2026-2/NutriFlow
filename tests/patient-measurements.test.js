@@ -6,6 +6,8 @@ const {
   bearer,
 } = require('./helpers');
 
+const MISSING_MEASUREMENT_ID = '00000000-0000-0000-0000-000000000000';
+
 describe('POST /api/patients/:id/measurements', () => {
   let app;
 
@@ -416,7 +418,7 @@ describe('POST /api/patients/:id/measurements', () => {
     });
 
     const response = await request(app)
-      .put(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
+      .patch(`/api/patients/${patient.user.id}/measurements/${measurement.id}`)
       .set(bearer(nutritionist.token))
       .send({
         weightKg: 73,
@@ -461,7 +463,7 @@ describe('POST /api/patients/:id/measurements', () => {
       .set(bearer(nutritionist.token));
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.message).toContain('historico de evolucao');
+    expect(response.body.message).toBe('Medida removida com sucesso.');
 
     const history = await request(app)
       .get(`/api/patients/${patient.user.id}/measurements`)
@@ -531,11 +533,11 @@ describe('POST /api/patients/:id/measurements', () => {
     await linkPatient(nutritionist, patient);
 
     const update = await request(app)
-      .put(`/api/patients/${patient.user.id}/measurements/medida-inexistente`)
+      .patch(`/api/patients/${patient.user.id}/measurements/${MISSING_MEASUREMENT_ID}`)
       .set(bearer(nutritionist.token))
       .send({ weightKg: 73 });
     const deletion = await request(app)
-      .delete(`/api/patients/${patient.user.id}/measurements/medida-inexistente`)
+      .delete(`/api/patients/${patient.user.id}/measurements/${MISSING_MEASUREMENT_ID}`)
       .set(bearer(nutritionist.token));
 
     expect(update.statusCode).toBe(404);
