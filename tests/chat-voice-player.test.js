@@ -21,7 +21,7 @@ describe('reprodutor de mensagens de voz', () => {
 					},
 					setAttribute: jest.fn(),
 					pause: jest.fn(),
-					play: jest.fn(),
+					play: jest.fn().mockResolvedValue(undefined),
 					load: jest.fn(),
 					removeAttribute: jest.fn(),
 				};
@@ -79,6 +79,7 @@ describe('reprodutor de mensagens de voz', () => {
 		expect(player.dataset.chatAudioUrl).toBe('blob:chat-audio-1');
 		expect(player.controls).toBe(true);
 		expect(player.playsInline).toBe(true);
+		expect(player.play).toHaveBeenCalledTimes(1);
 	});
 
 	it('não cria Blob para uma resposta 304 e mantém erro visível para nova tentativa', async () => {

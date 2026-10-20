@@ -305,7 +305,7 @@
       }
       const wrapper = globalScope.document.createElement('div');
       wrapper.className = 'w-full min-w-0';
-      createAudioControls(wrapper, new Blob([blob], { type: mimeType }));
+      const { audio } = createAudioControls(wrapper, new Blob([blob], { type: mimeType }));
       const transcript = button.dataset.audioTranscript;
       if (transcript) {
         const transcriptElement = globalScope.document.createElement('p');
@@ -325,6 +325,14 @@
         wrapper.append(toggle, transcriptElement);
       }
       button.replaceWith(wrapper);
+      try {
+        await audio.play();
+      } catch {
+        const playbackError = globalScope.document.createElement('p');
+        playbackError.className = 'mt-2 text-xs text-red-700';
+        playbackError.textContent = 'A reprodução automática foi bloqueada. Use os controles do player para iniciar o áudio.';
+        wrapper.append(playbackError);
+      }
     } catch (error) {
       button.disabled = false;
       button.textContent = 'Tentar reproduzir novamente';

@@ -180,7 +180,26 @@ function renderWorkspaceMessages(options = {}) {
   }
 
   if (!workspaceMessages) return;
+  const renderSignature = JSON.stringify({
+    conversationId: state.workspaceConversationId,
+    currentUserId: state.currentUser?.id,
+    loading: state.isLoadingWorkspace && !state.workspaceMessages.length,
+    messages: state.workspaceMessages.map((message) => ({
+      id: message.id,
+      senderId: message.senderId,
+      senderName: message.senderName,
+      createdAt: message.createdAt,
+      content: message.content,
+      type: message.type,
+      audioDurationSeconds: message.audioDurationSeconds,
+      transcript: message.transcript,
+      status: message.status,
+    })),
+  });
+  if (workspaceMessages.dataset.renderSignature === renderSignature) return;
+
   window.NutriFlowChatVoice.releaseAudioPlayers(workspaceMessages);
+  workspaceMessages.dataset.renderSignature = renderSignature;
   if (!conversation) {
     workspaceMessages.innerHTML = '<p class="m-auto text-center text-sm text-nutriflow-500">Selecione um paciente para abrir a conversa.</p>';
     return;
