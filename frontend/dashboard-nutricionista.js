@@ -1253,8 +1253,8 @@ function bindButtons() {
   });
 
 
-  document.getElementById('logoutButton')?.addEventListener('click', () => {
-    session.clear();
+  document.getElementById('logoutButton')?.addEventListener('click', async () => {
+    await session.clear();
     window.location.href = 'index.html';
   });
 

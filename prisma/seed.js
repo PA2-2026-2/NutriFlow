@@ -8,40 +8,57 @@
 require('dotenv/config');
 
 const { createPrismaClient } = require('../src/infra/database');
-const { PasswordService } = require('../src/services/passwordService');
 const { config } = require('../src/config');
 
 async function main() {
   const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-  const password = String(process.env.ADMIN_PASSWORD || '');
+  const id = String(process.env.ADMIN_USER_ID || '').trim();
   const name = String(process.env.ADMIN_NAME || 'Administrador').trim();
 
-  if (!email || password.length < 8) {
+  if (!email || !id) {
     throw new Error(
-      'Defina ADMIN_EMAIL e ADMIN_PASSWORD (minimo 8 caracteres) para criar o administrador.',
+      'Defina ADMIN_EMAIL e ADMIN_USER_ID de uma conta já criada e confirmada no Supabase Auth.',
     );
+  }
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    throw new Error('ADMIN_USER_ID deve ser o UUID da conta Supabase.');
   }
 
   const prisma = createPrismaClient(config.databaseUrl);
 
   try {
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const [existingId, existingEmail] = await Promise.all([
+      prisma.user.findUnique({ where: { id } }),
+      prisma.user.findUnique({ where: { email } }),
+    ]);
 
-    if (existing) {
-      console.log(`Ja existe um usuario com o e-mail ${email} (perfil ${existing.profile}). Nada foi alterado.`);
-      return;
+    if (existingId || existingEmail) {
+      if (
+        existingId?.id === id &&
+        existingId.email === email &&
+        existingId.profile === 'ADMIN'
+      ) {
+        console.log('O perfil administrador já está associado à conta Supabase. Nada foi alterado.');
+        return;
+      }
+
+      throw new Error(
+        'Já existe um perfil com esse UUID ou e-mail, mas ele não corresponde à conta ADMIN solicitada. Nenhum dado foi alterado.',
+      );
     }
 
     await prisma.user.create({
       data: {
+        id,
         name,
         email,
         profile: 'ADMIN',
-        passwordHash: new PasswordService().hash(password),
+        passwordHash: '',
       },
     });
 
-    console.log(`Administrador criado: ${email}`);
+    console.log(`Perfil administrador associado ao usuário Supabase ${id}.`);
   } finally {
     await prisma.$disconnect();
   }

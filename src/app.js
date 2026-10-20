@@ -5,6 +5,7 @@ const { config } = require('./config');
 const { createPrismaClient } = require('./infra/database');
 const { errorHandler } = require('./middlewares/errorHandler');
 const { createAuthMiddleware } = require('./middlewares/authMiddleware');
+const { createSupabaseAuthClient } = require('./infra/supabaseAuth');
 
 const { AuthController } = require('./controllers/authController');
 const { AdminController } = require('./controllers/adminController');
@@ -27,9 +28,6 @@ const { PatientService } = require('./services/patientService');
 const { PatientDashboardService } = require('./services/patientDashboardService');
 const { MealPlanService } = require('./services/mealPlanService');
 const { ChatService } = require('./services/chatService');
-const { SessionService } = require('./services/sessionService');
-const { PasswordService } = require('./services/passwordService');
-const { TokenService } = require('./services/tokenService');
 
 const { createAuthRoutes } = require('./routes/authRoutes');
 const { createAdminRoutes } = require('./routes/adminRoutes');
@@ -61,6 +59,8 @@ const FRONTEND_ROUTE_ALIASES = new Map([
   ['/Nutricionista/dashboard-nutricionista.js', '/dashboard-nutricionista.js'],
   ['/nutricionista/dashboard-nutricionista.html', '/dashboard-nutricionista.html'],
   ['/nutricionista/dashboard-nutricionista.js', '/dashboard-nutricionista.js'],
+  ['/auth/confirm', '/auth-confirmation.html'],
+  ['/reset-password', '/reset-password.html'],
 ]);
 
 function createCorsMiddleware(appConfig) {
@@ -149,7 +149,12 @@ function frontendAliases(frontendDir) {
       return response.redirect(308, `${cleanPath}${query}`);
     }
 
-    if (alias === '/dashboard.html' || alias === '/dashboard-nutricionista.html') {
+    if (
+      alias === '/dashboard.html' ||
+      alias === '/dashboard-nutricionista.html' ||
+      alias === '/auth-confirmation.html' ||
+      alias === '/reset-password.html'
+    ) {
       return response.sendFile(path.join(frontendDir, alias.slice(1)));
     }
 
@@ -164,10 +169,11 @@ function createDependencies(appConfig, overrides = {}) {
 
   const repository = new UserRepository(prisma);
   const profileRepository = new ProfileRepository(prisma);
-  const passwordService = new PasswordService();
-  const tokenService = new TokenService(appConfig.tokenSecret);
-
-  const sessionService = new SessionService();
+  const supabaseAuthClient =
+    overrides.supabaseAuthClient ||
+    (appConfig.nodeEnv === 'test'
+      ? require('../tests/support/supabaseAuthMock').createMockSupabaseAuthClient()
+      : createSupabaseAuthClient(appConfig.supabaseUrl, appConfig.supabaseAnonKey));
 
   const photoStorage =
     overrides.photoStorage ||
@@ -184,10 +190,13 @@ function createDependencies(appConfig, overrides = {}) {
 
   const authService = new AuthService(
     repository,
-    passwordService,
-    tokenService,
-    sessionService,
-    photoStorage
+    supabaseAuthClient,
+    appConfig.appBaseUrl,
+    photoStorage,
+    {
+      url: appConfig.nodeEnv === 'test' ? 'https://auth.test' : appConfig.supabaseUrl,
+      anonKey: appConfig.nodeEnv === 'test' ? 'test-anon-key' : appConfig.supabaseAnonKey,
+    },
   );
 
   const adminService = new AdminService(
@@ -212,6 +221,7 @@ function createDependencies(appConfig, overrides = {}) {
 
   return {
     prisma,
+    supabaseAuthClient,
     authController: new AuthController(authService),
     adminController: new AdminController(adminService),
     userController: new UserController(userService),
@@ -219,11 +229,7 @@ function createDependencies(appConfig, overrides = {}) {
     patientDashboardController: new PatientDashboardController(patientDashboardService),
     mealPlanController: new MealPlanController(mealPlanService),
     chatController: new ChatController(chatService),
-    authenticate: createAuthMiddleware(
-      tokenService,
-      sessionService,
-      repository
-    ),
+    authenticate: createAuthMiddleware(supabaseAuthClient, repository),
   };
 }
 
@@ -243,6 +249,7 @@ function createApp(options = {}) {
     mealPlanController,
     chatController,
     authenticate,
+    supabaseAuthClient,
   } = createDependencies(appConfig, options);
 
   const app = express();
@@ -251,10 +258,24 @@ function createApp(options = {}) {
   app.disable('x-powered-by');
   app.locals.config = appConfig;
   app.locals.prisma = prisma;
+  app.locals.supabaseAuthClient = supabaseAuthClient;
 
   app.use(createCorsMiddleware(appConfig));
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false }));
+
+  app.get('/api/vendor/supabase.js', (request, response, next) => {
+    const bundle = path.join(
+      path.dirname(require.resolve('@supabase/supabase-js')),
+      'umd',
+      'supabase.js',
+    );
+    response.sendFile(bundle, (error) => {
+      if (error) {
+        next(error);
+      }
+    });
+  });
 
   app.get('/health', async (request, response) => {
     try {

@@ -1,5 +1,4 @@
 const request = require('supertest');
-const { PasswordService } = require('../src/services/passwordService');
 
 const PASSWORD = 'senha1234';
 const TEST_EMAIL_DOMAIN = '@sprint2.nutriflow.test';
@@ -15,15 +14,25 @@ function uniqueEmail(label = 'user') {
 async function createUserWithRole(app, role, overrides = {}) {
   const prisma = app.locals.prisma;
   const email = overrides.email || uniqueEmail(role.toLowerCase());
+  const id = require('crypto').randomUUID();
 
   const user = await prisma.user.create({
     data: {
+      id,
       name: overrides.name || `Teste ${role}`,
       email,
       profile: role,
-      passwordHash: new PasswordService().hash(PASSWORD),
+      passwordHash: '',
       ...(overrides.data || {}),
     },
+  });
+  app.locals.supabaseAuthClient.mock.seedUser({
+    id: user.id,
+    email,
+    password: PASSWORD,
+    name: user.name,
+    profile: user.profile,
+    confirmed: true,
   });
 
   const login = await request(app)

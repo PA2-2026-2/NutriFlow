@@ -7,6 +7,7 @@ const closeLogin = document.getElementById('closeLogin');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const loginMessage = document.getElementById('loginMessage');
+const resendLoginConfirmation = document.getElementById('resendLoginConfirmation');
 const registerMessage = document.getElementById('registerMessage');
 const authHeading = document.getElementById('authHeading');
 const authSubheading = document.getElementById('authSubheading');
@@ -22,6 +23,19 @@ const registerRestrictions = document.getElementById('registerRestrictions');
 function resetAuthMessages() {
   loginMessage?.classList.add('hidden');
   registerMessage?.classList.add('hidden');
+  resendLoginConfirmation?.classList.add('hidden');
+}
+
+function isValidEmail(email) {
+  return email.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function setFormBusy(form, busy) {
+  const button = form?.querySelector('button[type="submit"]');
+  if (button) {
+    button.disabled = busy;
+    button.setAttribute('aria-busy', String(busy));
+  }
 }
 
 function showMessage(element, message, isError = false) {
@@ -138,6 +152,9 @@ function saveSession(data) {
   }
 
   localStorage.setItem('nutriflow.token', data.token);
+  if (data.refreshToken) {
+    localStorage.setItem('nutriflow.refreshToken', data.refreshToken);
+  }
   localStorage.setItem('nutriflow.user', JSON.stringify(data.user));
   localStorage.setItem('nutriflow.lastAuthAt', new Date().toISOString());
 }
@@ -230,21 +247,66 @@ loginForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
+  const password = document.getElementById('password').value;
 
   if (!email || !password) {
     showMessage(loginMessage, 'Preencha e-mail e senha para continuar.', true);
     return;
   }
 
+  if (!isValidEmail(email)) {
+    showMessage(loginMessage, 'Informe um endereço de e-mail válido.', true);
+    return;
+  }
+
+  setFormBusy(loginForm, true);
   try {
     const data = await sendAuthRequest('/api/auth/login', { email, password });
+    const client = await window.NutriFlowAuthReady;
+    const { error } = await client.auth.setSession({
+      access_token: data.token,
+      refresh_token: data.refreshToken,
+    });
+    if (error) {
+      throw new Error('Não foi possível iniciar sua sessão. Tente novamente.');
+    }
     saveSession(data);
     showMessage(loginMessage, `${data.message} Bem-vindo, ${data.user.name}.`);
+    resendLoginConfirmation?.classList.add('hidden');
     loginForm.reset();
     handlePostAuthNavigation(data);
   } catch (error) {
+    const message = String(error.message || '');
+    const requiresConfirmation = message.toLowerCase().includes('confirme seu e-mail');
+    showMessage(
+      loginMessage,
+      requiresConfirmation || message.toLowerCase().includes('not confirmed')
+        ? 'Confirme seu e-mail antes de entrar.'
+        : message,
+      true,
+    );
+    resendLoginConfirmation?.classList.toggle('hidden', !requiresConfirmation);
+  } finally {
+    setFormBusy(loginForm, false);
+  }
+});
+
+resendLoginConfirmation?.addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  if (!isValidEmail(email)) {
+    showMessage(loginMessage, 'Informe um endereço de e-mail válido para solicitar a confirmação.', true);
+    return;
+  }
+
+  resendLoginConfirmation.disabled = true;
+  try {
+    const data = await sendAuthRequest('/api/auth/resend-confirmation', { email });
+    showMessage(loginMessage, data.message);
+    resendLoginConfirmation.classList.add('hidden');
+  } catch (error) {
     showMessage(loginMessage, error.message, true);
+  } finally {
+    resendLoginConfirmation.disabled = false;
   }
 });
 
@@ -254,8 +316,8 @@ registerForm?.addEventListener('submit', async (event) => {
   const name = document.getElementById('registerName').value.trim();
   const email = document.getElementById('registerEmail').value.trim();
   const profile = document.getElementById('registerProfile').value;
-  const password = document.getElementById('registerPassword').value.trim();
-  const confirmPassword = document.getElementById('registerConfirm').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  const confirmPassword = document.getElementById('registerConfirm').value;
   const acceptedTerms = document.getElementById('registerTerms').checked;
   const nutritionistEmail = registerNutritionistEmail?.value.trim() || '';
   const age = registerAge?.value.trim() || '';
@@ -264,6 +326,11 @@ registerForm?.addEventListener('submit', async (event) => {
 
   if (!name || !email || !profile || !password || !confirmPassword) {
     showMessage(registerMessage, 'Preencha todos os campos para concluir o cadastro.', true);
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    showMessage(registerMessage, 'Informe um endereço de e-mail válido.', true);
     return;
   }
 
@@ -287,6 +354,7 @@ registerForm?.addEventListener('submit', async (event) => {
     return;
   }
 
+  setFormBusy(registerForm, true);
   try {
     const data = await sendAuthRequest('/api/auth/register', {
       name,
@@ -299,18 +367,13 @@ registerForm?.addEventListener('submit', async (event) => {
       restrictions,
     });
 
-    saveSession(data);
-    const linkedNutritionistMessage = data.user?.nutritionist
-      ? ` Vinculado a ${data.user.nutritionist.name}.`
-      : isPatientProfile(profile)
-        ? ' Voce pode concluir o vinculo depois, pelo dashboard do paciente ou do nutricionista.'
-      : '';
-    showMessage(registerMessage, `${data.message} Conta criada para ${data.user.name}.${linkedNutritionistMessage}`);
+    showMessage(registerMessage, data.message);
     registerForm.reset();
     syncPatientRegistrationFields();
-    handlePostAuthNavigation(data);
   } catch (error) {
     showMessage(registerMessage, error.message, true);
+  } finally {
+    setFormBusy(registerForm, false);
   }
 });
 

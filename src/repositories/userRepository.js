@@ -15,6 +15,12 @@ class UserRepository {
     });
   }
 
+  findByAuthUserId(authUserId) {
+    return this.prisma.user.findUnique({
+      where: { authUserId },
+    });
+  }
+
   create(data) {
     return this.prisma.user.create({
       data,
@@ -32,6 +38,16 @@ class UserRepository {
     return this.prisma.user.update({
       where: { id },
       data,
+    });
+  }
+
+  linkAuthUser(id, authUserId) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        authUserId,
+        passwordHash: '',
+      },
     });
   }
 

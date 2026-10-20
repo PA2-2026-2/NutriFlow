@@ -15,17 +15,78 @@ adicione ao Git nem compartilhe em logs:
 | --- | --- | --- |
 | `NODE_ENV` | Definido pela Vercel como `production` | `development` ou `test` |
 | `DATABASE_URL` | URL PostgreSQL com TLS conforme exigido pelo provedor | `file:./dev.db` |
-| `TOKEN_SECRET` | Segredo aleatório com pelo menos 32 caracteres | Pode omitir para usar o segredo local padrão |
+| `SUPABASE_URL` | URL HTTPS do projeto Supabase | URL do projeto Supabase |
+| `SUPABASE_ANON_KEY` | Chave pública `anon`/publishable do projeto; pode ser enviada ao navegador | Chave pública `anon`/publishable |
+| `APP_BASE_URL` | Origem HTTPS canônica da aplicação | `http://127.0.0.1:3000` (padrão) |
 | `CORS_ALLOWED_ORIGINS` | Opcional; lista separada por vírgula de origens HTTPS para clientes em outros domínios | Opcional |
 | `PHOTO_STORAGE_PROVIDER` | `supabase` (automático quando as duas variáveis Supabase existem) | `local` (padrão) |
-| `SUPABASE_URL` | URL HTTPS do projeto Supabase | Opcional |
-| `SUPABASE_SECRET_KEY` | Chave secreta do projeto; somente backend | Opcional |
+| `SUPABASE_SECRET_KEY` | Chave secreta; somente backend, necessária apenas para armazenamento Supabase de fotos | Opcional |
 
 O CORS não é necessário para o frontend hospedado na mesma origem. Se outro
 domínio precisar acessar a API, inclua somente a origem HTTPS exata em
 `CORS_ALLOWED_ORIGINS`. Origens não autorizadas recebem HTTP 403. Em produção,
 a aplicação falha na inicialização se `DATABASE_URL` não for PostgreSQL ou
-`TOKEN_SECRET` estiver ausente/curto.
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` estiverem ausentes. `VERCEL_URL` é usado
+como origem HTTPS automaticamente quando `APP_BASE_URL` não estiver definida.
+Não configure `SUPABASE_SECRET_KEY` no navegador; a chave administrativa não
+é usada nos fluxos de autenticação.
+
+## Supabase Auth: confirmação, sessão e recuperação
+
+1. No painel Supabase, habilite **Authentication → Providers → Email → Confirm
+   email**. A aplicação recusa novos cadastros se o Supabase devolver uma
+   sessão imediatamente, e o login/backend também exigem `email_confirmed_at`.
+2. Em **Authentication → URL Configuration**, configure o `Site URL` para o
+   valor de `APP_BASE_URL` do ambiente. Inclua estas URLs exatas em
+   **Redirect URLs**:
+   - `http://127.0.0.1:3000/auth/confirm`
+   - `http://127.0.0.1:3000/reset-password`
+   - `https://<dominio-producao>/auth/confirm`
+   - `https://<dominio-producao>/reset-password`
+   Para Preview Deployments da Vercel, inclua também o padrão de domínio
+   `.vercel.app` correspondente ao projeto/time no formato aceito pelo painel
+   Supabase; mantenha `VERCEL_URL` ou `APP_BASE_URL` alinhado à origem do
+   deployment que enviará o link. Não use curingas amplos fora dos domínios
+   controlados pela equipe.
+3. Mantenha os templates nativos de confirmação e recuperação do Supabase
+   apontando para `{{ .ConfirmationURL }}`. O SDK usa os callbacks
+   `/auth/confirm` e `/reset-password`; o Supabase gera, valida e consome os
+   tokens temporários. Não crie tokens próprios nem tabelas de confirmação ou
+   recuperação.
+4. Configure um provedor SMTP confiável no Supabase para produção. Os limites
+   padrão de envio são baixos; monitore o rate limit do Auth e configure
+   limites/antispam adequados. A API retorna respostas genéricas para
+   solicitação de recuperação e novo e-mail de confirmação para reduzir
+   enumeração de contas.
+5. `SUPABASE_ANON_KEY` é pública e serve ao cliente navegador; o backend usa a
+   mesma chave pública para Auth e valida cada bearer token com
+   `auth.getUser()`. Nunca exponha a chave `service_role`/secret key. A chave
+   `SUPABASE_SECRET_KEY` já documentada para fotos permanece exclusivamente no
+   backend e não é usada para cadastro, login, confirmação ou recuperação.
+
+O Auth é a fonte das credenciais e sessões. Para perfis novos, `User.id` no
+Prisma usa o UUID devolvido pelo Supabase Auth; o campo único opcional
+`User.authUserId` associa contas antigas sem alterar IDs já referenciados por
+pacientes, planos, mensagens ou outros registros. Essa coluna é adicionada por
+uma migration aditiva. Nome, papel e permissões continuam no perfil Prisma, e
+todas as rotas protegidas carregam o papel atual do banco após validar a sessão
+Supabase.
+
+Para associar um perfil antigo por e-mail, a pessoa deve realizar o cadastro
+com o mesmo endereço do perfil existente e confirmar a nova identidade
+Supabase; o backend mantém o ID, nome, papel, status e relações do perfil e
+grava a associação em `authUserId`. Um login Supabase confirmado também pode
+associar um perfil legado ainda não vinculado com o mesmo e-mail. Não são
+alterados IDs de dados relacionados. O campo legado `passwordHash` permanece
+no schema por compatibilidade, é limpo quando uma identidade é associada e
+nunca é usado para autenticar. Contas existentes precisam cadastrar/redefinir
+sua senha no Supabase; hashes locais não são migrados para Auth.
+
+Para criar o perfil de administrador, crie primeiro no Supabase Auth a
+identidade administrativa confirmada e execute `npm run db:seed` com
+`ADMIN_EMAIL`, `ADMIN_USER_ID` (UUID exato da identidade) e, opcionalmente,
+`ADMIN_NAME`. O seed não cria senha nem identidade Supabase; não permite
+cadastro público de administrador.
 
 ## PostgreSQL e schema
 

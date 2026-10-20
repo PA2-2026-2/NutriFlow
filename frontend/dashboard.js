@@ -143,8 +143,13 @@ function persistCurrentUser(user) {
   localStorage.setItem('nutriflow.user', JSON.stringify(user));
 }
 
-function clearSessionAndRedirect() {
+async function clearSessionAndRedirect() {
   stopPatientRealtimeChat();
+  try {
+    await window.NutriFlowSignOut?.();
+  } catch (error) {
+    console.error('Não foi possível encerrar a sessão Supabase.', error);
+  }
   localStorage.removeItem('nutriflow.token');
   localStorage.removeItem('nutriflow.user');
   localStorage.removeItem('nutriflow.lastAuthAt');

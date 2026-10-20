@@ -131,9 +131,15 @@
       return user;
     }
 
-    function clear() {
+    async function clear() {
       if (typeof onClear === 'function') {
         onClear();
+      }
+
+      try {
+        await window.NutriFlowSignOut?.();
+      } catch (error) {
+        console.error('Não foi possível encerrar a sessão Supabase.', error);
       }
 
       storage.removeItem(tokenKey);

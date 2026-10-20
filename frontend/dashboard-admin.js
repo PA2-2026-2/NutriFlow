@@ -2889,9 +2889,9 @@ async function toggleUserStatus(user) {
      LOGOUT
   ========================================================== */
 
-  function clearSessionAndRedirect() {
+  async function clearSessionAndRedirect() {
     try {
-      session.clear();
+      await session.clear();
     } catch (error) {
       console.warn(
         '[NutriFlow Admin] Não foi possível limpar a sessão pelo manager:',

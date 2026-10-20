@@ -66,4 +66,23 @@ describe('rotas do frontend', () => {
     expect(response.statusCode).toBe(302);
     expect(response.headers.location).toBe('/index.html');
   });
+
+  it('serve os callbacks nativos de confirmação e recuperação do Supabase', async () => {
+    const confirmation = await request(app).get('/auth/confirm');
+    const recovery = await request(app).get('/reset-password');
+
+    expect(confirmation.statusCode).toBe(200);
+    expect(confirmation.text).toContain('Confirmação de e-mail');
+    expect(confirmation.text).toContain('resendConfirmationForm');
+    expect(recovery.statusCode).toBe(200);
+    expect(recovery.text).toContain('updatePasswordForm');
+  });
+
+  it('serve o SDK oficial instalado sem expor a chave secreta', async () => {
+    const response = await request(app).get('/api/vendor/supabase.js');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.type).toContain('javascript');
+    expect(response.text).toContain('createClient');
+  });
 });

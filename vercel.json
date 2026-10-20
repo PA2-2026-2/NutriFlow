@@ -6,7 +6,10 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["frontend/**"]
+        "includeFiles": [
+          "frontend/**",
+          "node_modules/@supabase/supabase-js/dist/umd/supabase.js"
+        ]
       }
     }
   ],

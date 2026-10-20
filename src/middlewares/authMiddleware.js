@@ -13,7 +13,7 @@ function extractToken(request) {
 }
 
 
-function createAuthMiddleware(tokenService, tokenBlacklistService, userRepository) {
+function createAuthMiddleware(supabaseAuthClient, userRepository) {
   return async function authenticate(request, response, next) {
     try {
       const token = extractToken(request);
@@ -22,20 +22,34 @@ function createAuthMiddleware(tokenService, tokenBlacklistService, userRepositor
         throw new AppError('Token de acesso nao informado.', 401);
       }
 
-      if (tokenBlacklistService.isRevoked(token)) {
-        throw new AppError('Sessao encerrada. Faca login novamente.', 401);
+      if (!supabaseAuthClient) {
+        throw new AppError('Autenticação indisponível. Configure o Supabase Auth.', 503);
       }
 
-      const payload = tokenService.verify(token);
+      const { data, error } = await supabaseAuthClient.auth.getUser(token);
+      if (error) {
+        if ([401, 403].includes(error.status)) {
+          throw new AppError('Token invalido ou expirado.', 401);
+        }
 
-      if (!payload) {
-        throw new AppError('Token invalido ou expirado.', 401);
+        throw new AppError('Não foi possível validar a sessão. Tente novamente.', 503);
       }
 
-      const user = await userRepository.findById(payload.sub);
+      const authUser = data?.user;
+      if (!authUser?.id || !authUser.email_confirmed_at) {
+        throw new AppError('Confirme seu e-mail antes de acessar esta área.', 401);
+      }
+
+      const user =
+        (await userRepository.findByAuthUserId(authUser.id)) ||
+        (await userRepository.findById(authUser.id));
 
       if (!user) {
-        throw new AppError('Sessao invalida. Faca login novamente.', 401);
+        throw new AppError('Perfil NutriFlow não encontrado para esta conta.', 401);
+      }
+
+      if (String(user.email).toLowerCase() !== String(authUser.email || '').toLowerCase()) {
+        throw new AppError('Sessão inválida. Faça login novamente.', 401);
       }
 
       if (!user.isActive) {

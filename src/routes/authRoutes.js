@@ -5,6 +5,11 @@ const { authorize } = require('../middlewares/authMiddleware');
 function createAuthRoutes(authController, authenticate) {
 	const router = express.Router();
 
+	router.get(
+		'/config',
+		asyncHandler(authController.config.bind(authController)),
+	);
+
 	router.post(
 		'/register',
 		asyncHandler(authController.register.bind(authController)),
@@ -13,6 +18,16 @@ function createAuthRoutes(authController, authenticate) {
 	router.post(
 		'/login',
 		asyncHandler(authController.login.bind(authController)),
+	);
+
+	router.post(
+		'/password-reset',
+		asyncHandler(authController.requestPasswordReset.bind(authController)),
+	);
+
+	router.post(
+		'/resend-confirmation',
+		asyncHandler(authController.resendConfirmation.bind(authController)),
 	);
 
 	router.post(
