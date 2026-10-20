@@ -2035,7 +2035,29 @@ async function handleNutritionistLink(event) {
 }
 
 function bindNavigationState() {
-  window.addEventListener('hashchange', renderPatientPage);
+  document.querySelectorAll('.sidebar-link, .mobile-nav-pill').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const requestedPage = link.getAttribute('href')?.slice(1);
+      const pages = [...document.querySelectorAll('[data-dashboard-page]')];
+
+      if (!pages.some((page) => page.id === requestedPage)) {
+        return;
+      }
+
+      event.preventDefault();
+      if (window.history.state?.nutriflowDashboardPage === requestedPage) {
+        return;
+      }
+
+      window.history.pushState(
+        { ...window.history.state, nutriflowDashboardPage: requestedPage },
+        '',
+        `${window.location.pathname}${window.location.search}`,
+      );
+      renderPatientPage();
+    });
+  });
+  window.addEventListener('popstate', renderPatientPage);
   renderPatientPage();
 }
 
@@ -2043,9 +2065,20 @@ function renderPatientPage() {
   const pages = [...document.querySelectorAll('[data-dashboard-page]')];
   const links = document.querySelectorAll('.sidebar-link, .mobile-nav-pill');
   const requestedPage = window.location.hash.slice(1);
+  const storedPage = window.history.state?.nutriflowDashboardPage;
   const activePage = pages.some((page) => page.id === requestedPage)
     ? requestedPage
-    : 'visao-geral';
+    : pages.some((page) => page.id === storedPage)
+      ? storedPage
+      : 'visao-geral';
+
+  if (window.location.hash || storedPage !== activePage) {
+    window.history.replaceState(
+      { ...window.history.state, nutriflowDashboardPage: activePage },
+      '',
+      `${window.location.pathname}${window.location.search}`,
+    );
+  }
 
   pages.forEach((page) => {
     page.classList.toggle('hidden', page.id !== activePage);
