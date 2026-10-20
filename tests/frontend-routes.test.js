@@ -76,6 +76,12 @@ describe('rotas do frontend', () => {
     expect(confirmation.text).toContain('resendConfirmationForm');
     expect(recovery.statusCode).toBe(200);
     expect(recovery.text).toContain('updatePasswordForm');
+    expect(recovery.text).toContain('src="/auth-recovery.js"');
+
+    const recoveryScript = await request(app).get('/auth-recovery.js');
+    expect(recoveryScript.statusCode).toBe(200);
+    expect(recoveryScript.text).toContain('exchangeCodeForSession');
+    expect(recoveryScript.text).toContain('setSession');
   });
 
   it('serve o SDK oficial instalado sem expor a chave secreta', async () => {

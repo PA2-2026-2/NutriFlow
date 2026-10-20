@@ -26,8 +26,12 @@ O CORS não é necessário para o frontend hospedado na mesma origem. Se outro
 domínio precisar acessar a API, inclua somente a origem HTTPS exata em
 `CORS_ALLOWED_ORIGINS`. Origens não autorizadas recebem HTTP 403. Em produção,
 a aplicação falha na inicialização se `DATABASE_URL` não for PostgreSQL ou
-`SUPABASE_URL`/`SUPABASE_ANON_KEY` estiverem ausentes. `VERCEL_URL` é usado
-como origem HTTPS automaticamente quando `APP_BASE_URL` não estiver definida.
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` estiverem ausentes. Em solicitações de
+recuperação feitas pelo frontend na mesma origem, o redirect enviado ao Supabase
+usa a origem HTTPS da própria requisição, evitando retornar a um hostname
+temporário de deployment da Vercel. Para chamadas cross-origin ou outros
+redirects, `APP_BASE_URL` é a origem canônica; configure-a com o domínio público
+da aplicação.
 Não configure `SUPABASE_SECRET_KEY` no navegador; a chave administrativa não
 é usada nos fluxos de autenticação.
 
@@ -37,7 +41,7 @@ Não configure `SUPABASE_SECRET_KEY` no navegador; a chave administrativa não
    email**. A aplicação recusa novos cadastros se o Supabase devolver uma
    sessão imediatamente, e o login/backend também exigem `email_confirmed_at`.
 2. Em **Authentication → URL Configuration**, configure o `Site URL` para o
-   valor de `APP_BASE_URL` do ambiente. Inclua estas URLs exatas em
+   domínio público da aplicação. Inclua estas URLs exatas em
    **Redirect URLs**:
    - `http://127.0.0.1:3000/auth/confirm`
    - `http://127.0.0.1:3000/reset-password`
@@ -45,9 +49,7 @@ Não configure `SUPABASE_SECRET_KEY` no navegador; a chave administrativa não
    - `https://<dominio-producao>/reset-password`
    Para Preview Deployments da Vercel, inclua também o padrão de domínio
    `.vercel.app` correspondente ao projeto/time no formato aceito pelo painel
-   Supabase; mantenha `VERCEL_URL` ou `APP_BASE_URL` alinhado à origem do
-   deployment que enviará o link. Não use curingas amplos fora dos domínios
-   controlados pela equipe.
+   Supabase. Não use curingas amplos fora dos domínios controlados pela equipe.
 3. Mantenha os templates nativos de confirmação e recuperação do Supabase
    apontando para `{{ .ConfirmationURL }}`. O SDK usa os callbacks
    `/auth/confirm` e `/reset-password`; o Supabase gera, valida e consome os

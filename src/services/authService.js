@@ -49,8 +49,8 @@ class AuthService {
 		return this.supabaseAuthClient.auth;
 	}
 
-	getRedirectUrl(path) {
-		return new URL(path, `${this.appBaseUrl}/`).toString();
+	getRedirectUrl(path, baseUrl = this.appBaseUrl) {
+		return new URL(path, `${baseUrl}/`).toString();
 	}
 
 	async register(payload) {
@@ -220,7 +220,7 @@ class AuthService {
 		};
 	}
 
-	async requestPasswordReset(payload) {
+	async requestPasswordReset(payload, redirectOrigin) {
 		const email = normalizeEmail(payload.email);
 		if (!isValidEmail(email)) {
 			throw new AppError('Informe um endereço de e-mail válido.', 400);
@@ -228,7 +228,7 @@ class AuthService {
 
 		const { error } = await this.requireSupabaseAuth().resetPasswordForEmail(
 			email,
-			{ redirectTo: this.getRedirectUrl('/reset-password') },
+			{ redirectTo: this.getRedirectUrl('/reset-password', redirectOrigin || this.appBaseUrl) },
 		);
 
 		if (error) {
