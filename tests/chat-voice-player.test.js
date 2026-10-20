@@ -74,9 +74,11 @@ describe('reprodutor de mensagens de voz', () => {
 		expect(createdUrls[0].type).toBe('audio/wav');
 		expect(Buffer.from(await createdUrls[0].arrayBuffer())).toEqual(bytes);
 		const wrapper = button.replaceWith.mock.calls[0][0];
-		const player = wrapper.children[1];
+		const player = wrapper.children[0];
 		expect(player.src).toBe('blob:chat-audio-1');
 		expect(player.dataset.chatAudioUrl).toBe('blob:chat-audio-1');
+		expect(player.controls).toBe(true);
+		expect(player.playsInline).toBe(true);
 	});
 
 	it('não cria Blob para uma resposta 304 e mantém erro visível para nova tentativa', async () => {
@@ -107,7 +109,7 @@ describe('reprodutor de mensagens de voz', () => {
 			{ headers: { 'Content-Type': 'audio/webm' } },
 		));
 		const wrapper = button.replaceWith.mock.calls[0][0];
-		const player = wrapper.children[1];
+		const player = wrapper.children[0];
 		const container = {
 			querySelectorAll: jest.fn(() => [player]),
 		};

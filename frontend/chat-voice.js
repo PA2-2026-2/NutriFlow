@@ -199,70 +199,18 @@
     });
   }
 
-  function createAudioControls(container, blob, className = '') {
+  function createAudioControls(container, blob) {
     const source = globalScope.URL.createObjectURL(blob);
     activeAudioUrls.add(source);
     const audio = globalScope.document.createElement('audio');
+    audio.controls = true;
+    audio.playsInline = true;
+    audio.setAttribute('playsinline', '');
     audio.preload = 'metadata';
     audio.src = source;
     audio.dataset.chatAudioUrl = source;
-    const controls = globalScope.document.createElement('div');
-    controls.className = `flex w-full min-w-0 items-center gap-2 ${className}`.trim();
-    const playButton = globalScope.document.createElement('button');
-    playButton.type = 'button';
-    playButton.className = 'grid h-10 w-10 shrink-0 place-items-center rounded-full bg-nutriflow-800 font-bold text-white';
-    playButton.textContent = '▶';
-    playButton.setAttribute('aria-label', 'Reproduzir áudio');
-    const progress = globalScope.document.createElement('input');
-    progress.type = 'range';
-    progress.min = '0';
-    progress.max = '1000';
-    progress.value = '0';
-    progress.className = 'min-w-0 flex-1 accent-nutriflow-800';
-    progress.setAttribute('aria-label', 'Progresso do áudio');
-    const time = globalScope.document.createElement('span');
-    time.className = 'shrink-0 text-xs tabular-nums';
-    time.textContent = '0:00 / 0:00';
-    const updateTime = () => {
-      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-      const current = audio.currentTime || 0;
-      progress.value = String(duration ? Math.round((current / duration) * 1000) : 0);
-      time.textContent = `${formatDuration(current)} / ${formatDuration(duration)}`;
-    };
-    playButton.addEventListener('click', async () => {
-      if (audio.paused) {
-        try {
-          await audio.play();
-        } catch {
-          playButton.textContent = '▶';
-          playButton.setAttribute('aria-label', 'Reproduzir áudio');
-        }
-      } else {
-        audio.pause();
-      }
-    });
-    audio.addEventListener('play', () => {
-      playButton.textContent = 'Ⅱ';
-      playButton.setAttribute('aria-label', 'Pausar áudio');
-    });
-    audio.addEventListener('pause', () => {
-      playButton.textContent = '▶';
-      playButton.setAttribute('aria-label', 'Reproduzir áudio');
-    });
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('loadedmetadata', updateTime);
-    audio.addEventListener('ended', () => {
-      audio.currentTime = 0;
-      updateTime();
-    });
-    progress.addEventListener('input', () => {
-      if (Number.isFinite(audio.duration)) {
-        audio.currentTime = (Number(progress.value) / 1000) * audio.duration;
-      }
-    });
-    controls.append(playButton, progress, time);
-    container.append(controls, audio);
-    audio.className = 'hidden';
+    audio.className = 'w-full max-w-full';
+    container.append(audio);
     return { audio, source };
   }
 
