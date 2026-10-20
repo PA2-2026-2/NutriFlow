@@ -51,7 +51,9 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
 | `GET /chat/messages` | ✅ | ✅ | ❌ | Carrega mensagens entre participantes com vínculo ativo e marca recebidas como lidas |
 | `GET /api/chat/messages` | ✅ | ✅ | ❌ | Alias da consulta de conversa |
-| `POST /chat/messages` | ✅ | ✅ | ❌ | Envia mensagem de texto para paciente/nutricionista com vínculo ativo |
+| `GET /chat/messages/:messageId/audio` | ✅ | ✅ | ❌ | Recupera áudio apenas para participantes com vínculo ativo |
+| `GET /api/chat/messages/:messageId/audio` | ✅ | ✅ | ❌ | Alias da recuperação privada do áudio |
+| `POST /chat/messages` | ✅ | ✅ | ❌ | Envia mensagem de texto ou voz para participante com vínculo ativo |
 | `POST /api/chat/messages` | ✅ | ✅ | ❌ | Alias da rota de envio de mensagens |
 | `GET /chat/conversations` | ✅ | ✅ | ❌ | Lista conversas dos vínculos ativos, última mensagem e quantidade de não lidas |
 | `GET /api/chat/conversations` | ✅ | ✅ | ❌ | Alias da listagem de conversas |
@@ -73,11 +75,15 @@ nutricionista responsável por vez — vincular de novo substitui o anterior. O
 endpoint retorna `404` se o e-mail informado não pertencer a um nutricionista
 cadastrado, e `403` se o nutricionista estiver inativo.
 
-O envio de mensagens aceita apenas `recipientId` e `content`; o remetente é sempre
-o usuário autenticado. A conversa só pode ser iniciada entre paciente e
-nutricionista atualmente vinculados, e a mensagem começa com status `UNREAD`.
-Ao consultar a conversa, somente seus participantes têm acesso e as mensagens
-recebidas com status `UNREAD` passam para `READ`, com `readAt` definido pelo servidor.
+O envio de mensagens de texto aceita `recipientId` e `content`; o envio de áudio
+aceita `recipientId`, `audioBase64`, `audioMimeType` e `audioDurationSeconds`. O
+remetente é sempre o usuário autenticado. Áudios são limitados a 512 KB e 120
+segundos. A conversa só pode ser iniciada entre paciente e nutricionista
+atualmente vinculados, e a mensagem começa com status `UNREAD`. O conteúdo de
+áudio só é retornado por uma rota autenticada após validar que quem solicita é
+participante do vínculo ativo. Ao consultar a conversa, somente seus
+participantes têm acesso e as mensagens recebidas com status `UNREAD` passam
+para `READ`, com `readAt` definido pelo servidor.
 
 O endpoint de medidas recebe o ID do usuário do paciente. `weightKg` e
 `heightCm` são obrigatórios; circunferências (`*CircumferenceCm`) e dobras

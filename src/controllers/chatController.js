@@ -45,6 +45,14 @@ class ChatController {
 		);
 		response.status(201).json({ message });
 	}
+
+	async getMessageAudio(request, response) {
+		const audio = await this.chatService.getMessageAudio(
+			request.user.sub,
+			request.params.messageId,
+		);
+		response.status(200).json(audio);
+	}
 }
 
 module.exports = { ChatController };

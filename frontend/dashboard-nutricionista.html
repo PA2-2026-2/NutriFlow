@@ -177,8 +177,10 @@
               <form id="workspaceMessageForm" class="flex items-end gap-2">
                 <label class="sr-only" for="workspaceMessageInput">Escreva uma mensagem</label>
                 <textarea id="workspaceMessageInput" rows="2" maxlength="2000" class="min-h-12 flex-1 resize-y rounded-xl border border-nutriflow-200 bg-nutriflow-50 px-3 py-2 text-sm outline-none focus:border-nutriflow-500" placeholder="Selecione um paciente para responder..." disabled></textarea>
+                <button id="workspaceVoiceButton" type="button" class="rounded-xl border border-nutriflow-200 px-3 py-3 text-sm font-bold text-nutriflow-900 disabled:opacity-50" aria-label="Gravar mensagem de voz" disabled>Voz</button>
                 <button id="workspaceMessageSubmit" type="submit" class="rounded-xl bg-nutriflow-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-nutriflow-700 disabled:cursor-not-allowed disabled:opacity-50" disabled>Enviar</button>
               </form>
+              <p id="workspaceMessageStatus" class="mt-2 hidden text-xs font-semibold" role="status" aria-live="polite"></p>
             </div>
           </section>
         </div>
@@ -378,6 +380,7 @@
   <script src="api.js"></script>
   <script src="dashboard-core.js"></script>
   <script src="dashboard-components.js"></script>
+  <script src="chat-voice.js"></script>
   <script src="dashboard-nutricionista.js"></script>
 </body>
 </html>

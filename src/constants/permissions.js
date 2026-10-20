@@ -43,6 +43,8 @@ const PROTECTED_ROUTES = Object.freeze({
   'POST /api/chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
   'GET /chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
   'GET /api/chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /chat/messages/:messageId/audio': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/chat/messages/:messageId/audio': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
   'GET /chat/conversations': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
   'GET /api/chat/conversations': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
   'GET /chat/conversations/:conversationId/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),

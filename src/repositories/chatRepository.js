@@ -53,7 +53,19 @@ class ChatRepository {
 					{ senderId: secondUserId, recipientId: firstUserId },
 				],
 			},
-			include: { sender: { select: { name: true, profile: true } } },
+			select: {
+				id: true,
+				senderId: true,
+				recipientId: true,
+				content: true,
+				type: true,
+				audioMimeType: true,
+				audioDurationSeconds: true,
+				status: true,
+				createdAt: true,
+				readAt: true,
+				sender: { select: { name: true, profile: true } },
+			},
 			orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
 		});
 	}
@@ -77,7 +89,19 @@ class ChatRepository {
 					{ senderId: secondUserId, recipientId: firstUserId },
 				],
 			},
-			include: { sender: { select: { name: true, profile: true } } },
+			select: {
+				id: true,
+				senderId: true,
+				recipientId: true,
+				content: true,
+				type: true,
+				audioMimeType: true,
+				audioDurationSeconds: true,
+				status: true,
+				createdAt: true,
+				readAt: true,
+				sender: { select: { name: true, profile: true } },
+			},
 			orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
 			skip,
 			take,
@@ -92,7 +116,19 @@ class ChatRepository {
 					{ senderId: secondUserId, recipientId: firstUserId },
 				],
 			},
-			include: { sender: { select: { name: true, profile: true } } },
+			select: {
+				id: true,
+				senderId: true,
+				recipientId: true,
+				content: true,
+				type: true,
+				audioMimeType: true,
+				audioDurationSeconds: true,
+				status: true,
+				createdAt: true,
+				readAt: true,
+				sender: { select: { name: true, profile: true } },
+			},
 			orderBy: { createdAt: 'asc' },
 		});
 	}
@@ -118,9 +154,24 @@ class ChatRepository {
 				senderId: true,
 				recipientId: true,
 				content: true,
+				type: true,
+				audioMimeType: true,
+				audioDurationSeconds: true,
 				status: true,
 				createdAt: true,
 				readAt: true,
+			},
+		});
+	}
+
+	findMessageAudio(id) {
+		return this.prisma.chatMessage.findUnique({
+			where: { id },
+			select: {
+				senderId: true,
+				recipientId: true,
+				audioData: true,
+				audioMimeType: true,
 			},
 		});
 	}

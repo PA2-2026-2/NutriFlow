@@ -344,8 +344,10 @@
       <div id="quickReplies" class="flex flex-wrap gap-2 mb-3"></div>
       <form id="chatForm" class="flex gap-2">
         <input id="chatInput" type="text" class="flex-1 bg-nutriflow-50 border border-nutriflow-200 rounded-xl px-3 text-sm font-medium outline-none focus:border-nutriflow-500 transition" placeholder="Sua mensagem..." />
+        <button id="chatVoiceButton" type="button" class="rounded-xl border border-nutriflow-200 px-3 text-sm font-bold text-nutriflow-900 disabled:opacity-50" aria-label="Gravar mensagem de voz">Voz</button>
         <button type="submit" class="bg-nutriflow-950 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-nutriflow-800 transition">Enviar</button>
       </form>
+      <p id="chatMessageStatus" class="mt-2 hidden text-xs font-semibold" role="status" aria-live="polite"></p>
     </div>
   </div>
 
@@ -531,6 +533,7 @@
   <script src="ui.js"></script>
   <script src="api.js"></script>
   <script src="dashboard-core.js"></script>
+  <script src="chat-voice.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>

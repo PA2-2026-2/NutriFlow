@@ -22,6 +22,12 @@ function createChatRoutes(chatController, authenticate, routePrefix) {
 		authorize(`GET ${routePrefix}/messages`),
 		asyncHandler(chatController.getMessages.bind(chatController)),
 	);
+	router.get(
+		'/messages/:messageId/audio',
+		authenticate,
+		authorize(`GET ${routePrefix}/messages/:messageId/audio`),
+		asyncHandler(chatController.getMessageAudio.bind(chatController)),
+	);
 	router.post(
 		'/messages',
 		authenticate,

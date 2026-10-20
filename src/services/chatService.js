@@ -3,7 +3,22 @@ const { ROLES } = require('../constants/roles');
 const { getPhotoUrl } = require('../utils/photoPresenter');
 
 const MAX_MESSAGE_LENGTH = 2000;
-const MESSAGE_FIELDS = new Set(['recipientId', 'content']);
+const MAX_AUDIO_BYTES = 512 * 1024;
+const MAX_AUDIO_DURATION_SECONDS = 120;
+const ALLOWED_AUDIO_MIME_TYPES = new Set([
+	'audio/mp4',
+	'audio/mpeg',
+	'audio/ogg',
+	'audio/wav',
+	'audio/webm',
+]);
+const MESSAGE_FIELDS = new Set([
+	'recipientId',
+	'content',
+	'audioBase64',
+	'audioMimeType',
+	'audioDurationSeconds',
+]);
 
 class ChatService {
 	constructor(repository, photoStorage) {
@@ -47,16 +62,54 @@ class ChatService {
 			throw new AppError('Informe o destinatario da mensagem.', 400);
 		}
 
-		if (typeof payload.content !== 'string') {
-			throw new AppError('O conteudo da mensagem deve ser um texto.', 400);
-		}
+		const hasAudio = payload.audioBase64 !== undefined;
+		let content = '';
+		let audioData = null;
+		let audioMimeType = null;
+		let audioDurationSeconds = null;
 
-		const content = payload.content.trim();
-		if (!content) {
-			throw new AppError('A mensagem nao pode estar vazia.', 400);
-		}
-		if (content.length > MAX_MESSAGE_LENGTH) {
-			throw new AppError(`A mensagem deve ter ate ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
+		if (hasAudio) {
+			if (payload.content !== undefined && (typeof payload.content !== 'string' || payload.content.trim())) {
+				throw new AppError('Uma mensagem de voz nao pode conter texto.', 400);
+			}
+			if (typeof payload.audioBase64 !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload.audioBase64)) {
+				throw new AppError('O arquivo de audio e invalido.', 400);
+			}
+			audioData = Buffer.from(payload.audioBase64, 'base64');
+			const normalizedBase64 = payload.audioBase64.replace(/=+$/, '');
+			if (!audioData.length
+				|| audioData.toString('base64').replace(/=+$/, '') !== normalizedBase64) {
+				throw new AppError('O arquivo de audio e invalido.', 400);
+			}
+			if (audioData.length > MAX_AUDIO_BYTES) {
+				throw new AppError(`O audio deve ter no maximo ${MAX_AUDIO_BYTES / 1024} KB.`, 400);
+			}
+			audioMimeType = typeof payload.audioMimeType === 'string'
+				? payload.audioMimeType.split(';')[0].trim().toLowerCase()
+				: '';
+			if (!ALLOWED_AUDIO_MIME_TYPES.has(audioMimeType)) {
+				throw new AppError('Formato de audio nao suportado.', 400);
+			}
+			audioDurationSeconds = payload.audioDurationSeconds;
+			if (!Number.isInteger(audioDurationSeconds)
+				|| audioDurationSeconds < 1
+				|| audioDurationSeconds > MAX_AUDIO_DURATION_SECONDS) {
+				throw new AppError(`O audio deve ter ate ${MAX_AUDIO_DURATION_SECONDS} segundos.`, 400);
+			}
+		} else {
+			if (typeof payload.content !== 'string') {
+				throw new AppError('O conteudo da mensagem deve ser um texto.', 400);
+			}
+			content = payload.content.trim();
+			if (!content) {
+				throw new AppError('A mensagem nao pode estar vazia.', 400);
+			}
+			if (content.length > MAX_MESSAGE_LENGTH) {
+				throw new AppError(`A mensagem deve ter ate ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
+			}
+			if (payload.audioMimeType !== undefined || payload.audioDurationSeconds !== undefined) {
+				throw new AppError('Metadados de audio exigem uma mensagem de voz.', 400);
+			}
 		}
 
 		const recipientId = payload.recipientId.trim();
@@ -70,6 +123,10 @@ class ChatService {
 			senderId,
 			recipientId,
 			content,
+			type: hasAudio ? 'AUDIO' : 'TEXT',
+			audioData: audioData?.toString('base64') || null,
+			audioMimeType,
+			audioDurationSeconds,
 			status: 'UNREAD',
 			createdAt: new Date(),
 		});
@@ -204,6 +261,9 @@ class ChatService {
 			senderId: message.senderId,
 			recipientId: message.recipientId,
 			content: message.content,
+			type: message.type || 'TEXT',
+			audioMimeType: message.audioMimeType || null,
+			audioDurationSeconds: message.audioDurationSeconds || null,
 			status: message.status,
 			readAt: message.readAt,
 			createdAt: message.createdAt,
@@ -220,7 +280,7 @@ class ChatService {
 		if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
 			throw new AppError('Informe os dados da mensagem em um objeto.', 400);
 		}
-		if (Object.keys(payload).some((field) => field !== 'content')) {
+		if (Object.keys(payload).some((field) => !MESSAGE_FIELDS.has(field) || field === 'recipientId')) {
 			throw new AppError('Campo nao reconhecido no envio da mensagem.', 400);
 		}
 
@@ -231,8 +291,28 @@ class ChatService {
 
 		return this.sendMessage(patientId, {
 			recipientId: profile.nutritionistId,
-			content: payload.content,
+			...payload,
 		});
+	}
+
+	async getMessageAudio(userId, messageId) {
+		if (typeof messageId !== 'string' || !messageId.trim()) {
+			throw new AppError('Informe uma mensagem valida.', 400);
+		}
+		const message = await this.repository.findMessageAudio(messageId.trim());
+		if (!message || !message.audioData || !message.audioMimeType) {
+			throw new AppError('Audio nao encontrado.', 404);
+		}
+		if (message.senderId !== userId && message.recipientId !== userId) {
+			throw new AppError('Conversa nao encontrada.', 403);
+		}
+		await this.getAuthorizedPair(userId, message.senderId === userId
+			? message.recipientId
+			: message.senderId);
+		return {
+			audioBase64: message.audioData,
+			audioMimeType: message.audioMimeType,
+		};
 	}
 
 	async getConversation(userId, recipientId) {
@@ -254,6 +334,9 @@ class ChatService {
 			senderId: message.senderId,
 			recipientId: message.recipientId,
 			content: message.content,
+			type: message.type || 'TEXT',
+			audioMimeType: message.audioMimeType || null,
+			audioDurationSeconds: message.audioDurationSeconds || null,
 			status: message.status,
 			readAt: message.readAt,
 			createdAt: message.createdAt,

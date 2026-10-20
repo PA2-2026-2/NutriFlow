@@ -161,13 +161,17 @@ model PatientWeightEntry {
 }
 
 model ChatMessage {
-  id          String   @id @default(uuid())
-  senderId    String
-  recipientId String
-  content     String
-  status      String   @default("UNREAD")
-  createdAt   DateTime @default(now())
-  readAt      DateTime?
+  id                   String   @id @default(uuid())
+  senderId             String
+  recipientId          String
+  content              String
+  type                 String   @default("TEXT")
+  audioData            String?
+  audioMimeType        String?
+  audioDurationSeconds Int?
+  status               String   @default("UNREAD")
+  createdAt            DateTime @default(now())
+  readAt               DateTime?
 
   sender    User @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   recipient User @relation("ChatMessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)

@@ -23,6 +23,8 @@ let patientProfileSyncIntervalId = null;
 const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
+const chatVoiceButton = document.getElementById('chatVoiceButton');
+const chatMessageStatus = document.getElementById('chatMessageStatus');
 if (chatInput) {
   chatInput.maxLength = 2000;
 }
@@ -1482,6 +1484,10 @@ function renderChat() {
     } else {
       chatMessages.innerHTML = chat.messages.map((message) => {
         const isUserMessage = message.senderRole === 'PATIENT';
+        const audioMessage = message.type === 'AUDIO';
+        const deliveryLabel = isUserMessage
+          ? (message.status === 'READ' ? 'Lida' : 'Enviada')
+          : '';
 
         return `
           <div class="chat-row${isUserMessage ? ' is-user' : ''}">
@@ -1490,7 +1496,10 @@ function renderChat() {
               <p class="${isUserMessage ? 'text-xs font-semibold uppercase tracking-[0.14em] text-white/60' : 'text-xs font-semibold uppercase tracking-[0.14em] text-nutriflow-500'}">
                 ${escapeHtml(message.senderName || (isUserMessage ? patient.name : nutritionist.name))} - ${escapeHtml(message.timeLabel || 'agora')}
               </p>
-              <p class="mt-2 text-sm leading-7">${escapeHtml(message.content)}</p>
+              ${audioMessage
+                ? `<p class="mt-2 text-sm leading-7">Mensagem de voz · ${Number(message.audioDurationSeconds || 0)}s</p><button type="button" data-audio-message-id="${escapeHtml(message.id)}" class="mt-2 rounded-lg border border-current/20 px-3 py-2 text-sm font-semibold" aria-label="Reproduzir mensagem de voz">Reproduzir áudio</button>`
+                : `<p class="mt-2 text-sm leading-7">${escapeHtml(message.content)}</p>`}
+              ${deliveryLabel ? `<p class="mt-2 text-right text-[10px] opacity-70">${deliveryLabel}</p>` : ''}
             </div>
           </div>
         `;
@@ -1498,6 +1507,13 @@ function renderChat() {
 
       window.requestAnimationFrame(() => {
         chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+      chatMessages.querySelectorAll('[data-audio-message-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          window.NutriFlowChatVoice.loadAudioPlayer(button, (messageId) => (
+            apiRequest(`/api/chat/messages/${encodeURIComponent(messageId)}/audio`)
+          ));
+        });
       });
     }
   }
@@ -1793,6 +1809,75 @@ async function handleChatSubmit(event) {
     return;
   }
 
+  const patientVoiceRecorder = window.NutriFlowChatVoice?.createRecorder({
+    onRecordingChange(isRecording) {
+      if (!chatVoiceButton) return;
+      chatVoiceButton.textContent = isRecording ? 'Parar' : 'Voz';
+      chatVoiceButton.setAttribute('aria-label', isRecording ? 'Parar gravação e enviar' : 'Gravar mensagem de voz');
+      if (chatMessageStatus) {
+        chatMessageStatus.textContent = isRecording ? 'Gravando... Toque em Parar para enviar.' : '';
+        chatMessageStatus.classList.toggle('hidden', !isRecording);
+        chatMessageStatus.classList.toggle('text-red-700', false);
+        chatMessageStatus.classList.toggle('text-nutriflow-700', isRecording);
+      }
+    },
+    async onRecording(audio) {
+      state.isSendingMessage = true;
+      if (chatInput) chatInput.disabled = true;
+      if (chatVoiceButton) chatVoiceButton.disabled = true;
+      if (chatMessageStatus) {
+        chatMessageStatus.textContent = 'Enviando áudio...';
+        chatMessageStatus.classList.remove('hidden');
+        chatMessageStatus.classList.remove('text-red-700');
+        chatMessageStatus.classList.add('text-nutriflow-700');
+      }
+      try {
+        await sendPatientMessage(audio);
+        await refreshDashboard();
+        await syncPatientRealtimeChat({ forceRender: true });
+        if (chatMessageStatus) chatMessageStatus.textContent = 'Mensagem de voz enviada.';
+        showToast('Mensagem de voz enviada.');
+      } catch (error) {
+        if (chatMessageStatus) {
+          chatMessageStatus.textContent = `Falha no envio: ${error.message || 'Não foi possível enviar o áudio.'}`;
+          chatMessageStatus.classList.remove('hidden');
+          chatMessageStatus.classList.add('text-red-700');
+        }
+        showToast(error.message || 'Não foi possível enviar o áudio.');
+      } finally {
+        state.isSendingMessage = false;
+        if (chatInput) chatInput.disabled = false;
+        if (chatVoiceButton) chatVoiceButton.disabled = false;
+      }
+    },
+    onError(message) {
+      if (chatMessageStatus) {
+        chatMessageStatus.textContent = message;
+        chatMessageStatus.classList.remove('hidden');
+        chatMessageStatus.classList.add('text-red-700');
+        chatMessageStatus.classList.remove('text-nutriflow-700');
+      }
+      showToast(message);
+    },
+  });
+
+  chatVoiceButton?.addEventListener('click', async () => {
+    if (patientVoiceRecorder?.isRecording) {
+      await patientVoiceRecorder.stop();
+      return;
+    }
+    if (isSetupRequired()) {
+      showToast('Conecte sua conta a um nutricionista antes de usar o chat.');
+      return;
+    }
+    if (state.isSendingMessage) return;
+    if (chatMessageStatus) {
+      chatMessageStatus.classList.remove('hidden', 'text-red-700');
+      chatMessageStatus.classList.add('text-nutriflow-700');
+    }
+    await patientVoiceRecorder?.start();
+  });
+
   if (!chatInput || state.isSendingMessage) {
     return;
   }
@@ -1806,6 +1891,11 @@ async function handleChatSubmit(event) {
 
   state.isSendingMessage = true;
   chatInput.disabled = true;
+  if (chatMessageStatus) {
+    chatMessageStatus.textContent = 'Enviando mensagem...';
+    chatMessageStatus.classList.remove('hidden', 'text-red-700');
+    chatMessageStatus.classList.add('text-nutriflow-700');
+  }
 
   const submitButton = chatForm?.querySelector('button[type="submit"]');
   if (submitButton) {
@@ -1818,8 +1908,15 @@ async function handleChatSubmit(event) {
     chatInput.value = '';
     await refreshDashboard();
     await syncPatientRealtimeChat({ forceRender: true });
+    if (chatMessageStatus) chatMessageStatus.textContent = 'Mensagem enviada.';
     showToast(typeof result.message === 'string' ? result.message : 'Mensagem enviada para sua nutricionista.');
   } catch (error) {
+    if (chatMessageStatus) {
+      chatMessageStatus.textContent = `Falha no envio: ${error.message || 'tente novamente.'}`;
+      chatMessageStatus.classList.add('text-red-700');
+      chatMessageStatus.classList.remove('text-nutriflow-700');
+      chatMessageStatus.classList.remove('hidden');
+    }
     showToast(error.message || 'Nao foi possivel enviar sua mensagem.');
   } finally {
     state.isSendingMessage = false;

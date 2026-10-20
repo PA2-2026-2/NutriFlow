@@ -1,0 +1,5 @@
+ALTER TABLE "ChatMessage"
+ADD COLUMN "type" TEXT NOT NULL DEFAULT 'TEXT',
+ADD COLUMN "audioData" TEXT,
+ADD COLUMN "audioMimeType" TEXT,
+ADD COLUMN "audioDurationSeconds" INTEGER;

@@ -72,6 +72,74 @@ describe('POST /chat/messages', () => {
 		});
 	});
 
+	it('permite enviar e reproduzir áudio somente para participantes da conversa', async () => {
+			const patient = await createUserWithRole(app, 'PATIENT');
+			const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+			const otherPatient = await createUserWithRole(app, 'PATIENT');
+			await link(patient, nutritionist);
+			const audioBase64 = Buffer.from('audio de teste').toString('base64');
+
+			const sent = await request(app)
+				.post('/api/chat/messages')
+				.set(bearer(patient.token))
+				.send({
+					recipientId: nutritionist.user.id,
+					audioBase64,
+					audioMimeType: 'audio/webm;codecs=opus',
+					audioDurationSeconds: 3,
+				});
+			const history = await request(app)
+				.get(`/api/chat/conversations/${patient.user.id}/messages`)
+				.set(bearer(nutritionist.token));
+			const playback = await request(app)
+				.get(`/api/chat/messages/${sent.body.message.id}/audio`)
+				.set(bearer(nutritionist.token));
+			const forbidden = await request(app)
+				.get(`/api/chat/messages/${sent.body.message.id}/audio`)
+				.set(bearer(otherPatient.token));
+
+			expect(sent.statusCode).toBe(201);
+			expect(sent.body.message).toMatchObject({
+				content: '',
+				type: 'AUDIO',
+				audioMimeType: 'audio/webm',
+				audioDurationSeconds: 3,
+				status: 'UNREAD',
+			});
+			expect(history.body.messages[0]).toMatchObject({
+				type: 'AUDIO',
+				audioDurationSeconds: 3,
+			});
+			expect(history.body.messages[0]).not.toHaveProperty('audioBase64');
+			expect(playback.statusCode).toBe(200);
+			expect(playback.body).toEqual({
+				audioBase64,
+				audioMimeType: 'audio/webm',
+			});
+			expect(forbidden.statusCode).toBe(403);
+	});
+
+	it('rejeita áudio vazio, grande ou com metadados inválidos', async () => {
+			const patient = await createUserWithRole(app, 'PATIENT');
+			const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+			await link(patient, nutritionist);
+
+			const invalidMessages = [
+				{ audioBase64: '', audioMimeType: 'audio/webm', audioDurationSeconds: 2 },
+				{ audioBase64: Buffer.alloc(512 * 1024 + 1).toString('base64'), audioMimeType: 'audio/webm', audioDurationSeconds: 2 },
+				{ audioBase64: Buffer.from('audio').toString('base64'), audioMimeType: 'text/plain', audioDurationSeconds: 2 },
+				{ audioBase64: Buffer.from('audio').toString('base64'), audioMimeType: 'audio/webm', audioDurationSeconds: 121 },
+			];
+
+			for (const payload of invalidMessages) {
+				const response = await request(app)
+					.post('/api/chat/messages')
+					.set(bearer(patient.token))
+					.send({ recipientId: nutritionist.user.id, ...payload });
+				expect(response.statusCode).toBe(400);
+			}
+	});
+
 	it('carrega a conversa somente para participantes e marca mensagens recebidas como lidas', async () => {
 		const patient = await createUserWithRole(app, 'PATIENT');
 		const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
