@@ -169,6 +169,7 @@ model ChatMessage {
   audioData            String?
   audioMimeType        String?
   audioDurationSeconds Int?
+  transcript           String?
   status               String   @default("UNREAD")
   createdAt            DateTime @default(now())
   readAt               DateTime?

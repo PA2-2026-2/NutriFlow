@@ -342,6 +342,11 @@
     
     <div class="p-3 bg-white border-t border-nutriflow-100 rounded-b-[24px]">
       <div id="quickReplies" class="flex flex-wrap gap-2 mb-3"></div>
+      <div id="chatVoicePreview" class="mb-3 hidden" aria-label="Pré-visualização da mensagem de voz"></div>
+      <div id="chatVoiceRecording" class="mb-3 hidden items-center justify-between gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800" role="status" aria-live="polite">
+        <span id="chatVoiceRecordingTime">Gravando · 0:00</span>
+        <button id="chatVoiceCancel" type="button" class="rounded-lg border border-red-300 px-3 py-1 font-bold">Cancelar</button>
+      </div>
       <form id="chatForm" class="flex gap-2">
         <input id="chatInput" type="text" class="flex-1 bg-nutriflow-50 border border-nutriflow-200 rounded-xl px-3 text-sm font-medium outline-none focus:border-nutriflow-500 transition" placeholder="Sua mensagem..." />
         <button id="chatVoiceButton" type="button" class="rounded-xl border border-nutriflow-200 px-3 text-sm font-bold text-nutriflow-900 disabled:opacity-50" aria-label="Gravar mensagem de voz">Voz</button>

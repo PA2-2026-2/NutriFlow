@@ -51,7 +51,17 @@ class ChatController {
 			request.user.sub,
 			request.params.messageId,
 		);
-		response.status(200).json(audio);
+		const content = Buffer.from(audio.audioBase64, 'base64');
+		response.status(200);
+		response.set({
+			'Cache-Control': 'private, no-store',
+			'Content-Type': audio.audioMimeType,
+			'Content-Length': String(content.length),
+			'X-Content-Type-Options': 'nosniff',
+		});
+		response.removeHeader('ETag');
+		response.removeHeader('Last-Modified');
+		response.end(content);
 	}
 }
 

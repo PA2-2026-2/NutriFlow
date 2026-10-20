@@ -55,8 +55,14 @@ const workspaceMessageSubmit = document.getElementById('workspaceMessageSubmit')
 const workspaceMessageForm = document.getElementById('workspaceMessageForm');
 const workspaceVoiceButton = document.getElementById('workspaceVoiceButton');
 const workspaceMessageStatus = document.getElementById('workspaceMessageStatus');
+const workspaceVoicePreview = document.getElementById('workspaceVoicePreview');
+const workspaceVoiceRecording = document.getElementById('workspaceVoiceRecording');
+const workspaceVoiceRecordingTime = document.getElementById('workspaceVoiceRecordingTime');
+const workspaceVoiceCancel = document.getElementById('workspaceVoiceCancel');
 const loadOlderMessagesButton = document.getElementById('loadOlderMessages');
 let nutritionistChatSyncIntervalId = null;
+let workspaceVoiceDraft = null;
+let workspaceRecordingConversationId = null;
 
 function showToast(message) { toastController.show(message); }
 function ensureNutritionistAccess() { return session.ensureAuthenticated(); }
@@ -174,6 +180,7 @@ function renderWorkspaceMessages(options = {}) {
   }
 
   if (!workspaceMessages) return;
+  window.NutriFlowChatVoice.releaseAudioPlayers(workspaceMessages);
   if (!conversation) {
     workspaceMessages.innerHTML = '<p class="m-auto text-center text-sm text-nutriflow-500">Selecione um paciente para abrir a conversa.</p>';
     return;
@@ -194,7 +201,7 @@ function renderWorkspaceMessages(options = {}) {
       <article class="max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isMine ? 'ml-auto bg-nutriflow-800 text-white' : 'mr-auto border border-nutriflow-100 bg-white text-nutriflow-950'}">
         <p class="mb-1 text-[10px] font-bold uppercase tracking-wide ${isMine ? 'text-white/65' : 'text-nutriflow-500'}">${isMine ? 'Você' : escapeHtml(message.senderName || conversation.patient.name)} · ${escapeHtml(formatConversationTimestamp(message.createdAt))}</p>
         ${audioMessage
-          ? `<p class="whitespace-pre-wrap break-words text-sm leading-6">Mensagem de voz · ${Number(message.audioDurationSeconds || 0)}s</p><button type="button" data-audio-message-id="${escapeHtml(message.id)}" class="mt-2 rounded-lg border border-current/20 px-3 py-2 text-sm font-semibold">Reproduzir áudio</button>`
+          ? `<p class="whitespace-pre-wrap break-words text-sm leading-6">Mensagem de voz · ${Number(message.audioDurationSeconds || 0)}s</p><button type="button" data-audio-message-id="${escapeHtml(message.id)}" data-audio-transcript="${escapeHtml(message.transcript || '')}" class="mt-2 rounded-lg border border-current/20 px-3 py-2 text-sm font-semibold">Reproduzir áudio</button>`
           : `<p class="whitespace-pre-wrap break-words text-sm leading-6">${escapeHtml(message.content)}</p>`}
         ${isMine ? `<p class="mt-2 text-right text-[10px] text-white/65">${message.status === 'READ' ? 'Lida' : 'Enviada'}</p>` : ''}
       </article>
@@ -204,7 +211,10 @@ function renderWorkspaceMessages(options = {}) {
   workspaceMessages.querySelectorAll('[data-audio-message-id]').forEach((button) => {
     button.addEventListener('click', async () => {
       await window.NutriFlowChatVoice.loadAudioPlayer(button, (messageId) => (
-        apiRequest(`/api/chat/messages/${encodeURIComponent(messageId)}/audio`)
+        window.NutriFlowApi.request(
+          `/api/chat/messages/${encodeURIComponent(messageId)}/audio`,
+          { headers: { Authorization: `Bearer ${session.getToken()}` } },
+        )
       ));
       if (button.dataset.error) showToast(button.dataset.error);
     });
@@ -1424,83 +1434,126 @@ function renderNutritionistPage() {
   if (showConversations) void loadConversationWorkspace({ scrollToEnd: true });
 }
 
+function discardWorkspaceVoiceDraft() {
+  window.NutriFlowChatVoice.releaseAudioPlayers(workspaceVoicePreview);
+  workspaceVoiceDraft = null;
+  workspaceVoicePreview?.replaceChildren();
+  workspaceVoicePreview?.classList.add('hidden');
+  workspaceMessageForm?.classList.remove('hidden');
+  if (workspaceMessageInput) workspaceMessageInput.disabled = false;
+  if (workspaceVoiceButton) {
+    workspaceVoiceButton.disabled = !state.workspaceConversationId;
+    workspaceVoiceButton.textContent = 'Voz';
+  }
+}
+
+const workspaceVoiceRecorder = window.NutriFlowChatVoice?.createRecorder({
+  onRecordingChange(isRecording, elapsedSeconds, transcriptionAvailable) {
+    if (workspaceVoiceButton) {
+      workspaceVoiceButton.textContent = isRecording ? 'Finalizar' : 'Voz';
+      workspaceVoiceButton.setAttribute('aria-label', isRecording ? 'Finalizar gravação' : 'Gravar mensagem de voz');
+    }
+    workspaceVoiceRecording?.classList.toggle('hidden', !isRecording);
+    workspaceVoiceRecording?.classList.toggle('flex', isRecording);
+    if (workspaceVoiceRecordingTime) {
+      const suffix = transcriptionAvailable ? ' · transcrevendo' : '';
+      workspaceVoiceRecordingTime.textContent = `Gravando · ${window.NutriFlowChatVoice.formatDuration(elapsedSeconds)}${suffix}`;
+    }
+    if (workspaceMessageInput) workspaceMessageInput.disabled = isRecording || state.isSendingWorkspaceMessage;
+  },
+  onTranscript(transcript) {
+    if (workspaceVoiceDraft) workspaceVoiceDraft.transcript = transcript;
+  },
+  onDraft(draft) {
+    workspaceVoiceDraft = { ...draft };
+    workspaceVoiceRecording?.classList.add('hidden');
+    workspaceVoiceRecording?.classList.remove('flex');
+    workspaceMessageForm?.classList.add('hidden');
+    workspaceVoicePreview?.classList.remove('hidden');
+    window.NutriFlowChatVoice.renderDraftPreview(workspaceVoicePreview, workspaceVoiceDraft, {
+      onTranscriptChange(value) {
+        workspaceVoiceDraft.transcript = value;
+      },
+      onDiscard: discardWorkspaceVoiceDraft,
+      async onSend(value) {
+        if (state.isSendingWorkspaceMessage || !workspaceVoiceDraft || !workspaceRecordingConversationId) return;
+        state.isSendingWorkspaceMessage = true;
+        renderWorkspaceMessages();
+        if (workspaceMessageStatus) {
+          workspaceMessageStatus.textContent = 'Enviando mensagem de voz...';
+          workspaceMessageStatus.classList.remove('hidden', 'text-red-700');
+          workspaceMessageStatus.classList.add('text-nutriflow-700');
+        }
+        try {
+          await apiRequest('/api/chat/messages', {
+            method: 'POST',
+            body: JSON.stringify({
+              recipientId: workspaceRecordingConversationId,
+              audioBase64: await window.NutriFlowChatVoice.blobToBase64(value.audio),
+              audioMimeType: value.audioMimeType,
+              audioDurationSeconds: value.audioDurationSeconds,
+              ...(value.transcript ? { transcript: value.transcript } : {}),
+            }),
+          });
+          discardWorkspaceVoiceDraft();
+          await loadConversationWorkspace({ scrollToEnd: true });
+          if (workspaceMessageStatus) workspaceMessageStatus.textContent = 'Mensagem de voz enviada.';
+          showToast('Mensagem de voz enviada.');
+        } catch (error) {
+          if (workspaceMessageStatus) {
+            workspaceMessageStatus.textContent = `Falha no envio: ${error.message || 'tente novamente.'}`;
+            workspaceMessageStatus.classList.remove('hidden', 'text-nutriflow-700');
+            workspaceMessageStatus.classList.add('text-red-700');
+          }
+          showToast(error.message || 'Não foi possível enviar o áudio.');
+          throw error;
+        } finally {
+          state.isSendingWorkspaceMessage = false;
+          renderWorkspaceMessages();
+        }
+      },
+    });
+  },
+  onError(message) {
+    if (workspaceMessageStatus) {
+      workspaceMessageStatus.textContent = message;
+      workspaceMessageStatus.classList.remove('hidden', 'text-nutriflow-700');
+      workspaceMessageStatus.classList.add('text-red-700');
+    }
+    showToast(message);
+  },
+});
+
+workspaceVoiceButton?.addEventListener('click', async () => {
+  if (workspaceVoiceRecorder?.isRecording) {
+    await workspaceVoiceRecorder.stop();
+    return;
+  }
+  if (!state.workspaceConversationId || state.isSendingWorkspaceMessage || workspaceVoiceDraft) return;
+  workspaceRecordingConversationId = state.workspaceConversationId;
+  await workspaceVoiceRecorder?.start();
+});
+
+workspaceVoiceCancel?.addEventListener('click', async () => {
+  await workspaceVoiceRecorder?.cancel();
+  workspaceVoiceRecording?.classList.add('hidden');
+  workspaceVoiceRecording?.classList.remove('flex');
+  if (workspaceMessageInput) workspaceMessageInput.disabled = false;
+  if (workspaceVoiceButton) workspaceVoiceButton.textContent = 'Voz';
+});
+
 async function handleWorkspaceMessageSubmit(event) {
   event.preventDefault();
+  if (workspaceVoiceRecorder?.isRecording || workspaceVoiceDraft) {
+    showToast('Finalize, envie ou apague a gravação antes de enviar uma mensagem de texto.');
+    return;
+  }
   const conversationId = state.workspaceConversationId;
   const content = workspaceMessageInput?.value.trim() || '';
   if (!conversationId) {
     showToast('Selecione uma conversa antes de enviar.');
     return;
   }
-
-  let workspaceRecordingConversationId = null;
-  const workspaceVoiceRecorder = window.NutriFlowChatVoice?.createRecorder({
-    onRecordingChange(isRecording) {
-      if (workspaceVoiceButton) {
-        workspaceVoiceButton.textContent = isRecording ? 'Parar' : 'Voz';
-        workspaceVoiceButton.setAttribute('aria-label', isRecording ? 'Parar gravação e enviar' : 'Gravar mensagem de voz');
-      }
-      if (workspaceMessageStatus) {
-        workspaceMessageStatus.textContent = isRecording ? 'Gravando... Toque em Parar para enviar.' : '';
-        workspaceMessageStatus.classList.toggle('hidden', !isRecording);
-        workspaceMessageStatus.classList.toggle('text-nutriflow-700', isRecording);
-        workspaceMessageStatus.classList.toggle('text-red-700', false);
-      }
-    },
-    async onRecording(audio) {
-      if (!workspaceRecordingConversationId) return;
-      state.isSendingWorkspaceMessage = true;
-      renderWorkspaceMessages();
-      if (workspaceMessageStatus) {
-        workspaceMessageStatus.textContent = 'Enviando áudio...';
-        workspaceMessageStatus.classList.remove('hidden');
-        workspaceMessageStatus.classList.remove('text-red-700');
-        workspaceMessageStatus.classList.add('text-nutriflow-700');
-      }
-      try {
-        await apiRequest('/api/chat/messages', {
-          method: 'POST',
-          body: JSON.stringify({ recipientId: workspaceRecordingConversationId, ...audio }),
-        });
-        if (workspaceMessageStatus) workspaceMessageStatus.textContent = 'Mensagem de voz enviada.';
-        await loadConversationWorkspace({ scrollToEnd: true });
-        showToast('Mensagem de voz enviada.');
-      } catch (error) {
-        if (workspaceMessageStatus) {
-          workspaceMessageStatus.textContent = `Falha no envio: ${error.message || 'Não foi possível enviar o áudio.'}`;
-          workspaceMessageStatus.classList.remove('hidden');
-          workspaceMessageStatus.classList.add('text-red-700');
-        }
-        showToast(error.message || 'Não foi possível enviar o áudio.');
-      } finally {
-        state.isSendingWorkspaceMessage = false;
-        renderWorkspaceMessages();
-      }
-    },
-    onError(message) {
-      if (workspaceMessageStatus) {
-        workspaceMessageStatus.textContent = message;
-        workspaceMessageStatus.classList.remove('hidden');
-        workspaceMessageStatus.classList.add('text-red-700');
-        workspaceMessageStatus.classList.remove('text-nutriflow-700');
-      }
-      showToast(message);
-    },
-  });
-
-  workspaceVoiceButton?.addEventListener('click', async () => {
-    if (workspaceVoiceRecorder?.isRecording) {
-      await workspaceVoiceRecorder.stop();
-      return;
-    }
-    if (!state.workspaceConversationId || state.isSendingWorkspaceMessage) return;
-    workspaceRecordingConversationId = state.workspaceConversationId;
-    if (workspaceMessageStatus) {
-      workspaceMessageStatus.classList.remove('hidden', 'text-red-700');
-      workspaceMessageStatus.classList.add('text-nutriflow-700');
-    }
-    await workspaceVoiceRecorder?.start();
-  });
   if (!content) {
     showToast('Digite uma mensagem para enviar.');
     workspaceMessageInput?.focus();
@@ -1543,6 +1596,10 @@ async function handleWorkspaceMessageSubmit(event) {
 conversationList?.addEventListener('click', (event) => {
   const conversationButton = event.target.closest('[data-conversation-id]');
   if (!conversationButton) return;
+  if (workspaceVoiceRecorder?.isRecording || workspaceVoiceDraft) {
+    showToast('Finalize ou apague a gravação antes de trocar de conversa.');
+    return;
+  }
   state.workspaceConversationId = conversationButton.dataset.conversationId;
   state.workspaceMessages = [];
   state.workspacePagination = null;

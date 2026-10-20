@@ -18,6 +18,7 @@ const MESSAGE_FIELDS = new Set([
 	'audioBase64',
 	'audioMimeType',
 	'audioDurationSeconds',
+	'transcript',
 ]);
 
 class ChatService {
@@ -67,6 +68,7 @@ class ChatService {
 		let audioData = null;
 		let audioMimeType = null;
 		let audioDurationSeconds = null;
+		let transcript = null;
 
 		if (hasAudio) {
 			if (payload.content !== undefined && (typeof payload.content !== 'string' || payload.content.trim())) {
@@ -96,6 +98,13 @@ class ChatService {
 				|| audioDurationSeconds > MAX_AUDIO_DURATION_SECONDS) {
 				throw new AppError(`O audio deve ter ate ${MAX_AUDIO_DURATION_SECONDS} segundos.`, 400);
 			}
+			if (payload.transcript !== undefined && typeof payload.transcript !== 'string') {
+				throw new AppError('A transcricao deve ser um texto.', 400);
+			}
+			transcript = payload.transcript?.trim() || null;
+			if (transcript && transcript.length > MAX_MESSAGE_LENGTH) {
+				throw new AppError(`A transcricao deve ter ate ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
+			}
 		} else {
 			if (typeof payload.content !== 'string') {
 				throw new AppError('O conteudo da mensagem deve ser um texto.', 400);
@@ -107,7 +116,9 @@ class ChatService {
 			if (content.length > MAX_MESSAGE_LENGTH) {
 				throw new AppError(`A mensagem deve ter ate ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
 			}
-			if (payload.audioMimeType !== undefined || payload.audioDurationSeconds !== undefined) {
+			if (payload.audioMimeType !== undefined
+				|| payload.audioDurationSeconds !== undefined
+				|| payload.transcript !== undefined) {
 				throw new AppError('Metadados de audio exigem uma mensagem de voz.', 400);
 			}
 		}
@@ -127,6 +138,7 @@ class ChatService {
 			audioData: audioData?.toString('base64') || null,
 			audioMimeType,
 			audioDurationSeconds,
+			transcript,
 			status: 'UNREAD',
 			createdAt: new Date(),
 		});
@@ -264,6 +276,7 @@ class ChatService {
 			type: message.type || 'TEXT',
 			audioMimeType: message.audioMimeType || null,
 			audioDurationSeconds: message.audioDurationSeconds || null,
+			transcript: message.transcript || null,
 			status: message.status,
 			readAt: message.readAt,
 			createdAt: message.createdAt,
@@ -337,6 +350,7 @@ class ChatService {
 			type: message.type || 'TEXT',
 			audioMimeType: message.audioMimeType || null,
 			audioDurationSeconds: message.audioDurationSeconds || null,
+			transcript: message.transcript || null,
 			status: message.status,
 			readAt: message.readAt,
 			createdAt: message.createdAt,

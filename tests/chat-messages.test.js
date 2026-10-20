@@ -72,12 +72,13 @@ describe('POST /chat/messages', () => {
 		});
 	});
 
-	it('permite enviar e reproduzir áudio somente para participantes da conversa', async () => {
+	it('serve os bytes de áudio com MIME e sem cache apenas para participantes', async () => {
 			const patient = await createUserWithRole(app, 'PATIENT');
 			const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
 			const otherPatient = await createUserWithRole(app, 'PATIENT');
 			await link(patient, nutritionist);
-			const audioBase64 = Buffer.from('audio de teste').toString('base64');
+			const audioBytes = Buffer.from('audio binário de teste');
+			const audioBase64 = audioBytes.toString('base64');
 
 			const sent = await request(app)
 				.post('/api/chat/messages')
@@ -87,12 +88,14 @@ describe('POST /chat/messages', () => {
 					audioBase64,
 					audioMimeType: 'audio/webm;codecs=opus',
 					audioDurationSeconds: 3,
+					transcript: 'Como foi a semana?',
 				});
 			const history = await request(app)
 				.get(`/api/chat/conversations/${patient.user.id}/messages`)
 				.set(bearer(nutritionist.token));
 			const playback = await request(app)
 				.get(`/api/chat/messages/${sent.body.message.id}/audio`)
+				.set('If-None-Match', '*')
 				.set(bearer(nutritionist.token));
 			const forbidden = await request(app)
 				.get(`/api/chat/messages/${sent.body.message.id}/audio`)
@@ -105,18 +108,40 @@ describe('POST /chat/messages', () => {
 				audioMimeType: 'audio/webm',
 				audioDurationSeconds: 3,
 				status: 'UNREAD',
+				transcript: 'Como foi a semana?',
 			});
 			expect(history.body.messages[0]).toMatchObject({
 				type: 'AUDIO',
 				audioDurationSeconds: 3,
+				transcript: 'Como foi a semana?',
 			});
 			expect(history.body.messages[0]).not.toHaveProperty('audioBase64');
 			expect(playback.statusCode).toBe(200);
-			expect(playback.body).toEqual({
-				audioBase64,
-				audioMimeType: 'audio/webm',
-			});
+			expect(Buffer.isBuffer(playback.body)).toBe(true);
+			expect(playback.body).toEqual(audioBytes);
+			expect(playback.headers['content-type']).toBe('audio/webm');
+			expect(playback.headers['content-length']).toBe(String(audioBytes.length));
+			expect(playback.headers['cache-control']).toBe('private, no-store');
+			expect(playback.headers.etag).toBeUndefined();
+			expect(playback.headers['last-modified']).toBeUndefined();
 			expect(forbidden.statusCode).toBe(403);
+	});
+
+	it('retorna 404 para rota de áudio de mensagem de texto', async () => {
+		const patient = await createUserWithRole(app, 'PATIENT');
+		const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+		await link(patient, nutritionist);
+		const sent = await request(app)
+			.post('/api/chat/messages')
+			.set(bearer(patient.token))
+			.send({ recipientId: nutritionist.user.id, content: 'Mensagem sem áudio.' });
+
+		const response = await request(app)
+			.get(`/api/chat/messages/${sent.body.message.id}/audio`)
+			.set(bearer(nutritionist.token));
+
+		expect(response.statusCode).toBe(404);
+		expect(response.body.message).toContain('Audio nao encontrado');
 	});
 
 	it('rejeita áudio vazio, grande ou com metadados inválidos', async () => {
