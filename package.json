@@ -19,6 +19,7 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "postinstall": "npm run prisma:generate:production",
+    "vercel-build": "npm run prisma:generate:production && npm run db:migrate:deploy",
     "prisma:generate": "npm run prisma:generate:production && npm run prisma:generate:dev",
     "prisma:generate:production": "prisma generate --schema=prisma/schema.prisma",
     "prisma:generate:dev": "prisma generate --schema=prisma/schema.sqlite.prisma",

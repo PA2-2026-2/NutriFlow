@@ -215,6 +215,51 @@ describe('POST /chat/messages', () => {
 		]));
 	});
 
+	it('lista conversa sem mensagens sem consultar colunas inexistentes nem falhar', async () => {
+		const patient = await createUserWithRole(app, 'PATIENT');
+		const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+		await link(patient, nutritionist);
+
+		const response = await request(app)
+			.get('/api/chat/conversations')
+			.set(bearer(nutritionist.token));
+
+		expect(response.statusCode).toBe(200);
+		expect(response.body.conversations).toEqual([
+			expect.objectContaining({
+				id: patient.user.id,
+				lastMessage: null,
+				unreadCount: 0,
+			}),
+		]);
+	});
+
+	it('retorna erro interno genérico se a consulta de conversas falhar com P2022', async () => {
+		const patient = await createUserWithRole(app, 'PATIENT');
+		const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+		await link(patient, nutritionist);
+		const prismaError = Object.assign(
+			new Error('The column ChatMessage.type does not exist'),
+			{ code: 'P2022' },
+		);
+		const querySpy = jest.spyOn(app.locals.prisma.chatMessage, 'findFirst')
+			.mockRejectedValue(prismaError);
+		const errorLogSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+		try {
+			const response = await request(app)
+				.get('/api/chat/conversations')
+				.set(bearer(nutritionist.token));
+
+			expect(response.statusCode).toBe(500);
+			expect(response.body).toEqual({ message: 'Erro interno do servidor.' });
+			expect(response.body.message).not.toContain('ChatMessage.type');
+		} finally {
+			querySpy.mockRestore();
+			errorLogSpy.mockRestore();
+		}
+	});
+
 	it('retorna historico paginado em ordem cronologica e bloqueia nao participantes', async () => {
 		const patient = await createUserWithRole(app, 'PATIENT');
 		const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');

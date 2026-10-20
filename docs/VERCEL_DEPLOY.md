@@ -36,12 +36,16 @@ a aplicação falha na inicialização se `DATABASE_URL` não for PostgreSQL ou
    o banco de destino:
 
    ```bash
-   npm run prisma:generate
    npm run db:migrate:deploy
    ```
 
    `db:migrate:deploy` cria/atualiza o schema a partir das migrações; não
    transfere registros do SQLite. Não use `db push` no banco de produção.
+   No deployment Vercel, o comando `vercel-build` gera o Prisma Client do
+   schema PostgreSQL e executa `prisma migrate deploy` antes de publicar a
+   função. Configure uma `DATABASE_URL` apropriada para cada ambiente Vercel
+   (Production, Preview e Development); o build aplica migrations no banco
+   selecionado para aquele ambiente.
 3. O schema PostgreSQL é `prisma/schema.prisma`. O schema SQLite separado
    (`prisma/schema.sqlite.prisma`) gera um client local para manter testes e
    desenvolvimento sem alterar a cópia SQLite atual.
@@ -104,7 +108,10 @@ Após configurar as variáveis, revisar/aplicar a migração de schema e decidir
 como tratar as fotos:
 
 1. Conecte o repositório à Vercel e faça o deploy pela integração Vercel ou
-   pela CLI autenticada. Este repositório não executa deploy automaticamente.
+   pela CLI autenticada. A configuração `buildCommand` executa
+   `npm run vercel-build`, que gera o client do schema PostgreSQL e aplica
+   migrations pendentes antes da publicação. Este repositório não executa
+   deploy automaticamente.
 2. Verifique `GET https://<dominio>/health`. HTTP 200 com
    `{"status":"OK","database":"connected",...}` confirma API e consulta ao
    banco; HTTP 503 indica banco indisponível.
