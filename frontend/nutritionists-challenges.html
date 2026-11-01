@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NutriFlow | Desafios do nutricionista</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nutriflow: {
+              50: '#f3f7f1',
+              100: '#cadbbf',
+              200: '#a8c297',
+              300: '#85a96f',
+              400: '#4f6b3d',
+              500: '#37482d',
+              600: '#25331e',
+              700: '#1c2618',
+              800: '#11170e',
+              900: '#000000',
+              950: '#000000'
+            }
+          },
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dashboard-body nutritionist-body text-nutriflow-950 font-sans">
+  <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(21,53,93,.12),transparent_22%),radial-gradient(circle_at_bottom_left,rgba(111,150,86,.18),transparent_26%)]"></div>
+
+  <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-4 py-4 md:px-6 xl:gap-6">
+    <aside class="dashboard-sidebar nutritionist-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[280px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col overflow-y-auto">
+      <div>
+        <a href="/dashboard-nutricionista" class="flex items-center gap-3">
+          <span class="grid h-[55px] w-[55px] place-items-center rounded-2xl bg-white/12"><img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" /></span>
+          <div>
+            <p class="text-xl font-extrabold tracking-[-0.05em]">NutriFlow</p>
+            <p class="text-[10px] text-white/68 uppercase">Workspace Nutri</p>
+          </div>
+        </a>
+
+        <div class="mt-8 rounded-[20px] border border-white/12 bg-white/8 p-4">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Resumo</p>
+          <p class="mt-2 text-2xl font-bold tracking-[-0.06em]" id="sidebarSummary">0</p>
+        </div>
+
+        <nav class="mt-6 space-y-1">
+          <a href="/dashboard-nutricionista" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">♙</span><span>Meu painel</span>
+          </a>
+          <a href="/nutritionists/challenges" class="flex items-center gap-3 rounded-xl bg-white/12 px-3 py-3 text-sm font-bold text-white transition">
+            <span aria-hidden="true">◇</span><span>Desafios</span>
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="min-w-0 flex-1">
+      <header class="dashboard-header dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6">
+        <div class="dashboard-header-content flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div class="dashboard-header-title">
+            <a href="/dashboard-nutricionista" class="dashboard-mobile-brand xl:hidden">
+              <img src="/favicon.png" alt="" class="h-10 w-10 object-contain" />
+              <span>NutriFlow</span>
+            </a>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-nutriflow-600">Gestão de desafios</p>
+            <h1 class="mt-2 text-2xl font-extrabold tracking-[-0.06em]">Desafios nutricionais</h1>
+            <p class="mt-2 text-sm text-nutriflow-700">Acompanhe metas, participantes e progresso dos pacientes em um só lugar.</p>
+          </div>
+
+          <div class="dashboard-header-actions flex flex-col gap-3 lg:flex-row lg:items-center">
+            <button id="refreshChallengesBtn" type="button" class="rounded-[16px] border border-nutriflow-200 bg-white px-4 py-3 text-sm font-bold text-nutriflow-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-nutriflow-50">Atualizar</button>
+            <button id="createChallengeBtn" type="button" class="rounded-[20px] bg-nutriflow-950 px-4 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">Novo desafio</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="mt-6 space-y-6">
+        <section class="dashboard-surface rounded-[28px] p-5 md:p-6">
+          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-[0.18em] text-nutriflow-500">Campanhas ativas</p>
+              <h2 class="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-nutriflow-950">Lista de desafios</h2>
+            </div>
+            <button id="quickCreateBtn" type="button" class="rounded-[16px] border border-nutriflow-200 bg-white px-4 py-2.5 text-sm font-bold text-nutriflow-800 hover:bg-nutriflow-50">Criar desafio</button>
+          </div>
+
+          <div id="challengeList" class="mt-6 grid gap-4 xl:grid-cols-2"></div>
+        </section>
+
+        <section id="challengeDetailPanel" class="dashboard-surface hidden rounded-[28px] p-5 md:p-6">
+          <div id="challengeDetailHeader" class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"></div>
+          <div class="mt-6 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+            <div class="rounded-[24px] border border-nutriflow-100 bg-nutriflow-50/70 p-4">
+              <div class="flex items-center justify-between gap-4">
+                <h3 class="text-lg font-extrabold tracking-[-0.04em] text-nutriflow-950">Progresso dos pacientes</h3>
+                <button id="addParticipantBtn" type="button" class="rounded-xl border border-nutriflow-200 bg-white px-3 py-2 text-xs font-bold text-nutriflow-800 hover:bg-nutriflow-50">Adicionar paciente</button>
+              </div>
+              <div id="participantProgressList" class="mt-4 space-y-3"></div>
+            </div>
+
+            <div class="rounded-[24px] border border-nutriflow-100 bg-white p-4">
+              <h3 class="text-lg font-extrabold tracking-[-0.04em] text-nutriflow-950">Histórico de check-ins</h3>
+              <div id="participantCheckInList" class="mt-4 space-y-3"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="challengeModal" class="nf-modal-overlay hidden">
+    <div class="nf-modal-card !max-w-2xl">
+      <div class="flex justify-between gap-4">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-nutriflow-500">Desafio</p>
+          <h3 id="challengeModalTitle" class="mt-2 text-2xl font-extrabold tracking-[-0.05em] text-nutriflow-950">Criar desafio</h3>
+        </div>
+        <button type="button" class="nf-modal-close" data-close="challenge">x</button>
+      </div>
+
+      <form id="challengeForm" class="mt-5 grid gap-4">
+        <div class="grid gap-4 md:grid-cols-2">
+          <label class="nf-field md:col-span-2"><span>Título</span><input id="challengeTitleInput" type="text" class="font-bold" required /></label>
+          <label class="nf-field md:col-span-2"><span>Descrição</span><textarea id="challengeDescriptionInput" rows="3" class="font-bold"></textarea></label>
+          <label class="nf-field"><span>Categoria</span>
+            <select id="challengeCategoryInput" class="font-bold">
+              <option value="GERAL">Geral</option>
+              <option value="HABITOS">Hábitos</option>
+              <option value="PESO">Peso</option>
+              <option value="PERFORMANCE">Performance</option>
+              <option value="HIDRATACAO">Hidratação</option>
+            </select>
+          </label>
+          <label class="nf-field"><span>Meta</span><input id="challengeGoalDescriptionInput" type="text" class="font-bold" placeholder="Ex.: 10.000 passos por dia" required /></label>
+          <label class="nf-field"><span>Valor alvo (opcional)</span><input id="challengeGoalTargetInput" type="number" step="0.1" min="0" class="font-bold" placeholder="Ex.: 10000" /></label>
+          <label class="nf-field"><span>Data inicial</span><input id="challengeStartDateInput" type="date" class="font-bold" required /></label>
+          <label class="nf-field"><span>Data final</span><input id="challengeEndDateInput" type="date" class="font-bold" required /></label>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" class="rounded-lg border border-nutriflow-200 bg-white px-4 py-2 text-sm font-bold text-nutriflow-800" data-close="challenge">Cancelar</button>
+          <button type="submit" class="rounded-lg bg-nutriflow-950 px-5 py-2.5 text-sm font-bold text-white">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="addParticipantModal" class="nf-modal-overlay hidden">
+    <div class="nf-modal-card !max-w-md">
+      <div class="flex justify-between gap-4">
+        <div>
+          <h3 class="text-xl font-bold text-nutriflow-950">Adicionar paciente</h3>
+        </div>
+        <button type="button" class="nf-modal-close" data-close="addParticipant">x</button>
+      </div>
+
+      <form id="addParticipantForm" class="mt-5 grid gap-4">
+        <label class="nf-field"><span>Paciente</span>
+          <select id="challengePatientSelect" class="font-bold" required></select>
+        </label>
+
+        <div class="flex justify-end gap-2">
+          <button type="button" class="rounded-lg border border-nutriflow-200 bg-white px-4 py-2 text-sm font-bold text-nutriflow-800" data-close="addParticipant">Cancelar</button>
+          <button type="submit" class="rounded-lg bg-nutriflow-950 px-5 py-2.5 text-sm font-bold text-white">Adicionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="nutritionistToast" class="nf-toast hidden"></div>
+
+  <script src="/api.js"></script>
+  <script src="/dashboard-core.js"></script>
+  <script src="/nutritionists-challenges.js"></script>
+</body>
+</html>
