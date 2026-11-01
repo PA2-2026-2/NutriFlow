@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NutriFlow | Desafios do paciente</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nutriflow: {
+              50: '#f3f7f1',
+              100: '#cadbbf',
+              200: '#a8c297',
+              300: '#85a96f',
+              400: '#4f6b3d',
+              500: '#37482d',
+              600: '#25331e',
+              700: '#1c2618',
+              800: '#11170e',
+              900: '#000000',
+              950: '#000000'
+            }
+          },
+          fontFamily: {
+            sans: ['Manrope', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dashboard-body text-nutriflow-950 font-sans">
+  <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(21,53,93,.1),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(111,150,86,.16),transparent_28%)]"></div>
+
+  <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 px-4 py-4 md:gap-6 md:px-6 lg:px-8">
+    <aside class="dashboard-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[290px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col overflow-y-auto">
+      <div>
+        <a href="/dashboard" class="flex items-center gap-3">
+          <span class="grid h-[55px] w-[55px] place-items-center rounded-full bg-white/12 shadow-lg shadow-black/10">
+            <img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" />
+          </span>
+          <div>
+            <p class="text-2xl font-extrabold tracking-[-0.05em]">NutriFlow</p>
+            <p class="text-xs text-white/70">Paciente</p>
+          </div>
+        </a>
+
+        <div class="mt-8 rounded-[24px] border border-white/12 bg-white/8 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Desafios</p>
+          <p id="sidebarChallengeCount" class="mt-2 text-2xl font-bold tracking-[-0.06em]">0</p>
+        </div>
+
+        <nav class="mt-8 space-y-2">
+          <a class="sidebar-link" href="/dashboard"><span>Visão geral</span></a>
+          <a class="sidebar-link is-active" href="/patients/challenges"><span>Desafios</span></a>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="min-w-0 flex-1">
+      <header class="dashboard-header dashboard-surface sticky top-4 z-20 rounded-[28px] px-5 py-4 md:px-6">
+        <div class="dashboard-header-content flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div class="dashboard-header-title">
+            <a href="/dashboard" class="dashboard-mobile-brand xl:hidden">
+              <img src="/favicon.png" alt="" class="h-10 w-10 object-contain" />
+              <span>NutriFlow</span>
+            </a>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-nutriflow-600">Meus desafios</p>
+            <h1 class="mt-2 text-2xl font-extrabold tracking-[-0.06em] md:text-3xl">Acompanhe suas metas</h1>
+            <p class="mt-2 text-sm text-nutriflow-700">Registre check-ins, acompanhe seu progresso e mantenha sua rotina consistente.</p>
+          </div>
+
+          <div class="dashboard-header-actions flex flex-col gap-3 lg:flex-row lg:items-center">
+            <button id="refreshChallengesBtn" type="button" class="rounded-[16px] border border-nutriflow-200 bg-white px-4 py-3 text-sm font-bold text-nutriflow-800 shadow-sm transition hover:-translate-y-0.5 hover:bg-nutriflow-50">Atualizar</button>
+            <button id="goToDashboardBtn" type="button" class="rounded-[20px] bg-nutriflow-950 px-4 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5">Voltar ao painel</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="mt-6 space-y-6">
+        <section id="challengeList" class="grid gap-4 xl:grid-cols-2"></section>
+      </main>
+    </div>
+  </div>
+
+  <div id="patientToast" class="nf-toast hidden"></div>
+
+  <script src="/api.js"></script>
+  <script src="/dashboard-core.js"></script>
+  <script src="/patients-challenges.js"></script>
+</body>
+</html>

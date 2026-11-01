@@ -13,12 +13,14 @@ const { UserController } = require('./controllers/userController');
 const { PatientController } = require('./controllers/patientController');
 const { PatientDashboardController } = require('./controllers/patientDashboardController');
 const { MealPlanController } = require('./controllers/mealPlanController');
+const { ChallengeController } = require('./controllers/challengeController');
 const { ChatController } = require('./controllers/chatController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
 const { ProfileRepository } = require('./repositories/profileRepository');
 const { PatientDashboardRepository } = require('./repositories/patientDashboardRepository');
 const { MealPlanRepository } = require('./repositories/mealPlanRepository');
+const { ChallengeRepository } = require('./repositories/challengeRepository');
 const { ChatRepository } = require('./repositories/chatRepository');
 
 const { AuthService } = require('./services/authService');
@@ -27,6 +29,7 @@ const { UserService } = require('./services/userService');
 const { PatientService } = require('./services/patientService');
 const { PatientDashboardService } = require('./services/patientDashboardService');
 const { MealPlanService } = require('./services/mealPlanService');
+const { ChallengeService } = require('./services/challengeService');
 const { ChatService } = require('./services/chatService');
 
 const { createAuthRoutes } = require('./routes/authRoutes');
@@ -61,6 +64,12 @@ const FRONTEND_ROUTE_ALIASES = new Map([
   ['/nutricionista/dashboard-nutricionista.js', '/dashboard-nutricionista.js'],
   ['/auth/confirm', '/auth-confirmation.html'],
   ['/reset-password', '/reset-password.html'],
+  ['/nutritionists/challenges', '/nutritionists-challenges.html'],
+  ['/nutritionists/challenges/', '/nutritionists-challenges.html'],
+  ['/nutritionists/challenges.html', '/nutritionists-challenges.html'],
+  ['/patients/challenges', '/patients-challenges.html'],
+  ['/patients/challenges/', '/patients-challenges.html'],
+  ['/patients/challenges.html', '/patients-challenges.html'],
 ]);
 
 function createCorsMiddleware(appConfig) {
@@ -153,7 +162,9 @@ function frontendAliases(frontendDir) {
       alias === '/dashboard.html' ||
       alias === '/dashboard-nutricionista.html' ||
       alias === '/auth-confirmation.html' ||
-      alias === '/reset-password.html'
+      alias === '/reset-password.html' ||
+      alias === '/nutritionists-challenges.html' ||
+      alias === '/patients-challenges.html'
     ) {
       return response.sendFile(path.join(frontendDir, alias.slice(1)));
     }
@@ -212,9 +223,14 @@ function createDependencies(appConfig, overrides = {}) {
   const patientService = new PatientService(profileRepository, repository);
   const patientDashboardService = new PatientDashboardService(
     new PatientDashboardRepository(prisma),
+    profileRepository,
   );
   const mealPlanService = new MealPlanService(
     new MealPlanRepository(prisma),
+    profileRepository,
+  );
+  const challengeService = new ChallengeService(
+    new ChallengeRepository(prisma),
     profileRepository,
   );
   const chatService = new ChatService(new ChatRepository(prisma), photoStorage);
@@ -228,6 +244,7 @@ function createDependencies(appConfig, overrides = {}) {
     patientController: new PatientController(patientService),
     patientDashboardController: new PatientDashboardController(patientDashboardService),
     mealPlanController: new MealPlanController(mealPlanService),
+    challengeController: new ChallengeController(challengeService),
     chatController: new ChatController(chatService),
     authenticate: createAuthMiddleware(supabaseAuthClient, repository),
   };
@@ -247,6 +264,7 @@ function createApp(options = {}) {
     patientController,
     patientDashboardController,
     mealPlanController,
+    challengeController,
     chatController,
     authenticate,
     supabaseAuthClient,
@@ -319,17 +337,22 @@ function createApp(options = {}) {
 
   app.use(
     '/api/patients',
-    createPatientRoutes(patientController, authenticate)
+    createPatientRoutes(patientController, challengeController, authenticate)
   );
 
   app.use(
     '/api/patient',
-    createPatientDashboardRoutes(patientDashboardController, chatController, authenticate)
+    createPatientDashboardRoutes(patientDashboardController, chatController, challengeController, authenticate)
   );
 
   app.use(
     '/api/nutritionist',
-    createNutritionistRoutes(patientController, mealPlanController, authenticate)
+    createNutritionistRoutes(patientController, mealPlanController, challengeController, authenticate)
+  );
+
+  app.use(
+    '/api/nutritionists',
+    createNutritionistRoutes(patientController, mealPlanController, challengeController, authenticate)
   );
 
   app.use(

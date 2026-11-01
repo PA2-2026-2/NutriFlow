@@ -26,6 +26,8 @@ model User {
   patients PatientProfile[] @relation("NutritionistPatients")
   mealPlansAsPatient MealPlan[] @relation("PatientMealPlans")
   mealPlansAsNutritionist MealPlan[] @relation("NutritionistMealPlans")
+  challengesAsNutritionist Challenge[] @relation("NutritionistChallenges")
+  challengeParticipants ChallengeParticipant[] @relation("PatientChallengeParticipants")
   mealEntries PatientMealEntry[]
   weightEntries PatientWeightEntry[]
   sentMessages ChatMessage[] @relation("ChatMessageSender")
@@ -159,6 +161,63 @@ model PatientWeightEntry {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, recordedAt])
+}
+
+model Challenge {
+  id               String   @id @default(uuid())
+  nutritionistId   String
+  title            String
+  description      String?
+  category         String?
+  goalDescription  String
+  goalTarget       Float?
+  startDate        DateTime
+  endDate          DateTime
+  status           String   @default("AGENDADO")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  nutritionist User @relation("NutritionistChallenges", fields: [nutritionistId], references: [id], onDelete: Restrict)
+  participants ChallengeParticipant[]
+
+  @@index([nutritionistId, createdAt])
+  @@index([startDate, endDate])
+}
+
+model ChallengeParticipant {
+  id          String   @id @default(uuid())
+  challengeId  String
+  patientId    String
+  enrolledAt   DateTime @default(now())
+  status      String   @default("INSCRITO")
+  progress    Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  patient   User @relation("PatientChallengeParticipants", fields: [patientId], references: [id], onDelete: Restrict)
+  checkIns  ChallengeCheckIn[]
+
+  @@unique([challengeId, patientId])
+  @@unique([id, patientId])
+}
+
+model ChallengeCheckIn {
+  id              String   @id @default(uuid())
+  participationId String
+  patientId       String
+  checkInDate     DateTime
+  completed       Boolean  @default(false)
+  recordedValue   Float?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  participation ChallengeParticipant @relation(fields: [participationId, patientId], references: [id, patientId], onDelete: Restrict)
+
+  @@unique([participationId, checkInDate])
+  @@index([patientId, checkInDate])
 }
 
 model ChatMessage {

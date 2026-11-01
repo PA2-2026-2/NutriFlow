@@ -49,6 +49,27 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /api/nutritionist/foods` | ❌ | ✅ | ❌ | Lista a base de alimentos para montar planos |
 | `GET /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Lista os planos alimentares do nutricionista |
 | `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
+| `GET /api/nutritionist/challenges` | ❌ | ✅ | ❌ | Lista desafios criados pelo nutricionista autenticado |
+| `POST /api/nutritionist/challenges` | ❌ | ✅ | ❌ | Cria um novo desafio nutricional |
+| `PUT /api/nutritionist/challenges/:challengeId` | ❌ | ✅ | ❌ | Atualiza um desafio de um nutricionista |
+| `PATCH /api/nutritionist/challenges/:challengeId` | ❌ | ✅ | ❌ | Atualiza parcialmente um desafio de um nutricionista |
+| `DELETE /api/nutritionist/challenges/:challengeId` | ❌ | ✅ | ❌ | Arquiva ou encerra um desafio nutricional |
+| `POST /api/nutritionist/challenges/:challengeId/participants` | ❌ | ✅ | ❌ | Inscreve um paciente vinculado ao desafio |
+| `GET /api/nutritionists/challenges` | ❌ | ✅ | ❌ | Alias compatível para listagem de desafios |
+| `POST /api/nutritionists/challenges` | ❌ | ✅ | ❌ | Alias compatível para criação de desafios |
+| `PUT /api/nutritionists/challenges/:challengeId` | ❌ | ✅ | ❌ | Alias compatível de atualização |
+| `PATCH /api/nutritionists/challenges/:challengeId` | ❌ | ✅ | ❌ | Alias compatível de atualização parcial |
+| `DELETE /api/nutritionists/challenges/:challengeId` | ❌ | ✅ | ❌ | Alias compatível de arquivamento |
+| `POST /api/nutritionists/challenges/:challengeId/participants` | ❌ | ✅ | ❌ | Alias compatível de inscrição de paciente |
+| `GET /api/patient/challenges` | ✅ | ❌ | ❌ | Lista desafios do nutricionista do paciente |
+| `POST /api/patient/challenges/:challengeId/enroll` | ✅ | ❌ | ❌ | Inscreve o paciente em um desafio disponível |
+| `GET /api/patient/challenges/:challengeId/checkins` | ✅ | ❌ | ❌ | Lista os check-ins do paciente no desafio |
+| `POST /api/patient/challenges/:challengeId/checkins` | ✅ | ❌ | ❌ | Registra um check-in diário do paciente |
+| `PATCH /api/patient/challenges/:challengeId/complete` | ✅ | ❌ | ❌ | Marca o desafio como concluído pelo paciente |
+| `GET /api/patients/challenges` | ✅ | ❌ | ❌ | Alias compatível dos desafios do paciente |
+| `POST /api/patients/challenges/:challengeId/enroll` | ✅ | ❌ | ❌ | Alias compatível de inscrição no desafio |
+| `GET /api/patients/challenges/:challengeId/checkins` | ✅ | ❌ | ❌ | Alias compatível dos check-ins do paciente |
+| `POST /api/patients/challenges/:challengeId/checkins` | ✅ | ❌ | ❌ | Alias compatível de criação de check-in |
 | `GET /chat/messages` | ✅ | ✅ | ❌ | Carrega mensagens entre participantes com vínculo ativo e marca recebidas como lidas |
 | `GET /api/chat/messages` | ✅ | ✅ | ❌ | Alias da consulta de conversa |
 | `GET /chat/messages/:messageId/audio` | ✅ | ✅ | ❌ | Recupera áudio apenas para participantes com vínculo ativo |
