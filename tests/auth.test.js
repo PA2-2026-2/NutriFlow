@@ -5,6 +5,10 @@ const { cleanupTestUsers, uniqueEmail } = require('./helpers');
 describe('autenticação por Supabase e perfis Prisma', () => {
   let app;
 
+  function authRedirect(path) {
+    return new URL(path, `${app.locals.config.appBaseUrl}/`).toString();
+  }
+
   beforeEach(() => {
     app = createApp();
   });
@@ -57,7 +61,7 @@ describe('autenticação por Supabase e perfis Prisma', () => {
     expect(authUser.email_confirmed_at).toBeNull();
     expect(authUser.id).toBe(prismaUser.id);
     expect(authAccount.signupRequests[0].options.emailRedirectTo)
-      .toBe('http://127.0.0.1:3000/auth/confirm');
+      .toBe(authRedirect('/auth/confirm'));
     expect(authAccount.confirmationRequests).toHaveLength(0);
   });
 
@@ -237,7 +241,7 @@ describe('autenticação por Supabase e perfis Prisma', () => {
     expect(app.locals.supabaseAuthClient.mock.resetRequests).toEqual([
       {
         email,
-        options: { redirectTo: 'http://127.0.0.1:3000/reset-password' },
+        options: { redirectTo: authRedirect('/reset-password') },
       },
     ]);
   });
@@ -268,7 +272,7 @@ describe('autenticação por Supabase e perfis Prisma', () => {
     expect(resend.statusCode).toBe(200);
     expect(resend.body.message).toContain('Se houver uma conta pendente');
     expect(app.locals.supabaseAuthClient.mock.confirmationRequests[0].options.emailRedirectTo)
-      .toBe('http://127.0.0.1:3000/auth/confirm');
+      .toBe(authRedirect('/auth/confirm'));
   });
 
   it('encerra a sessão Supabase e bloqueia o token revogado', async () => {

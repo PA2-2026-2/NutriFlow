@@ -49,6 +49,9 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /api/nutritionist/foods` | ❌ | ✅ | ❌ | Lista a base de alimentos para montar planos |
 | `GET /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Lista os planos alimentares do nutricionista |
 | `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
+| `GET /api/appointments` | ✅ | ✅ | ❌ | Lista somente consultas do perfil autenticado |
+| `POST /api/appointments` | ❌ | ✅ | ❌ | Cria consulta para paciente vinculado |
+| `PUT /api/appointments/:id` | ❌ | ✅ | ❌ | Atualiza status, descrição ou horário da consulta sob responsabilidade do nutricionista |
 | `GET /chat/messages` | ✅ | ✅ | ❌ | Carrega mensagens entre participantes com vínculo ativo e marca recebidas como lidas |
 | `GET /api/chat/messages` | ✅ | ✅ | ❌ | Alias da consulta de conversa |
 | `GET /chat/messages/:messageId/audio` | ✅ | ✅ | ❌ | Recupera áudio apenas para participantes com vínculo ativo |
