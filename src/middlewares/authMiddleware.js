@@ -32,6 +32,13 @@ function createAuthMiddleware(supabaseAuthClient, userRepository) {
           throw new AppError('Token invalido ou expirado.', 401);
         }
 
+        const status = Number(error.status);
+        console.error('Falha ao validar a sessão no Supabase Auth.', {
+          name: error.name || 'Error',
+          code: error.code || 'UNKNOWN',
+          status: Number.isInteger(status) ? status : 'UNKNOWN',
+        });
+
         throw new AppError('Não foi possível validar a sessão. Tente novamente.', 503);
       }
 

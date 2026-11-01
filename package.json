@@ -18,6 +18,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
+    "predev": "npm run prisma:generate",
     "postinstall": "npm run prisma:generate:production",
     "vercel-build": "npm run prisma:generate:production && npm run db:migrate:deploy",
     "prisma:generate": "npm run prisma:generate:production && npm run prisma:generate:dev",
@@ -28,7 +29,7 @@
     "db:migrate:diff": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
     "db:migrate:data": "node scripts/migrate-sqlite-to-postgres.js",
     "db:seed": "node prisma/seed.js",
-    "test": "npm run prisma:generate && node scripts/run-tests.js"
+    "test": "npm run prisma:generate:dev && node scripts/run-tests.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
