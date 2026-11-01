@@ -154,4 +154,5 @@ produção fica em `prisma/schema.prisma`.
 ## Documentação adicional
 
 - [Permissões por perfil](docs/PERMISSIONS.md)
+- [API de agendamento de consultas](docs/APPOINTMENTS.md)
 - [Preparação para implantação na Vercel, Supabase e PostgreSQL](docs/VERCEL_DEPLOY.md)

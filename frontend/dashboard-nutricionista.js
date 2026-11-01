@@ -25,6 +25,10 @@ const state = {
   activeFilterId: null, 
   activeChallengeId: null, 
   mealPlans: [], assessments: [], appointments: [], challenges: [], messages: [], foods: [], reminders: [],
+  appointmentsLoading: false,
+  appointmentsError: '',
+  appointmentsRequestId: 0,
+  editingAppointment: null,
   chatConversations: [],
   workspaceConversationId: null,
   workspaceMessages: [],
@@ -38,10 +42,10 @@ const state = {
 };
 
 const APPOINTMENT_STATUS_LABELS = {
-  agendada: 'Agendada',
-  confirmada: 'Confirmada',
-  remarcada: 'Remarcada',
-  faltou: 'Faltou',
+  AGENDADA: 'Agendada',
+  CONFIRMADA: 'Confirmada',
+  CANCELADA: 'Cancelada',
+  CONCLUIDA: 'Concluída',
 };
 const MAX_PROFILE_PHOTO_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -66,6 +70,65 @@ let workspaceRecordingConversationId = null;
 
 function showToast(message) { toastController.show(message); }
 function ensureNutritionistAccess() { return session.ensureAuthenticated(); }
+
+function formatAppointmentDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Data inválida';
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function toLocalDateTimeInput(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+}
+
+function localDateTimeToIso(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) {
+    throw new Error('Informe uma data e horário válidos.');
+  }
+  return date.toISOString();
+}
+
+function appointmentFilterQuery() {
+  const query = new URLSearchParams();
+  const status = document.getElementById('appointmentStatusFilter')?.value;
+  const from = document.getElementById('appointmentFromFilter')?.value;
+  const to = document.getElementById('appointmentToFilter')?.value;
+  if (status) query.set('status', status);
+  if (from) query.set('from', localDateTimeToIso(`${from}T00:00`));
+  if (to) query.set('to', localDateTimeToIso(`${to}T23:59:59.999`));
+  return query.toString();
+}
+
+async function fetchAppointments() {
+  const requestId = ++state.appointmentsRequestId;
+  const status = document.getElementById('appointmentsStatus');
+  state.appointmentsLoading = true;
+  state.appointmentsError = '';
+  if (status) status.textContent = 'Carregando consultas...';
+  try {
+    const query = appointmentFilterQuery();
+    const result = await apiRequest(`/api/appointments${query ? `?${query}` : ''}`);
+    if (requestId === state.appointmentsRequestId) {
+      state.appointments = result.appointments || [];
+    }
+  } catch (error) {
+    if (requestId === state.appointmentsRequestId) {
+      state.appointmentsError = error.message || 'Não foi possível carregar as consultas.';
+    }
+  } finally {
+    if (requestId === state.appointmentsRequestId) {
+      state.appointmentsLoading = false;
+      renderAppointments();
+    }
+  }
+}
 
 function ensureValidPatientSelections() {
   const patientIds = new Set(state.patients.map((patient) => patient.id));
@@ -314,6 +377,7 @@ async function fetchDatabaseData() {
     state.patients = patientsData.patients || [];
     state.foods = foodsData.foods || [];
     state.mealPlans = mealPlansData.mealPlans || [];
+    await fetchAppointments();
     state.assessments = state.patients
       .flatMap((patient) => (patient.bodyMeasurements?.history || []).map((entry) => {
         const weight = entry.items.find((item) => item.label === 'Peso');
@@ -347,6 +411,7 @@ function renderAll() {
   renderPatientsList();
   renderSelectedPatient();
   renderGeneralLists();
+  renderAppointments();
   populatePatientSelects();
   renderWorkspaceConversationList();
 }
@@ -878,8 +943,6 @@ function renderGeneralLists() {
   
   const plans = pId ? state.mealPlans.filter(p => p.patientId === pId) : state.mealPlans;
   const asss = pId ? state.assessments.filter(a => a.patientId === pId) : state.assessments;
-  const apps = pId ? state.appointments.filter(a => a.patientId === pId) : state.appointments;
-
   const plansContainer = document.getElementById('latestMealPlans');
   plansContainer.innerHTML = plans.length ? plans.map(plan => `
       <div class="h-[136px] shrink-0 bg-white border rounded-xl p-3 shadow-sm relative group">
@@ -905,40 +968,6 @@ function renderGeneralLists() {
       </div>
     `).join('') : '<p class="text-sm text-nutriflow-500">Nenhuma avaliação.</p>';
 
-  const agendaContainer = document.getElementById('appointmentsList');
-  const remindersContainer = document.getElementById('appointmentRemindersList');
-
-  if (remindersContainer) {
-    remindersContainer.innerHTML = state.reminders.length
-      ? state.reminders.map((reminder) => `
-        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-          <p class="text-xs font-bold uppercase tracking-[0.12em] text-amber-700">${escapeHtml(reminder.reminder?.label || 'Lembrete')}</p>
-          <p class="mt-1 text-sm font-bold text-nutriflow-950">${escapeHtml(reminder.patient)} - ${escapeHtml(reminder.type)}</p>
-          <p class="text-xs text-nutriflow-700">${escapeHtml(reminder.date)} (${escapeHtml(String(reminder.reminder?.minutesUntil || 0))} min)</p>
-        </div>
-      `).join('')
-      : '<p class="text-sm text-nutriflow-500">Sem lembretes de consulta nas próximas 24h.</p>';
-  }
-
-  if (agendaContainer) {
-    agendaContainer.innerHTML = apps.length ? apps.map(app => `
-      <div class="bg-white border rounded-xl p-3 shadow-sm flex justify-between items-center relative group">
-        <div>
-          <p class="text-sm font-bold text-nutriflow-950">${escapeHtml(app.patient)}</p>
-          <p class="text-xs font-bold text-nutriflow-500">${escapeHtml(app.type)}</p>
-          <p class="text-[11px] font-bold text-nutriflow-700 mt-1">Status: ${escapeHtml(APPOINTMENT_STATUS_LABELS[app.status] || app.status)}</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <p class="text-xs font-bold bg-nutriflow-50 px-2 py-1 rounded-lg">${escapeHtml(app.date)}</p>
-          <button onclick="window.updateAppointmentStatus('${app.id}', 'confirmada')" class="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">Confirmar</button>
-          <button onclick="window.rescheduleAppointment('${app.id}')" class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">Remarcar</button>
-          <button onclick="window.updateAppointmentStatus('${app.id}', 'faltou')" class="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700">Faltou</button>
-          <button onclick="window.deleteResource('appointments', '${app.id}')" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">🗑️</button>
-        </div>
-      </div>
-    `).join('') : '<p class="text-sm text-nutriflow-500">Sem agenda.</p>';
-  }
-
   const challContainer = document.getElementById('challengesList');
   if (challContainer) {
     challContainer.innerHTML = state.challenges.length ? state.challenges.map(ch => `
@@ -952,6 +981,45 @@ function renderGeneralLists() {
       </div>
     `).join('') : '<p class="text-sm text-nutriflow-600">Nenhum desafio ativo.</p>';
   }
+}
+
+function renderAppointments() {
+  const list = document.getElementById('appointmentsList');
+  const status = document.getElementById('appointmentsStatus');
+  if (!list || !status) return;
+
+  if (state.appointmentsLoading) {
+    status.textContent = 'Carregando consultas...';
+    list.replaceChildren();
+    return;
+  }
+  if (state.appointmentsError) {
+    status.textContent = state.appointmentsError;
+    status.setAttribute('role', 'alert');
+    list.replaceChildren();
+    return;
+  }
+  status.setAttribute('role', 'status');
+  status.textContent = state.appointments.length
+    ? `${state.appointments.length} consulta${state.appointments.length === 1 ? '' : 's'} encontrada${state.appointments.length === 1 ? '' : 's'}.`
+    : 'Nenhuma consulta encontrada para os filtros selecionados.';
+  list.innerHTML = state.appointments.map((appointment) => {
+    const patient = state.patients.find((item) => item.id === appointment.patientId);
+    const statusLabel = APPOINTMENT_STATUS_LABELS[appointment.status] || appointment.status;
+    return `
+      <article class="min-w-0 rounded-2xl border border-nutriflow-200 bg-white p-4 shadow-sm">
+        <div class="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
+            <p class="break-words text-base font-extrabold text-nutriflow-950">${escapeHtml(patient?.name || 'Paciente')}</p>
+            <p class="mt-1 break-words text-sm text-nutriflow-700">${escapeHtml(formatAppointmentDateTime(appointment.startAt))} – ${escapeHtml(new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' }).format(new Date(appointment.endAt)))}</p>
+            <p class="mt-1 text-xs font-bold text-nutriflow-600">Status: ${escapeHtml(statusLabel)}</p>
+            ${appointment.description ? `<p class="mt-2 break-words text-sm text-nutriflow-700">${escapeHtml(appointment.description)}</p>` : '<p class="mt-2 text-sm italic text-nutriflow-500">Sem descrição.</p>'}
+          </div>
+          <button type="button" data-edit-appointment="${escapeHtml(appointment.id)}" class="w-full shrink-0 rounded-xl border border-nutriflow-200 bg-nutriflow-50 px-3 py-2 text-sm font-bold text-nutriflow-900 sm:w-auto">Editar consulta</button>
+        </div>
+      </article>
+    `;
+  }).join('');
 }
 
 function populatePatientSelects() {
@@ -1001,37 +1069,83 @@ window.openAddParticipant = function(challengeId) {
   openModal('addParticipant');
 };
 
-window.updateAppointmentStatus = async function(appointmentId, status) {
+function openAppointmentEdit(appointmentId) {
+  const appointment = state.appointments.find((item) => item.id === appointmentId);
+  if (!appointment) return;
+
+  state.editingAppointment = appointment;
+  document.getElementById('appointmentEditPatient').textContent =
+    state.patients.find((patient) => patient.id === appointment.patientId)?.name || 'Paciente';
+
+  const statusSelect = document.getElementById('appointmentEditStatus');
+  const startInput = document.getElementById('appointmentEditStartAt');
+  const endInput = document.getElementById('appointmentEditEndAt');
+  const closed = ['CANCELADA', 'CONCLUIDA'].includes(appointment.status);
+  const transitions = appointment.status === 'AGENDADA'
+    ? ['CONFIRMADA', 'CANCELADA']
+    : appointment.status === 'CONFIRMADA'
+      ? ['CANCELADA', 'CONCLUIDA']
+      : [];
+  statusSelect.innerHTML = '<option value="">Manter status</option>' + transitions.map((status) => (
+    `<option value="${status}">${APPOINTMENT_STATUS_LABELS[status]}</option>`
+  )).join('');
+  statusSelect.disabled = closed;
+  startInput.value = toLocalDateTimeInput(appointment.startAt);
+  endInput.value = toLocalDateTimeInput(appointment.endAt);
+  startInput.disabled = closed;
+  endInput.disabled = closed;
+  document.getElementById('appointmentEditDescription').value = appointment.description || '';
+
+  const message = document.getElementById('appointmentEditStatusMessage');
+  message.textContent = closed
+    ? 'Consultas canceladas ou concluídas permitem apenas atualizar a descrição.'
+    : '';
+  message.classList.toggle('hidden', !closed);
+  openModal('appointmentEdit');
+}
+
+document.getElementById('appointmentsList')?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-edit-appointment]');
+  if (button) openAppointmentEdit(button.dataset.editAppointment);
+});
+
+document.getElementById('appointmentEditForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const appointment = state.editingAppointment;
+  if (!appointment) return;
+
+  const startInput = document.getElementById('appointmentEditStartAt');
+  const endInput = document.getElementById('appointmentEditEndAt');
+  const payload = {
+    description: document.getElementById('appointmentEditDescription').value,
+  };
+  const selectedStatus = document.getElementById('appointmentEditStatus').value;
+  if (selectedStatus) payload.status = selectedStatus;
+
+  const startAt = localDateTimeToIso(startInput.value);
+  const endAt = localDateTimeToIso(endInput.value);
+  if (
+    !startInput.disabled &&
+    (startInput.value !== toLocalDateTimeInput(appointment.startAt) ||
+      endInput.value !== toLocalDateTimeInput(appointment.endAt))
+  ) {
+    payload.startAt = startAt;
+    payload.endAt = endAt;
+  }
+
   try {
-    await apiRequest(`/api/nutritionist/appointments/${appointmentId}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
+    await apiRequest(`/api/appointments/${encodeURIComponent(appointment.id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     });
-    showToast('Status da consulta atualizado.');
-    await fetchDatabaseData();
+    closeModal('appointmentEdit');
+    state.editingAppointment = null;
+    showToast('Consulta atualizada.');
+    await fetchAppointments();
   } catch (error) {
-    showToast(error.message || 'Erro ao atualizar status da consulta.');
+    showToast(error.message || 'Não foi possível atualizar a consulta.');
   }
-};
-
-window.rescheduleAppointment = async function(appointmentId) {
-  const newDate = window.prompt('Nova data/hora (formato: 2026-12-30T14:30):');
-
-  if (!newDate) {
-    return;
-  }
-
-  try {
-    await apiRequest(`/api/nutritionist/appointments/${appointmentId}/reschedule`, {
-      method: 'PATCH',
-      body: JSON.stringify({ scheduledAt: newDate }),
-    });
-    showToast('Consulta remarcada com sucesso.');
-    await fetchDatabaseData();
-  } catch (error) {
-    showToast(error.message || 'Erro ao remarcar consulta.');
-  }
-};
+});
 
 
 function openModal(modalId) {
@@ -1193,7 +1307,22 @@ function bindButtons() {
 
   document.getElementById('btnOpenAppointment')?.addEventListener('click', () => {
     document.getElementById('appointmentForm')?.reset();
+    const patientSelect = document.getElementById('appointmentPatient');
+    const preferredPatientId = state.activeFilterId || state.selectedPatientId;
+    if (preferredPatientId && state.patients.some((patient) => patient.id === preferredPatientId)) {
+      patientSelect.value = preferredPatientId;
+    }
     openModal('appointment');
+  });
+
+  ['appointmentStatusFilter', 'appointmentFromFilter', 'appointmentToFilter'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('change', () => void fetchAppointments());
+  });
+  document.getElementById('clearAppointmentFilters')?.addEventListener('click', () => {
+    document.getElementById('appointmentStatusFilter').value = '';
+    document.getElementById('appointmentFromFilter').value = '';
+    document.getElementById('appointmentToFilter').value = '';
+    void fetchAppointments();
   });
 
   document.getElementById('btnOpenChallenge')?.addEventListener('click', () => {
@@ -1379,15 +1508,23 @@ document.getElementById('assessmentForm')?.addEventListener('submit', async (e) 
 
 document.getElementById('appointmentForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const payload = {
-    patientId: document.getElementById('appointmentPatient').value,
-    date: document.getElementById('appointmentDate').value,
-    type: document.getElementById('appointmentType').value
-  };
   try {
-    await apiRequest('/api/nutritionist/appointments', { method: 'POST', body: JSON.stringify(payload) });
-    showToast('Consulta Agendada!'); closeModal('appointment'); await fetchDatabaseData();
-  } catch(err) { showToast('Erro ao agendar.'); }
+    const payload = {
+      patientId: document.getElementById('appointmentPatient').value,
+      startAt: localDateTimeToIso(document.getElementById('appointmentStartAt').value),
+      endAt: localDateTimeToIso(document.getElementById('appointmentEndAt').value),
+      description: document.getElementById('appointmentDescription').value.trim(),
+    };
+    await apiRequest('/api/appointments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    showToast('Consulta agendada.');
+    closeModal('appointment');
+    await fetchAppointments();
+  } catch (error) {
+    showToast(error.message || 'Não foi possível agendar a consulta.');
+  }
 });
 
 document.getElementById('challengeForm')?.addEventListener('submit', async (e) => {
@@ -1419,7 +1556,7 @@ document.getElementById('addParticipantForm')?.addEventListener('submit', async 
 function renderNutritionistPage() {
   const requestedPage = window.location.hash.slice(1);
   const storedPage = window.history.state?.nutriflowDashboardPage;
-  const pageIds = ['pacientes', 'plano-alimentar', 'avaliacoes', 'conversas'];
+  const pageIds = ['pacientes', 'agenda', 'plano-alimentar', 'avaliacoes', 'conversas'];
   const activePage = pageIds.includes(requestedPage)
     ? requestedPage
     : pageIds.includes(storedPage)
@@ -1449,7 +1586,7 @@ function renderNutritionistPage() {
     link.classList.toggle('text-white', showConversations);
     link.classList.toggle('text-white/75', !showConversations);
   });
-  document.querySelectorAll('.nutritionist-sidebar [data-dashboard-page="patients"], .nutritionist-sidebar [data-dashboard-page="plans"], .nutritionist-sidebar [data-dashboard-page="assessments"]').forEach((link) => {
+  document.querySelectorAll('.nutritionist-sidebar [data-dashboard-page="patients"], .nutritionist-sidebar [data-dashboard-page="agenda"], .nutritionist-sidebar [data-dashboard-page="plans"], .nutritionist-sidebar [data-dashboard-page="assessments"]').forEach((link) => {
     const isActive = link.getAttribute('href') === `#${activePage}`;
     link.classList.toggle('bg-white/12', isActive);
     link.classList.toggle('text-white', isActive);
@@ -1459,7 +1596,7 @@ function renderNutritionistPage() {
   document.querySelectorAll('[data-dashboard-page="conversations"]').forEach((link) => {
     link.classList.toggle('is-active', showConversations);
   });
-  document.querySelectorAll('[data-dashboard-page="patients"], [data-dashboard-page="plans"], [data-dashboard-page="assessments"]').forEach((link) => {
+  document.querySelectorAll('[data-dashboard-page="patients"], [data-dashboard-page="agenda"], [data-dashboard-page="plans"], [data-dashboard-page="assessments"]').forEach((link) => {
     const isActive = link.getAttribute('href') === `#${activePage}`;
     link.classList.toggle('is-active', isActive);
   });
@@ -1652,7 +1789,7 @@ loadOlderMessagesButton?.addEventListener('click', () => void loadOlderConversat
 document.querySelectorAll('[data-dashboard-page][href^="#"]').forEach((link) => {
   link.addEventListener('click', (event) => {
     const requestedPage = link.getAttribute('href').slice(1);
-    const pageIds = ['pacientes', 'plano-alimentar', 'avaliacoes', 'conversas'];
+    const pageIds = ['pacientes', 'agenda', 'plano-alimentar', 'avaliacoes', 'conversas'];
 
     if (!pageIds.includes(requestedPage)) {
       return;

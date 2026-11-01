@@ -9,6 +9,17 @@ class ProfileRepository {
     });
   }
 
+  findPatientWithUserByUserId(userId) {
+    return this.prisma.patientProfile.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: { id: true, profile: true },
+        },
+      },
+    });
+  }
+
   createMeasurement(patientProfileId, data) {
     return this.prisma.patientMeasurement.create({
       data: {
