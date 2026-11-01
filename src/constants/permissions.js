@@ -59,6 +59,9 @@ const PROTECTED_ROUTES = Object.freeze({
   'POST /api/patients/challenges/:challengeId/enroll': PATIENT_ONLY,
   'GET /api/patients/challenges/:challengeId/checkins': PATIENT_ONLY,
   'POST /api/patients/challenges/:challengeId/checkins': PATIENT_ONLY,
+  'GET /api/appointments': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'POST /api/appointments': NUTRITIONIST_ONLY,
+  'PUT /api/appointments/:id': NUTRITIONIST_ONLY,
 
   'POST /chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
   'POST /api/chat/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),

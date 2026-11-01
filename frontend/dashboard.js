@@ -9,6 +9,10 @@ function safeParse(jsonValue) {
 const state = {
   currentUser: safeParse(localStorage.getItem('nutriflow.user')),
   dashboard: null,
+  appointments: [],
+  appointmentsLoading: false,
+  appointmentsError: '',
+  appointmentsRequestId: 0,
   isAddingMeal: false,
   isSavingWeeklyWeight: false,
   isSendingMessage: false,
@@ -19,6 +23,7 @@ const state = {
 let patientChatSyncIntervalId = null;
 let patientChatSyncInFlight = false;
 let patientProfileSyncIntervalId = null;
+let patientAppointmentsSyncIntervalId = null;
 
 const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
@@ -804,6 +809,10 @@ async function getPatientDashboard() {
   return apiRequest('/api/patient/dashboard');
 }
 
+async function getPatientAppointments() {
+  return apiRequest('/api/appointments');
+}
+
 async function getPatientChat() {
   const recipientId = getNutritionistData().id;
   if (!recipientId) {
@@ -975,10 +984,80 @@ function renderHighlights() {
   const patient = getPatientData();
   const nutritionist = patient.nutritionist;
   const clinical = state.dashboard?.clinical;
+  const nextAppointment = state.appointments.find((appointment) =>
+    ['AGENDADA', 'CONFIRMADA'].includes(appointment.status) &&
+    new Date(appointment.startAt) > new Date(),
+  );
 
   setTextContent('#sidebarNutriName', nutritionist?.name || 'Sem vínculo');
   setTextContent('#sidebarObjective', patient.objective || 'A definir');
-  setTextContent('#sidebarAppointment', clinical?.nextAppointment?.dateLabel || 'Sem agenda');
+  setTextContent(
+    '#sidebarAppointment',
+    nextAppointment
+      ? formatPatientAppointmentDate(nextAppointment.startAt)
+      : clinical?.nextAppointment?.dateLabel || 'Sem agenda',
+  );
+}
+
+function formatPatientAppointmentDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Data indisponível';
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function renderPatientAppointments() {
+  const status = document.getElementById('patientAppointmentsStatus');
+  const upcomingList = document.getElementById('patientUpcomingAppointments');
+  const historyList = document.getElementById('patientAppointmentHistory');
+  if (!status || !upcomingList || !historyList) return;
+
+  if (state.appointmentsLoading) {
+    status.textContent = 'Carregando consultas...';
+    upcomingList.replaceChildren();
+    historyList.replaceChildren();
+    return;
+  }
+  if (state.appointmentsError) {
+    status.textContent = state.appointmentsError;
+    status.setAttribute('role', 'alert');
+    upcomingList.replaceChildren();
+    historyList.replaceChildren();
+    return;
+  }
+
+  status.setAttribute('role', 'status');
+  status.textContent = `${state.appointments.length} consulta${state.appointments.length === 1 ? '' : 's'} no total.`;
+  const now = new Date();
+  const upcoming = state.appointments.filter((appointment) =>
+    ['AGENDADA', 'CONFIRMADA'].includes(appointment.status) &&
+    new Date(appointment.startAt) > now,
+  );
+  const history = state.appointments.filter((appointment) => !upcoming.includes(appointment));
+  const nutritionistName = getNutritionistData().name || 'Sua nutricionista';
+  const statusLabels = {
+    AGENDADA: 'Agendada',
+    CONFIRMADA: 'Confirmada',
+    CANCELADA: 'Cancelada',
+    CONCLUIDA: 'Concluída',
+  };
+  const appointmentCard = (appointment) => `
+    <article class="min-w-0 rounded-2xl border border-nutriflow-200 bg-nutriflow-50/70 p-4">
+      <p class="break-words font-extrabold text-nutriflow-950">${escapeHtml(formatPatientAppointmentDate(appointment.startAt))}</p>
+      <p class="mt-1 text-sm font-bold text-nutriflow-800">${escapeHtml(nutritionistName)}</p>
+      <p class="mt-1 text-xs font-bold text-nutriflow-600">Status: ${escapeHtml(statusLabels[appointment.status] || appointment.status)}</p>
+      <p class="mt-2 break-words text-sm leading-6 text-nutriflow-700">${escapeHtml(appointment.description || 'Sem descrição informada.')}</p>
+    </article>
+  `;
+
+  upcomingList.innerHTML = upcoming.length
+    ? upcoming.map(appointmentCard).join('')
+    : '<p class="text-sm text-nutriflow-600">Você não tem próximas consultas agendadas.</p>';
+  historyList.innerHTML = history.length
+    ? history.map(appointmentCard).join('')
+    : '<p class="text-sm text-nutriflow-600">Seu histórico de consultas aparecerá aqui.</p>';
 }
 
 function setInteractionsEnabled(isEnabled) {
@@ -1560,13 +1639,23 @@ function renderClinical() {
   };
   const checklist = clinical.checklist || [];
   const pendingItems = checklist.filter((item) => !item.done).length;
+  const nextAppointment = state.appointments.find((appointment) =>
+    ['AGENDADA', 'CONFIRMADA'].includes(appointment.status) &&
+    new Date(appointment.startAt) > new Date(),
+  );
 
-  if (clinical.nextAppointment) {
-    setTextContent(document.getElementById('nextAppointmentTitle'), clinical.nextAppointment.dateLabel);
-    setTextContent(document.getElementById('nextAppointmentDescription'), clinical.nextAppointment.description);
+  if (nextAppointment) {
+    setTextContent(document.getElementById('nextAppointmentTitle'), formatPatientAppointmentDate(nextAppointment.startAt));
+    setTextContent(
+      document.getElementById('nextAppointmentDescription'),
+      `${getNutritionistData().name || 'Sua nutricionista'} · ${nextAppointment.description || 'Consulta agendada'} · ${nextAppointment.status === 'CONFIRMADA' ? 'Confirmada' : 'Agendada'}`,
+    );
+  } else if (state.appointmentsError) {
+    setTextContent(document.getElementById('nextAppointmentTitle'), 'Agenda indisponível');
+    setTextContent(document.getElementById('nextAppointmentDescription'), 'Não foi possível carregar suas consultas agora.');
   } else {
-    setTextContent(document.getElementById('nextAppointmentTitle'), 'Nenhuma consulta agendada');
-    setTextContent(document.getElementById('nextAppointmentDescription'), 'Assim que sua nutricionista marcar um novo acompanhamento, ele vai aparecer aqui.');
+    setTextContent(document.getElementById('nextAppointmentTitle'), clinical?.nextAppointment?.dateLabel || 'Nenhuma consulta agendada');
+    setTextContent(document.getElementById('nextAppointmentDescription'), clinical?.nextAppointment?.description || 'Assim que sua nutricionista marcar um novo acompanhamento, ele vai aparecer aqui.');
   }
 
   const badgeText = pendingItems > 0
@@ -1619,13 +1708,40 @@ function renderDashboard() {
   renderWeight();
   renderChat();
   renderClinical();
+  renderPatientAppointments();
   renderChallenges()
+}
+
+async function refreshPatientAppointments() {
+  const requestId = ++state.appointmentsRequestId;
+  state.appointmentsLoading = true;
+  state.appointmentsError = '';
+  renderPatientAppointments();
+
+  try {
+    const result = await getPatientAppointments();
+    if (requestId === state.appointmentsRequestId) {
+      state.appointments = result.appointments || [];
+    }
+  } catch (error) {
+    if (requestId === state.appointmentsRequestId) {
+      state.appointmentsError = error.message || 'Não foi possível carregar suas consultas.';
+    }
+  } finally {
+    if (requestId === state.appointmentsRequestId) {
+      state.appointmentsLoading = false;
+      renderPatientAppointments();
+      renderClinical();
+      renderHighlights();
+    }
+  }
 }
 
 async function refreshDashboard() {
   const payload = await getPatientDashboard();
   applyDashboardState(payload);
   renderDashboard();
+  await refreshPatientAppointments();
   syncPatientRealtimeAvailability();
 }
 
@@ -2170,15 +2286,18 @@ function bindEvents() {
     if (!document.hidden) {
       void refreshCurrentUserProfile();
       void syncPatientRealtimeChat({ forceRender: true });
+      void refreshPatientAppointments();
     }
   });
   window.addEventListener('focus', () => {
     void refreshCurrentUserProfile();
     void syncPatientRealtimeChat({ forceRender: true });
+    void refreshPatientAppointments();
   });
   window.addEventListener('beforeunload', () => {
     stopPatientRealtimeChat();
     window.clearInterval(patientProfileSyncIntervalId);
+    window.clearInterval(patientAppointmentsSyncIntervalId);
   });
   bindNavigationState();
 }
@@ -2195,6 +2314,9 @@ async function init() {
     () => void refreshCurrentUserProfile(),
     30000,
   );
+  patientAppointmentsSyncIntervalId = window.setInterval(() => {
+    if (!document.hidden) void refreshPatientAppointments();
+  }, 60000);
 
   try {
     await refreshCurrentUserProfile();

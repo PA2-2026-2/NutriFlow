@@ -15,6 +15,7 @@ const { PatientDashboardController } = require('./controllers/patientDashboardCo
 const { MealPlanController } = require('./controllers/mealPlanController');
 const { ChallengeController } = require('./controllers/challengeController');
 const { ChatController } = require('./controllers/chatController');
+const { AppointmentController } = require('./controllers/appointmentController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
 const { ProfileRepository } = require('./repositories/profileRepository');
@@ -22,6 +23,7 @@ const { PatientDashboardRepository } = require('./repositories/patientDashboardR
 const { MealPlanRepository } = require('./repositories/mealPlanRepository');
 const { ChallengeRepository } = require('./repositories/challengeRepository');
 const { ChatRepository } = require('./repositories/chatRepository');
+const { AppointmentRepository } = require('./repositories/appointmentRepository');
 
 const { AuthService } = require('./services/authService');
 const { AdminService } = require('./services/adminService');
@@ -31,6 +33,7 @@ const { PatientDashboardService } = require('./services/patientDashboardService'
 const { MealPlanService } = require('./services/mealPlanService');
 const { ChallengeService } = require('./services/challengeService');
 const { ChatService } = require('./services/chatService');
+const { AppointmentService } = require('./services/appointmentService');
 
 const { createAuthRoutes } = require('./routes/authRoutes');
 const { createAdminRoutes } = require('./routes/adminRoutes');
@@ -39,6 +42,7 @@ const { createPatientRoutes } = require('./routes/patientRoutes');
 const { createPatientDashboardRoutes } = require('./routes/patientDashboardRoutes');
 const { createNutritionistRoutes } = require('./routes/nutritionistRoutes');
 const { createChatRoutes } = require('./routes/chatRoutes');
+const { createAppointmentRoutes } = require('./routes/appointmentRoutes');
 const { PhotoStorage } = require('./infra/photoStorage');
 const { SupabasePhotoStorage } = require('./infra/supabasePhotoStorage');
 
@@ -234,6 +238,10 @@ function createDependencies(appConfig, overrides = {}) {
     profileRepository,
   );
   const chatService = new ChatService(new ChatRepository(prisma), photoStorage);
+  const appointmentService = new AppointmentService(
+    new AppointmentRepository(prisma),
+    profileRepository,
+  );
 
   return {
     prisma,
@@ -246,6 +254,7 @@ function createDependencies(appConfig, overrides = {}) {
     mealPlanController: new MealPlanController(mealPlanService),
     challengeController: new ChallengeController(challengeService),
     chatController: new ChatController(chatService),
+    appointmentController: new AppointmentController(appointmentService),
     authenticate: createAuthMiddleware(supabaseAuthClient, repository),
   };
 }
@@ -266,6 +275,7 @@ function createApp(options = {}) {
     mealPlanController,
     challengeController,
     chatController,
+    appointmentController,
     authenticate,
     supabaseAuthClient,
   } = createDependencies(appConfig, options);
@@ -353,6 +363,11 @@ function createApp(options = {}) {
   app.use(
     '/api/nutritionists',
     createNutritionistRoutes(patientController, mealPlanController, challengeController, authenticate)
+  );
+
+  app.use(
+    '/api/appointments',
+    createAppointmentRoutes(appointmentController, authenticate)
   );
 
   app.use(

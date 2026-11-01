@@ -1,18 +1,15 @@
 # Matriz de permissões por rota
 
 Fonte única no código: [`src/constants/permissions.js`](../src/constants/permissions.js).
-As rotas protegidas usam `authorize('<MÉTODO> <caminho>')`; uma rota sem entrada na
-matriz faz a aplicação falhar ao subir. O teste `tests/permissions.test.js` confere
-esta tabela com o código e exercita **todas** as combinações de perfil × rota.
+
+As rotas protegidas usam `authorize('<MÉTODO> <caminho>')`; uma rota sem entrada na matriz faz a aplicação falhar ao subir. O teste `tests/permissions.test.js` confere esta tabela com o código e exercita **todas** as combinações de perfil × rota.
 
 ## Como a autorização funciona
 
-1. `authenticate` valida o token (assinatura, expiração e revogação por logout) e
-   confere **no banco** que o usuário existe e está ativo. Resultados:
+1. `authenticate` valida o token (assinatura, expiração e revogação por logout) e confere **no banco** que o usuário existe e está ativo. Resultados:
    - sem token, token inválido/expirado/revogado ou usuário removido → **401**
    - usuário bloqueado → **403**
-2. `authorize(...)` compara o perfil **atual do banco** (não o gravado no token)
-   com os perfis permitidos para a rota. Perfil não permitido → **403**.
+2. `authorize(...)` compara o perfil **atual do banco** (não o gravado no token) com os perfis permitidos para a rota. Perfil não permitido → **403**.
 
 Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administrador).
 
@@ -70,6 +67,9 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/patients/challenges/:challengeId/enroll` | ✅ | ❌ | ❌ | Alias compatível de inscrição no desafio |
 | `GET /api/patients/challenges/:challengeId/checkins` | ✅ | ❌ | ❌ | Alias compatível dos check-ins do paciente |
 | `POST /api/patients/challenges/:challengeId/checkins` | ✅ | ❌ | ❌ | Alias compatível de criação de check-in |
+| `GET /api/appointments` | ✅ | ✅ | ❌ | Lista somente consultas do perfil autenticado |
+| `POST /api/appointments` | ❌ | ✅ | ❌ | Cria consulta para paciente vinculado |
+| `PUT /api/appointments/:id` | ❌ | ✅ | ❌ | Atualiza status, descrição ou horário da consulta sob responsabilidade do nutricionista |
 | `GET /chat/messages` | ✅ | ✅ | ❌ | Carrega mensagens entre participantes com vínculo ativo e marca recebidas como lidas |
 | `GET /api/chat/messages` | ✅ | ✅ | ❌ | Alias da consulta de conversa |
 | `GET /chat/messages/:messageId/audio` | ✅ | ✅ | ❌ | Recupera áudio apenas para participantes com vínculo ativo |
@@ -91,51 +91,17 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 
 Regras adicionais do admin: não pode bloquear nem remover a própria conta.
 
-Regra adicional do vínculo paciente-nutricionista: o paciente só pode ter um
-nutricionista responsável por vez — vincular de novo substitui o anterior. O
-endpoint retorna `404` se o e-mail informado não pertencer a um nutricionista
-cadastrado, e `403` se o nutricionista estiver inativo.
+Regra adicional do vínculo paciente-nutricionista: o paciente só pode ter um nutricionista responsável por vez — vincular de novo substitui o anterior. O endpoint retorna `404` se o e-mail informado não pertencer a um nutricionista cadastrado, e `403` se o nutricionista estiver inativo.
 
-O envio de mensagens de texto aceita `recipientId` e `content`; o envio de áudio
-aceita `recipientId`, `audioBase64`, `audioMimeType` e `audioDurationSeconds`. O
-remetente é sempre o usuário autenticado. Áudios são limitados a 512 KB e 120
-segundos. A conversa só pode ser iniciada entre paciente e nutricionista
-atualmente vinculados, e a mensagem começa com status `UNREAD`. O conteúdo de
-áudio só é retornado por uma rota autenticada após validar que quem solicita é
-participante do vínculo ativo. Ao consultar a conversa, somente seus
-participantes têm acesso e as mensagens recebidas com status `UNREAD` passam
-para `READ`, com `readAt` definido pelo servidor.
+O envio de mensagens de texto aceita `recipientId` e `content`; o envio de áudio aceita `recipientId`, `audioBase64`, `audioMimeType` e `audioDurationSeconds`. O remetente é sempre o usuário autenticado. Áudios são limitados a 512 KB e 120 segundos. A conversa só pode ser iniciada entre paciente e nutricionista atualmente vinculados, e a mensagem começa com status `UNREAD`. O conteúdo de áudio só é retornado por uma rota autenticada após validar que quem solicita é participante do vínculo ativo. Ao consultar a conversa, somente seus participantes têm acesso e as mensagens recebidas com status `UNREAD` passam para `READ`, com `readAt` definido pelo servidor.
 
-O endpoint de medidas recebe o ID do usuário do paciente. `weightKg` e
-`heightCm` são obrigatórios; circunferências (`*CircumferenceCm`) e dobras
-cutâneas (`*SkinfoldMm`) são opcionais. Os limites aceitos são peso de 1–500 kg,
-altura de 30–300 cm, circunferências de pescoço/braço/panturrilha de 5–100 cm,
-tórax/cintura/quadril de 20–250 cm, coxa de 10–150 cm e dobras cutâneas de
-1–100 mm. `recordedAt` é definido automaticamente e não pode ser enviado no
-corpo da requisição.
+O endpoint de medidas recebe o ID do usuário do paciente. `weightKg` e `heightCm` são obrigatórios; circunferências (`*CircumferenceCm`) e dobras cutâneas (`*SkinfoldMm`) são opcionais. Os limites aceitos são peso de 1–500 kg, altura de 30–300 cm, circunferências de pescoço/braço/panturrilha de 5–100 cm, tórax/cintura/quadril de 20–250 cm, coxa de 10–150 cm e dobras cutâneas de 1–100 mm. `recordedAt` é definido automaticamente e não pode ser enviado no corpo da requisição.
 
-Para substituir um registro, `PUT /api/patients/:id/measurements/:measurementId`
-exige peso e altura; campos de medida opcionais omitidos são limpos. Para alterar
-somente alguns campos, use `PATCH`; campos opcionais e observações podem receber
-`null` para serem limpos. A exclusão usa `DELETE` no mesmo caminho e remove
-permanentemente o registro do histórico. As operações são restritas ao
-nutricionista atualmente vinculado ao paciente.
+Para substituir um registro, `PUT /api/patients/:id/measurements/:measurementId` exige peso e altura; campos de medida opcionais omitidos são limpos. Para alterar somente alguns campos, use `PATCH`; campos opcionais e observações podem receber `null` para serem limpos. A exclusão usa `DELETE` no mesmo caminho e remove permanentemente o registro do histórico. As operações são restritas ao nutricionista atualmente vinculado ao paciente.
 
-Planos alimentares só podem ser criados para pacientes vinculados ao nutricionista
-autenticado. Os itens referenciam alimentos da base; calorias, proteínas,
-carboidratos e gorduras são calculados no servidor com os valores por 100 g do
-catálogo inicial, e o plano fica ativo por 30 dias.
+Planos alimentares só podem ser criados para pacientes vinculados ao nutricionista autenticado. Os itens referenciam alimentos da base; calorias, proteínas, carboidratos e gorduras são calculados no servidor com os valores por 100 g do catálogo inicial, e o plano fica ativo por 30 dias.
 
-O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados
-O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados
-pelo administrador ficam disponíveis para nutricionistas criarem planos e para o
-paciente visualizar o catálogo e o plano associado. Ao remover um alimento, ele
-deixa de aparecer no catálogo; seus itens são retirados dos planos e os valores
-nutricionais são recalculados. Planos sem itens restantes também são removidos.
-O cadastro recebe calorias,
-proteínas, carboidratos e gorduras por 100 g; o nome deve ser único, calorias
-devem ser não negativas (sem limite superior) e cada macronutriente fica entre
-0 e 100 g.
+O catálogo de alimentos é compartilhado entre os painéis: alimentos cadastrados pelo administrador ficam disponíveis para nutricionistas criarem planos e para o paciente visualizar o catálogo e o plano associado. Ao remover um alimento, ele deixa de aparecer no catálogo; seus itens são retirados dos planos e os valores nutricionais são recalculados. Planos sem itens restantes também são removidos. O cadastro recebe calorias, proteínas, carboidratos e gorduras por 100 g; o nome deve ser único, calorias devem ser não negativas (sem limite superior) e cada macronutriente fica entre 0 e 100 g.
 
 ## Ao criar uma rota nova
 

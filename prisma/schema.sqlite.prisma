@@ -32,6 +32,8 @@ model User {
   weightEntries PatientWeightEntry[]
   sentMessages ChatMessage[] @relation("ChatMessageSender")
   receivedMessages ChatMessage[] @relation("ChatMessageRecipient")
+  appointmentsAsPatient Appointment[] @relation("AppointmentPatient")
+  appointmentsAsNutritionist Appointment[] @relation("AppointmentNutritionist")
 }
 
 model PatientProfile {
@@ -239,4 +241,22 @@ model ChatMessage {
 
   @@index([senderId, recipientId, createdAt])
   @@index([recipientId, status, createdAt])
+}
+
+model Appointment {
+  id             String   @id @default(uuid())
+  patientId      String
+  nutritionistId String
+  startAt        DateTime
+  endAt          DateTime
+  status         String   @default("AGENDADA")
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  patient      User @relation("AppointmentPatient", fields: [patientId], references: [id], onDelete: Cascade)
+  nutritionist User @relation("AppointmentNutritionist", fields: [nutritionistId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, startAt])
+  @@index([nutritionistId, startAt])
 }
