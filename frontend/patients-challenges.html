@@ -58,7 +58,13 @@
 
         <nav class="mt-8 space-y-2">
           <a class="sidebar-link" href="/dashboard"><span>Visão geral</span></a>
+          <a class="sidebar-link" href="/dashboard#refeicoes"><span>Refeições</span></a>
+          <a class="sidebar-link" href="/dashboard#historico"><span>Histórico</span></a>
+          <a class="sidebar-link" href="/dashboard#plano"><span>Plano alimentar</span></a>
+          <a class="sidebar-link" href="/dashboard#medidas"><span>Medidas corporais</span></a>
+          <a class="sidebar-link" href="/dashboard#peso"><span>Evolução de peso</span></a>
           <a class="sidebar-link is-active" href="/patients/challenges"><span>Desafios</span></a>
+          <a class="sidebar-link" href="/dashboard#consultas"><span>Consultas</span></a>
         </nav>
       </div>
     </aside>
@@ -82,6 +88,17 @@
           </div>
         </div>
       </header>
+
+      <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel do paciente">
+        <a class="mobile-nav-pill" href="/dashboard">Visão geral</a>
+        <a class="mobile-nav-pill" href="/dashboard#refeicoes">Refeições</a>
+        <a class="mobile-nav-pill" href="/dashboard#historico">Histórico</a>
+        <a class="mobile-nav-pill" href="/dashboard#plano">Plano alimentar</a>
+        <a class="mobile-nav-pill" href="/dashboard#medidas">Medidas</a>
+        <a class="mobile-nav-pill" href="/dashboard#peso">Peso</a>
+        <a class="mobile-nav-pill is-active" href="/patients/challenges">Desafios</a>
+        <a class="mobile-nav-pill" href="/dashboard#consultas">Consultas</a>
+      </nav>
 
       <main class="mt-6 space-y-6">
         <section id="challengeList" class="grid gap-4 xl:grid-cols-2"></section>
