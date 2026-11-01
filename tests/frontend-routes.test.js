@@ -11,6 +11,20 @@ describe('rotas do frontend', () => {
     expect(response.headers.location).toBeUndefined();
     expect(response.text).toContain('<title>NutriFlow | Dashboard do paciente</title>');
     expect(response.text).toContain('src="dashboard.js"');
+    expect(response.text).toContain('<a class="mobile-nav-pill" href="/patients/challenges">Desafios</a>');
+  });
+
+  it('mantém a navegação completa do paciente na tela de desafios', async () => {
+    const response = await request(app).get('/patients/challenges');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toContain('href="/dashboard#refeicoes"');
+    expect(response.text).toContain('href="/dashboard#historico"');
+    expect(response.text).toContain('href="/dashboard#plano"');
+    expect(response.text).toContain('href="/dashboard#medidas"');
+    expect(response.text).toContain('href="/dashboard#peso"');
+    expect(response.text).toContain('href="/dashboard#consultas"');
+    expect(response.text).toContain('aria-label="Navegação do painel do paciente"');
   });
 
   it('mantém a raiz da página no diretório do frontend para recursos relativos', async () => {
@@ -44,6 +58,8 @@ describe('rotas do frontend', () => {
     expect(response.headers.location).toBeUndefined();
     expect(response.text).toContain('<title>NutriFlow | Dashboard do Nutricionista</title>');
     expect(response.text).toContain('src="dashboard-nutricionista.js"');
+    expect(response.text).toContain('<a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios Ativos</a>');
+    expect(response.text).not.toContain('aria-disabled="true">Desafios Ativos');
   });
 
   it('redireciona a URL antiga do painel da nutricionista para a rota limpa', async () => {
