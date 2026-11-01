@@ -299,4 +299,36 @@ describe('autenticação por Supabase e perfis Prisma', () => {
     expect(noSession.statusCode).toBe(401);
     expect(logout.statusCode).toBe(200);
   });
+
+  it('registra detalhes seguros quando o Supabase Auth falha ao validar a sessão', async () => {
+    const token = 'secret-test-token';
+    app.locals.supabaseAuthClient.auth.getUser = async () => ({
+      data: { user: null },
+      error: {
+        name: 'AuthRetryableFetchError',
+        code: 'fetch_failed',
+        status: 503,
+      },
+    });
+    const logError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const response = await request(app)
+        .get('/api/nutritionist/challenges')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.statusCode).toBe(503);
+      expect(logError).toHaveBeenCalledWith(
+        'Falha ao validar a sessão no Supabase Auth.',
+        {
+          name: 'AuthRetryableFetchError',
+          code: 'fetch_failed',
+          status: 503,
+        },
+      );
+      expect(JSON.stringify(logError.mock.calls)).not.toContain(token);
+    } finally {
+      logError.mockRestore();
+    }
+  });
 });

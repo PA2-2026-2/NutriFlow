@@ -10,6 +10,7 @@ const databaseUrl = `file:./${databaseFilename}`;
 const env = {
   ...process.env,
   NODE_ENV: 'test',
+  APP_BASE_URL: 'http://127.0.0.1:3000',
   DATABASE_URL: databaseUrl,
 };
 const prismaCli = path.join(root, 'node_modules', 'prisma', 'build', 'index.js');

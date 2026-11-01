@@ -48,6 +48,7 @@ function errorHandler(error, request, response, next) {
 		console.error('Erro interno do servidor.', {
 			name: error.name || 'Error',
 			code: error.code || 'UNKNOWN',
+			stack: error.stack || 'Stack trace indisponivel.',
 		});
 	}
 

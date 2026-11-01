@@ -43,10 +43,12 @@ Na raiz do repositório, rode:
 
 ```bash
 npm install
-npm run prisma:generate
 npm run db:push
 npm run dev
 ```
+
+O `npm run dev` gera automaticamente os clientes Prisma para SQLite e
+PostgreSQL antes de iniciar o servidor.
 
 O comando `db:push` prepara o schema SQLite e cria o arquivo local do banco em
 `prisma/dev.db` (se ainda não existir). O servidor de desenvolvimento inicia
@@ -114,7 +116,7 @@ O arquivo `.env` e os bancos SQLite locais são ignorados pelo Git.
 
 | Comando | Descrição |
 | --- | --- |
-| `npm run dev` | Inicia o servidor com reinicialização automática durante o desenvolvimento. |
+| `npm run dev` | Gera os clientes Prisma e inicia o servidor com reinicialização automática. |
 | `npm start` | Inicia o servidor sem modo de observação. |
 | `npm test` | Gera os clientes Prisma e executa a suíte de testes. |
 | `npm run prisma:generate` | Gera os clientes Prisma para SQLite e PostgreSQL. |
