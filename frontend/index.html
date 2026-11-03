@@ -458,7 +458,10 @@
 
             <label class="block">
               <span class="mb-2 block text-sm font-medium">Senha</span>
-              <input id="password" class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500" type="password" placeholder="Digite sua senha" required />
+              <span class="flex overflow-hidden rounded-2xl border border-nutriflow-200 transition focus-within:border-nutriflow-500">
+                <input id="password" class="min-w-0 flex-1 px-4 py-3 outline-none" type="password" placeholder="Digite sua senha" autocomplete="current-password" required />
+                <button type="button" class="px-4 text-sm font-semibold text-nutriflow-700 hover:text-nutriflow-950" data-toggle-password="password" aria-controls="password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+              </span>
             </label>
 
             <div class="flex items-center justify-between gap-4 text-sm">
@@ -471,6 +474,7 @@
 
             <button type="submit" class="w-full rounded-full bg-nutriflow-950 px-5 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-nutriflow-800">Entrar</button>
             <p id="loginMessage" class="hidden rounded-2xl bg-nutriflow-100 px-4 py-3 text-sm font-medium text-nutriflow-800" role="status" aria-live="polite"></p>
+            <button id="submitNutritionistRequest" type="button" class="hidden text-sm font-semibold text-nutriflow-800 underline underline-offset-2">Enviar solicitação para análise</button>
             <button id="resendLoginConfirmation" type="button" class="hidden text-sm font-semibold text-nutriflow-800 underline underline-offset-2">Reenviar e-mail de confirmação</button>
             <p class="auth-note">Ainda nao tem conta? <button type="button" data-switch-auth="register" class="font-semibold text-nutriflow-900 underline underline-offset-2">Criar conta agora</button></p>
           </form>
@@ -524,11 +528,17 @@
             <div class="grid gap-4 md:grid-cols-2">
               <label class="block">
                 <span class="mb-2 block text-sm font-medium">Senha</span>
-                <input id="registerPassword" class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500" type="password" placeholder="Minimo 8 caracteres" required />
+                <span class="flex overflow-hidden rounded-2xl border border-nutriflow-200 transition focus-within:border-nutriflow-500">
+                  <input id="registerPassword" class="min-w-0 flex-1 px-4 py-3 outline-none" type="password" placeholder="Minimo 8 caracteres" autocomplete="new-password" required />
+                  <button type="button" class="px-4 text-sm font-semibold text-nutriflow-700 hover:text-nutriflow-950" data-toggle-password="registerPassword" aria-controls="registerPassword" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+                </span>
               </label>
               <label class="block">
                 <span class="mb-2 block text-sm font-medium">Confirmar senha</span>
-                <input id="registerConfirm" class="w-full rounded-2xl border border-nutriflow-200 px-4 py-3 outline-none transition focus:border-nutriflow-500" type="password" placeholder="Repita a senha" required />
+                <span class="flex overflow-hidden rounded-2xl border border-nutriflow-200 transition focus-within:border-nutriflow-500">
+                  <input id="registerConfirm" class="min-w-0 flex-1 px-4 py-3 outline-none" type="password" placeholder="Repita a senha" autocomplete="new-password" required />
+                  <button type="button" class="px-4 text-sm font-semibold text-nutriflow-700 hover:text-nutriflow-950" data-toggle-password="registerConfirm" aria-controls="registerConfirm" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+                </span>
               </label>
             </div>
 

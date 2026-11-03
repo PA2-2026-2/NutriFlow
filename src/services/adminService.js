@@ -38,12 +38,61 @@ function toManagedUser(user) {
 }
 
 class AdminService {
-	constructor(adminRepository, photoStorage) {
+	constructor(adminRepository, photoStorage, approvalRepository) {
 		this.adminRepository = adminRepository;
 		this.photoStorage = photoStorage;
+		this.approvalRepository = approvalRepository;
 	}
 
-	
+	async listNutritionistRequests() {
+		const requests = await this.approvalRepository.listPending();
+		return {
+			requests: requests.map((request) => ({
+				id: request.id,
+				status: request.status,
+				createdAt: request.createdAt,
+				user: request.user,
+			})),
+		};
+	}
+
+	async decideNutritionistRequest(requestId, payload) {
+		const status = String(payload.status || '').trim().toUpperCase();
+		const decisionReason = normalizeText(payload.reason);
+		if (!['APPROVED', 'REJECTED'].includes(status)) {
+			throw new AppError('Informe status APPROVED ou REJECTED.', 400);
+		}
+		if (status === 'REJECTED' && !decisionReason) {
+			throw new AppError('Informe o motivo da recusa.', 400);
+		}
+		if (decisionReason.length > 500) {
+			throw new AppError('O motivo deve ter no máximo 500 caracteres.', 400);
+		}
+
+		const request = await this.approvalRepository.findById(requestId);
+		if (!request) {
+			throw new AppError('Solicitação não encontrada.', 404);
+		}
+		if (request.status !== 'PENDING') {
+			throw new AppError('Esta solicitação já foi analisada.', 409);
+		}
+
+		const update = await this.approvalRepository.updatePending(requestId, {
+			status,
+			decisionReason: status === 'REJECTED' ? decisionReason : null,
+		});
+		if (update.count !== 1) {
+			throw new AppError('Esta solicitação já foi analisada.', 409);
+		}
+
+		return {
+			message: status === 'APPROVED'
+				? 'Cadastro aprovado com sucesso.'
+				: 'Solicitação recusada com sucesso.',
+			request: await this.approvalRepository.findById(requestId),
+		};
+	}
+
 	
 	async getUsers(filters = {}) {
 		const hasRoleFilter = String(filters.role ?? '').trim() !== '';

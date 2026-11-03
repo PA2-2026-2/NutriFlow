@@ -8,6 +8,19 @@ class AdminController {
 		response.status(200).json(result);
 	}
 
+	async listNutritionistRequests(request, response) {
+		const result = await this.adminService.listNutritionistRequests();
+		response.status(200).json(result);
+	}
+
+	async decideNutritionistRequest(request, response) {
+		const result = await this.adminService.decideNutritionistRequest(
+			request.params.requestId,
+			request.body || {},
+		);
+		response.status(200).json(result);
+	}
+
 	async getSummary(request, response) {
 		const result = await this.adminService.getSummary();
 		response.status(200).json(result);

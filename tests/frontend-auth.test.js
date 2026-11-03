@@ -332,4 +332,57 @@ describe('fluxo de redefinição de senha no navegador', () => {
       .toContain('Link inválido ou expirado.');
     expect(elements.get('resendConfirmationForm').classList.contains('hidden')).toBe(false);
   });
+
+  it('envia o token da sessão ao backend para validar a confirmação', async () => {
+    const elements = new Map();
+    const request = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        message: 'E-mail confirmado com sucesso! Seu cadastro foi enviado para análise do administrador. Você receberá uma atualização quando houver uma decisão.',
+      }),
+    }));
+    const window = {
+      location: { hash: '', search: '' },
+      NutriFlowAuthReady: Promise.resolve({
+        auth: {
+          getSession: async () => ({
+            data: {
+              session: {
+                access_token: 'confirmed-access-token',
+                user: {},
+              },
+            },
+            error: null,
+          }),
+        },
+      }),
+      NutriFlowApi: { request },
+    };
+    const document = {
+      getElementById(id) {
+        if (!elements.has(id)) {
+          const element = createElement();
+          if (id === 'resendConfirmationForm' || id === 'retryConfirmationButton') {
+            element.classList.add('hidden');
+          }
+          elements.set(id, element);
+        }
+        return elements.get(id);
+      },
+    };
+    vm.runInNewContext(confirmationScript, {
+      window,
+      document,
+      URLSearchParams,
+      console,
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(request).toHaveBeenCalledWith('/api/auth/confirm-email', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer confirmed-access-token' },
+    });
+    expect(elements.get('confirmationMessage').textContent)
+      .toContain('Seu cadastro foi enviado para análise do administrador.');
+  });
 });

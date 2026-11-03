@@ -27,6 +27,11 @@ class AuthController {
 		response.status(200).json(result);
 	}
 
+	async confirmEmail(request, response) {
+		const result = await this.authService.confirmEmail(extractToken(request));
+		response.status(200).json(result);
+	}
+
 	config(request, response) {
 		response.status(200).json(this.authService.getPublicConfig());
 	}

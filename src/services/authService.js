@@ -16,12 +16,13 @@ function normalizeText(value) {
 }
 
 class AuthService {
-	constructor(userRepository, supabaseAuthClient, appBaseUrl, photoStorage, publicConfig = {}) {
+	constructor(userRepository, supabaseAuthClient, appBaseUrl, photoStorage, publicConfig = {}, approvalRepository) {
 		this.userRepository = userRepository;
 		this.supabaseAuthClient = supabaseAuthClient;
 		this.appBaseUrl = appBaseUrl;
 		this.photoStorage = photoStorage;
 		this.publicConfig = publicConfig;
+		this.approvalRepository = approvalRepository;
 	}
 
 	getPublicConfig() {
@@ -136,12 +137,75 @@ class AuthService {
 					email,
 					profile,
 					passwordHash: '',
+					requiresAdminApproval: profile === 'NUTRITIONIST',
 				});
 			}
 		}
 
 		return {
-			message: 'Se o cadastro puder ser concluído, enviaremos uma confirmação para o e-mail informado.',
+			message: profile === 'NUTRITIONIST'
+				? 'Cadastro realizado! Enviamos um link de confirmação para seu e-mail. Após confirmar, seu cadastro será encaminhado para análise do administrador.'
+				: 'Se o cadastro puder ser concluído, enviaremos uma confirmação para o e-mail informado.',
+		};
+	}
+
+	async confirmEmail(token) {
+		if (!token) {
+			throw new AppError('Confirme seu e-mail pelo link enviado para sua caixa de entrada.', 401);
+		}
+
+		const { data, error } = await this.requireSupabaseAuth().getUser(token);
+		if (error || !data?.user?.id) {
+			if (error && ![401, 403].includes(Number(error.status))) {
+				throw this.toAuthError(error, 'Não foi possível validar a confirmação agora.');
+			}
+			throw new AppError('Link inválido ou expirado. Solicite uma nova confirmação.', 401);
+		}
+
+		const authUser = data.user;
+		if (!authUser.email_confirmed_at) {
+			throw new AppError('Confirme seu e-mail antes de enviar o cadastro para análise.', 403);
+		}
+
+		let user =
+			(await this.userRepository.findByAuthUserId(authUser.id)) ||
+			(await this.userRepository.findById(authUser.id));
+		if (!user && authUser.email) {
+			const matchingProfile = await this.userRepository.findByEmail(
+				normalizeEmail(authUser.email),
+			);
+			if (matchingProfile && !matchingProfile.authUserId) {
+				user = await this.userRepository.linkAuthUser(matchingProfile.id, authUser.id);
+			}
+		}
+
+		if (!user || normalizeEmail(user.email) !== normalizeEmail(authUser.email)) {
+			throw new AppError('Perfil NutriFlow não encontrado para esta conta. Procure o suporte.', 403);
+		}
+
+		if (!user.requiresAdminApproval) {
+			return {
+				message: 'E-mail confirmado com sucesso. Agora você já pode entrar no NutriFlow.',
+				status: 'CONFIRMED',
+			};
+		}
+
+		if (!this.approvalRepository) {
+			throw new AppError('Não foi possível registrar a solicitação. Tente novamente.', 503);
+		}
+
+		const application = await this.approvalRepository.upsertPending(user.id);
+		const resultByStatus = {
+			PENDING: 'E-mail confirmado com sucesso! Seu cadastro foi enviado para análise do administrador. Você receberá uma atualização quando houver uma decisão.',
+			APPROVED: 'Seu cadastro foi aprovado! Agora você já pode acessar o NutriFlow.',
+			REJECTED: 'Sua solicitação de cadastro foi recusada. Consulte o motivo informado pela administração.',
+		};
+		const reason = application.decisionReason
+			? ` Motivo: ${application.decisionReason}`
+			: '';
+		return {
+			message: `${resultByStatus[application.status] || resultByStatus.PENDING}${application.status === 'REJECTED' ? reason : ''}`,
+			status: application.status,
 		};
 	}
 
@@ -205,6 +269,50 @@ class AuthService {
 			);
 		}
 
+		if (user.requiresAdminApproval) {
+			if (!this.approvalRepository) {
+				throw new AppError('Não foi possível verificar a aprovação administrativa.', 503);
+			}
+
+			let application = await this.approvalRepository.findByUserId(user.id);
+			if (!application) {
+				const { data: verifiedData, error: verificationError } =
+					await this.requireSupabaseAuth().getUser(data.session.access_token);
+				const verifiedUser = verifiedData?.user;
+				if (verificationError) {
+					throw this.toAuthError(
+						verificationError,
+						'Não foi possível validar seu e-mail agora. Tente novamente.',
+					);
+				}
+				if (
+					!verifiedUser?.email_confirmed_at ||
+					verifiedUser.id !== data.user.id ||
+					normalizeEmail(verifiedUser.email) !== normalizeEmail(user.email)
+				) {
+					throw new AppError('Confirme seu e-mail antes de enviar o cadastro para análise.', 401);
+				}
+
+				application = await this.approvalRepository.upsertPending(user.id);
+			}
+
+			if (application?.status === 'REJECTED') {
+				const reason = application.decisionReason
+					? ` Motivo: ${application.decisionReason}`
+					: '';
+				throw new AppError(
+					`Sua solicitação de cadastro foi recusada. Consulte o motivo informado pela administração.${reason}`,
+					403,
+				);
+			}
+			if (application?.status !== 'APPROVED') {
+				throw new AppError(
+					'Seu e-mail já foi confirmado, mas seu acesso ainda depende da aprovação do administrador.',
+					403,
+				);
+			}
+		}
+
 		if (!user.isActive) {
 			throw new AppError(
 				'Sua conta esta bloqueada. Procure o administrador da plataforma.',
@@ -213,7 +321,9 @@ class AuthService {
 		}
 
 		return {
-			message: 'Login realizado com sucesso.',
+			message: user.requiresAdminApproval
+				? 'Seu cadastro foi aprovado! Agora você já pode acessar o NutriFlow.'
+				: 'Login realizado com sucesso.',
 			token: data.session.access_token,
 			refreshToken: data.session.refresh_token,
 			user: await presentPhoto(this.photoStorage, toPublicUser(user)),

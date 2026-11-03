@@ -24,6 +24,7 @@ model User {
   profile         String
   passwordHash    String
   isActive        Boolean         @default(true)
+  requiresAdminApproval Boolean   @default(false)
   profilePhotoUrl String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -40,6 +41,20 @@ model User {
   receivedMessages ChatMessage[] @relation("ChatMessageRecipient")
   appointmentsAsPatient Appointment[] @relation("AppointmentPatient")
   appointmentsAsNutritionist Appointment[] @relation("AppointmentNutritionist")
+  nutritionistApprovalRequest NutritionistApprovalRequest?
+}
+
+model NutritionistApprovalRequest {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  status         String   @default("PENDING")
+  decisionReason String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }
 
 model PatientProfile {

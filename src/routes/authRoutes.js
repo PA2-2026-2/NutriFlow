@@ -31,6 +31,11 @@ function createAuthRoutes(authController, authenticate) {
 	);
 
 	router.post(
+		'/confirm-email',
+		asyncHandler(authController.confirmEmail.bind(authController)),
+	);
+
+	router.post(
 		'/logout',
 		asyncHandler(authController.logout.bind(authController)),
 	);

@@ -1,6 +1,11 @@
 const request = require('supertest');
 const { createApp } = require('../src/app');
-const { cleanupTestUsers, uniqueEmail } = require('./helpers');
+const {
+  bearer,
+  cleanupTestUsers,
+  createUserWithRole,
+  uniqueEmail,
+} = require('./helpers');
 
 describe('autenticação por Supabase e perfis Prisma', () => {
   let app;
@@ -141,27 +146,186 @@ describe('autenticação por Supabase e perfis Prisma', () => {
     expect(response.body.message).toBe('Confirme seu e-mail antes de entrar.');
   });
 
-  it('permite login após confirmação, preservando o perfil Prisma', async () => {
+  it('mantém a confirmação de pacientes sem criar solicitação administrativa', async () => {
     const email = uniqueEmail();
     await request(app).post('/api/auth/register').send({
+      name: 'Paciente Teste',
+      email,
+      password: 'senha1234',
+      role: 'patient',
+    });
+    app.locals.supabaseAuthClient.mock.confirmEmail(email);
+    app.locals.supabaseAuthClient.mock.sessions.set(
+      'confirmed-patient-token',
+      app.locals.supabaseAuthClient.mock.usersByEmail.get(email).user,
+    );
+
+    const confirmation = await request(app)
+      .post('/api/auth/confirm-email')
+      .set(bearer('confirmed-patient-token'));
+
+    expect(confirmation.statusCode).toBe(200);
+    expect(confirmation.body.message)
+      .toBe('E-mail confirmado com sucesso. Agora você já pode entrar no NutriFlow.');
+    expect(await app.locals.prisma.nutritionistApprovalRequest.count()).toBe(0);
+  });
+
+  it('só cria solicitação após confirmação validada e libera o acesso após aprovação', async () => {
+    const email = uniqueEmail();
+    const signup = await request(app).post('/api/auth/register').send({
       name: 'Nutricionista Teste',
       email,
       password: 'senha1234',
       role: 'nutricionista',
     });
+    expect(signup.body.message).toBe(
+      'Cadastro realizado! Enviamos um link de confirmação para seu e-mail. Após confirmar, seu cadastro será encaminhado para análise do administrador.',
+    );
+
+    const profile = await app.locals.prisma.user.findUnique({ where: { email } });
+    expect(profile.requiresAdminApproval).toBe(true);
+
+    const admin = await createUserWithRole(app, 'ADMIN');
+    const authUser = app.locals.supabaseAuthClient.mock.usersByEmail.get(email).user;
+    app.locals.supabaseAuthClient.mock.sessions.set('unconfirmed-token', authUser);
+    const unconfirmed = await request(app)
+      .post('/api/auth/confirm-email')
+      .set(bearer('unconfirmed-token'));
+    expect(unconfirmed.statusCode).toBe(403);
+    expect(await app.locals.prisma.nutritionistApprovalRequest.count()).toBe(0);
+
     app.locals.supabaseAuthClient.mock.confirmEmail(email);
+    app.locals.supabaseAuthClient.mock.sessions.set('confirmed-token', authUser);
+
+    const confirmation = await request(app)
+      .post('/api/auth/confirm-email')
+      .set(bearer('confirmed-token'));
+    expect(confirmation.statusCode).toBe(200);
+    expect(confirmation.body).toEqual({
+      message: 'E-mail confirmado com sucesso! Seu cadastro foi enviado para análise do administrador. Você receberá uma atualização quando houver uma decisão.',
+      status: 'PENDING',
+    });
+
+    const requests = await request(app)
+      .get('/api/admin/nutritionist-requests')
+      .set(bearer(admin.token));
+    expect(requests.statusCode).toBe(200);
+    expect(requests.body.requests).toHaveLength(1);
+    expect(requests.body.requests[0].user.email).toBe(email);
+
+    const repeatedConfirmation = await request(app)
+      .post('/api/auth/confirm-email')
+      .set(bearer('confirmed-token'));
+    expect(repeatedConfirmation.statusCode).toBe(200);
+    expect(await app.locals.prisma.nutritionistApprovalRequest.count()).toBe(1);
+
+    const waitingLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: 'senha1234' });
+    expect(waitingLogin.statusCode).toBe(403);
+    expect(waitingLogin.body.message).toBe(
+      'Seu e-mail já foi confirmado, mas seu acesso ainda depende da aprovação do administrador.',
+    );
+    expect(waitingLogin.body).not.toHaveProperty('token');
+
+    const rawSession = await app.locals.supabaseAuthClient.auth.signInWithPassword({
+      email,
+      password: 'senha1234',
+    });
+    const blockedEndpoint = await request(app)
+      .get('/api/nutritionist/foods')
+      .set(bearer(rawSession.data.session.access_token));
+    expect(blockedEndpoint.statusCode).toBe(403);
+
+    const decision = await request(app)
+      .patch(`/api/admin/nutritionist-requests/${requests.body.requests[0].id}`)
+      .set(bearer(admin.token))
+      .send({ status: 'APPROVED' });
+    expect(decision.statusCode).toBe(200);
 
     const response = await request(app)
       .post('/api/auth/login')
       .send({ email, password: 'senha1234' });
-
     expect(response.statusCode).toBe(200);
+    expect(response.body.message)
+      .toBe('Seu cadastro foi aprovado! Agora você já pode acessar o NutriFlow.');
     expect(response.body.token).toMatch(/^test-access-/);
     expect(response.body.refreshToken).toMatch(/^test-refresh-/);
     expect(response.body.user).toMatchObject({
       email,
       role: 'NUTRITIONIST',
     });
+  });
+
+  it('recupera uma solicitação não persistida quando o nutricionista confirmado tenta entrar', async () => {
+    const email = uniqueEmail();
+    await request(app).post('/api/auth/register').send({
+      name: 'Nutricionista com solicitação recuperável',
+      email,
+      password: 'senha1234',
+      role: 'nutricionista',
+    });
+    app.locals.supabaseAuthClient.mock.confirmEmail(email);
+
+    const firstLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: 'senha1234' });
+    expect(firstLogin.statusCode).toBe(403);
+    expect(firstLogin.body.message)
+      .toBe('Seu e-mail já foi confirmado, mas seu acesso ainda depende da aprovação do administrador.');
+    expect(await app.locals.prisma.nutritionistApprovalRequest.count()).toBe(1);
+
+    const secondLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: 'senha1234' });
+    expect(secondLogin.statusCode).toBe(403);
+    expect(await app.locals.prisma.nutritionistApprovalRequest.count()).toBe(1);
+  });
+
+  it('mantém recusado o acesso do nutricionista e informa o motivo da decisão', async () => {
+    const email = uniqueEmail();
+    await request(app).post('/api/auth/register').send({
+      name: 'Nutricionista Recusado',
+      email,
+      password: 'senha1234',
+      role: 'nutricionista',
+    });
+    app.locals.supabaseAuthClient.mock.confirmEmail(email);
+    app.locals.supabaseAuthClient.mock.sessions.set(
+      'rejected-nutritionist-token',
+      app.locals.supabaseAuthClient.mock.usersByEmail.get(email).user,
+    );
+    await request(app)
+      .post('/api/auth/confirm-email')
+      .set(bearer('rejected-nutritionist-token'));
+
+    const admin = await createUserWithRole(app, 'ADMIN');
+    const { body: list } = await request(app)
+      .get('/api/admin/nutritionist-requests')
+      .set(bearer(admin.token));
+    const decision = await request(app)
+      .patch(`/api/admin/nutritionist-requests/${list.requests[0].id}`)
+      .set(bearer(admin.token))
+      .send({ status: 'REJECTED', reason: 'Documentação profissional incompleta.' });
+    expect(decision.statusCode).toBe(200);
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: 'senha1234' });
+    expect(login.statusCode).toBe(403);
+    expect(login.body.message).toBe(
+      'Sua solicitação de cadastro foi recusada. Consulte o motivo informado pela administração. Motivo: Documentação profissional incompleta.',
+    );
+
+    const session = await app.locals.supabaseAuthClient.auth.signInWithPassword({
+      email,
+      password: 'senha1234',
+    });
+    const endpoint = await request(app)
+      .get('/api/nutritionist/foods')
+      .set(bearer(session.data.session.access_token));
+    expect(endpoint.statusCode).toBe(403);
+    expect(endpoint.body.message).toContain('Documentação profissional incompleta.');
   });
 
   it('associa perfil legado por e-mail sem alterar ID, papel ou relações', async () => {

@@ -12,6 +12,8 @@ function createAdminRoutes(adminController, authenticate) {
 	router.post('/foods', authorize('POST /api/admin/foods'), asyncHandler(adminController.createFood.bind(adminController)));
 	router.delete('/foods/:foodId', authorize('DELETE /api/admin/foods/:foodId'), asyncHandler(adminController.deleteFood.bind(adminController)));
 	router.get('/users', authorize('GET /api/admin/users'), asyncHandler(adminController.getUsers.bind(adminController)));
+	router.get('/nutritionist-requests', authorize('GET /api/admin/nutritionist-requests'), asyncHandler(adminController.listNutritionistRequests.bind(adminController)));
+	router.patch('/nutritionist-requests/:requestId', authorize('PATCH /api/admin/nutritionist-requests/:requestId'), asyncHandler(adminController.decideNutritionistRequest.bind(adminController)));
 	router.put('/users/:userId', authorize('PUT /api/admin/users/:userId'), asyncHandler(adminController.updateUser.bind(adminController)));
 	router.patch('/users/:userId/status', authorize('PATCH /api/admin/users/:userId/status'), asyncHandler(adminController.updateUserStatus.bind(adminController)));
 	router.delete('/users/:userId', authorize('DELETE /api/admin/users/:userId'), asyncHandler(adminController.deleteUser.bind(adminController)));

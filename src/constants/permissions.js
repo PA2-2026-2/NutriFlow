@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = Object.freeze([
   'POST /api/auth/login',
   'POST /api/auth/password-reset',
   'POST /api/auth/resend-confirmation',
+  'POST /api/auth/confirm-email',
   'POST /api/auth/logout',
 ]);
 
@@ -84,6 +85,8 @@ const PROTECTED_ROUTES = Object.freeze({
   'GET /api/chat/conversations/:conversationId/messages': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
 
   'GET /api/admin/users': ADMIN_ONLY,
+  'GET /api/admin/nutritionist-requests': ADMIN_ONLY,
+  'PATCH /api/admin/nutritionist-requests/:requestId': ADMIN_ONLY,
   'GET /api/admin/summary': ADMIN_ONLY,
   'GET /api/admin/foods': ADMIN_ONLY,
   'POST /api/admin/foods': ADMIN_ONLY,

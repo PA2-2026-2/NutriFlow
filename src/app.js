@@ -18,6 +18,7 @@ const { ChatController } = require('./controllers/chatController');
 const { AppointmentController } = require('./controllers/appointmentController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
+const { NutritionistApprovalRepository } = require('./repositories/nutritionistApprovalRepository');
 const { ProfileRepository } = require('./repositories/profileRepository');
 const { PatientDashboardRepository } = require('./repositories/patientDashboardRepository');
 const { MealPlanRepository } = require('./repositories/mealPlanRepository');
@@ -183,6 +184,7 @@ function createDependencies(appConfig, overrides = {}) {
     createPrismaClient(appConfig.databaseUrl);
 
   const repository = new UserRepository(prisma);
+  const approvalRepository = new NutritionistApprovalRepository(prisma);
   const profileRepository = new ProfileRepository(prisma);
   const supabaseAuthClient =
     overrides.supabaseAuthClient ||
@@ -212,11 +214,13 @@ function createDependencies(appConfig, overrides = {}) {
       url: appConfig.nodeEnv === 'test' ? 'https://auth.test' : appConfig.supabaseUrl,
       anonKey: appConfig.nodeEnv === 'test' ? 'test-anon-key' : appConfig.supabaseAnonKey,
     },
+    approvalRepository,
   );
 
   const adminService = new AdminService(
     new AdminRepository(prisma),
-    photoStorage
+    photoStorage,
+    approvalRepository,
   );
 
   const userService = new UserService(repository, photoStorage, {
@@ -255,7 +259,7 @@ function createDependencies(appConfig, overrides = {}) {
     challengeController: new ChallengeController(challengeService),
     chatController: new ChatController(chatService),
     appointmentController: new AppointmentController(appointmentService),
-    authenticate: createAuthMiddleware(supabaseAuthClient, repository),
+    authenticate: createAuthMiddleware(supabaseAuthClient, repository, approvalRepository),
   };
 }
 
