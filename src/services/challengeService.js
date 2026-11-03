@@ -91,7 +91,10 @@ function serializeParticipant(participant, challenge) {
 }
 
 function serializeChallenge(challenge, currentPatientId = null) {
-  const participants = (challenge.participants || []).map((participant) => serializeParticipant(participant, challenge));
+  const allParticipants = (challenge.participants || []).map((participant) => serializeParticipant(participant, challenge));
+  const participants = currentPatientId
+    ? allParticipants.filter((participant) => participant.patientId === currentPatientId)
+    : allParticipants;
   const averageProgress = participants.length
     ? participants.reduce((sum, participant) => sum + Number(participant.progress || 0), 0) / participants.length
     : 0;
@@ -108,7 +111,7 @@ function serializeChallenge(challenge, currentPatientId = null) {
     endDate: challenge.endDate,
     status: challenge.status || buildChallengeStatus(challenge.startDate, challenge.endDate),
     isActive: challenge.isActive !== false,
-    participantCount: participants.length,
+    participantCount: allParticipants.length,
     averageProgress: Number(averageProgress.toFixed(2)),
     enrolled: currentPatientId ? participants.some((participant) => participant.patientId === currentPatientId) : undefined,
     participants,
@@ -246,17 +249,29 @@ class ChallengeService {
     };
   }
 
-  async enrollPatient(patientId, challengeId) {
-    const profile = await this.profileRepository.findPatientWithNutritionistByUserId(patientId);
-    if (!profile || !profile.nutritionistId) {
-      throw new AppError('Voce ainda nao esta vinculado a um nutricionista.', 403);
-    }
-
+  async enrollPatient(patientId, challengeId, requestingNutritionistId = null) {
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
       throw new AppError('Desafio nao encontrado.', 404);
     }
-    if (challenge.nutritionistId !== profile.nutritionistId) {
+
+    if (
+      requestingNutritionistId &&
+      challenge.nutritionistId !== requestingNutritionistId
+    ) {
+      throw new AppError('Desafio nao encontrado.', 404);
+    }
+
+    if (typeof patientId !== 'string' || !patientId.trim()) {
+      throw new AppError('Informe o paciente para inscricao.', 400);
+    }
+
+    const patientProfile = await this.profileRepository.findPatientWithUserByUserId(patientId);
+    if (
+      !patientProfile ||
+      patientProfile.user.profile !== 'PATIENT' ||
+      patientProfile.nutritionistId !== challenge.nutritionistId
+    ) {
       throw new AppError('Este desafio nao pertence ao seu nutricionista.', 403);
     }
     if (new Date(challenge.endDate) < new Date()) {

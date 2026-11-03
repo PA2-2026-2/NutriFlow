@@ -29,7 +29,11 @@ class ChallengeController {
   }
 
   async addParticipant(request, response) {
-    const result = await this.challengeService.enrollPatient(request.body.patientId || request.user.sub, request.params.challengeId);
+    const result = await this.challengeService.enrollPatient(
+      request.body?.patientId,
+      request.params.challengeId,
+      request.user.sub,
+    );
     response.status(201).json(result);
   }
 

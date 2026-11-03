@@ -357,12 +357,24 @@ function createApp(options = {}) {
 
   app.use(
     '/api/nutritionist',
-    createNutritionistRoutes(patientController, mealPlanController, challengeController, authenticate)
+    createNutritionistRoutes(
+      patientController,
+      mealPlanController,
+      challengeController,
+      authenticate,
+      '/api/nutritionist',
+    )
   );
 
   app.use(
     '/api/nutritionists',
-    createNutritionistRoutes(patientController, mealPlanController, challengeController, authenticate)
+    createNutritionistRoutes(
+      patientController,
+      mealPlanController,
+      challengeController,
+      authenticate,
+      '/api/nutritionists',
+    )
   );
 
   app.use(
