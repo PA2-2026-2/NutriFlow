@@ -9,8 +9,12 @@ const NUTRITIONIST_ONLY = Object.freeze([ROLES.NUTRITIONIST]);
 
 const PUBLIC_ROUTES = Object.freeze([
   'GET /health',
+  'GET /api/vendor/supabase.js',
+  'GET /api/auth/config',
   'POST /api/auth/register',
   'POST /api/auth/login',
+  'POST /api/auth/password-reset',
+  'POST /api/auth/resend-confirmation',
   'POST /api/auth/logout',
 ]);
 
@@ -38,6 +42,11 @@ const PROTECTED_ROUTES = Object.freeze({
   'GET /api/nutritionist/meal-plans': NUTRITIONIST_ONLY,
   'POST /api/nutritionist/meal-plans': NUTRITIONIST_ONLY,
   'POST /api/nutritionist/link-patient': NUTRITIONIST_ONLY,
+  'GET /api/nutritionists/patients': NUTRITIONIST_ONLY,
+  'GET /api/nutritionists/foods': NUTRITIONIST_ONLY,
+  'GET /api/nutritionists/meal-plans': NUTRITIONIST_ONLY,
+  'POST /api/nutritionists/meal-plans': NUTRITIONIST_ONLY,
+  'POST /api/nutritionists/link-patient': NUTRITIONIST_ONLY,
   'GET /api/nutritionist/challenges': NUTRITIONIST_ONLY,
   'POST /api/nutritionist/challenges': NUTRITIONIST_ONLY,
   'PUT /api/nutritionist/challenges/:challengeId': NUTRITIONIST_ONLY,

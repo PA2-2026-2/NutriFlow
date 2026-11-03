@@ -10,6 +10,19 @@ describe('desafios do nutricionista', () => {
   });
 
   afterAll(async () => {
+    const challengeFilter = {
+      challenge: {
+        nutritionist: {
+          email: { endsWith: '@sprint2.nutriflow.test' },
+        },
+      },
+    };
+    await app.locals.prisma.challengeCheckIn.deleteMany({
+      where: { participation: challengeFilter },
+    });
+    await app.locals.prisma.challengeParticipant.deleteMany({
+      where: challengeFilter,
+    });
     await app.locals.prisma.challenge.deleteMany({
       where: {
         nutritionist: {
@@ -54,5 +67,152 @@ describe('desafios do nutricionista', () => {
 
     expect(listResponse.statusCode).toBe(200);
     expect(listResponse.body.challenges).toContainEqual(createResponse.body.challenge);
+  });
+
+  it('limita os dados de participantes exibidos a cada paciente', async () => {
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const firstPatient = await createUserWithRole(app, 'PATIENT');
+    const secondPatient = await createUserWithRole(app, 'PATIENT');
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    const endDate = new Date(startDate);
+    endDate.setUTCDate(endDate.getUTCDate() + 7);
+    const startDateLabel = startDate.toISOString().slice(0, 10);
+    const endDateLabel = endDate.toISOString().slice(0, 10);
+
+    for (const patient of [firstPatient, secondPatient]) {
+      await app.locals.prisma.patientProfile.create({
+        data: {
+          userId: patient.user.id,
+          nutritionistId: nutritionist.user.id,
+        },
+      });
+    }
+
+    const created = await request(app)
+      .post('/api/nutritionist/challenges')
+      .set(bearer(nutritionist.token))
+      .send({
+        title: 'Rotina de hidratacao',
+        goalDescription: 'Registrar hidratacao diariamente',
+        startDate: startDateLabel,
+        endDate: endDateLabel,
+      });
+    const challengeId = created.body.challenge.id;
+
+    const selfEnrollment = await request(app)
+      .post(`/api/patients/challenges/${challengeId}/enroll`)
+      .set(bearer(firstPatient.token));
+    const nutritionistEnrollment = await request(app)
+      .post(`/api/nutritionist/challenges/${challengeId}/participants`)
+      .set(bearer(nutritionist.token))
+      .send({ patientId: secondPatient.user.id });
+
+    expect(selfEnrollment.statusCode).toBe(201);
+    expect(nutritionistEnrollment.statusCode).toBe(201);
+
+    const checkIn = await request(app)
+      .post(`/api/patients/challenges/${challengeId}/checkins`)
+      .set(bearer(secondPatient.token))
+      .send({ checkInDate: startDateLabel, completed: true });
+    expect(checkIn.statusCode).toBe(201);
+
+    const firstPatientChallenges = await request(app)
+      .get('/api/patients/challenges')
+      .set(bearer(firstPatient.token));
+    const visibleChallenge = firstPatientChallenges.body.challenges.find(
+      (challenge) => challenge.id === challengeId,
+    );
+
+    expect(firstPatientChallenges.statusCode).toBe(200);
+    expect(visibleChallenge.participantCount).toBe(2);
+    expect(visibleChallenge.participants).toHaveLength(1);
+    expect(visibleChallenge.participants[0].patientId).toBe(firstPatient.user.id);
+    expect(visibleChallenge.averageProgress).toBe(0);
+    expect(JSON.stringify(visibleChallenge)).not.toContain(secondPatient.user.id);
+
+    const nutritionistChallenges = await request(app)
+      .get('/api/nutritionist/challenges')
+      .set(bearer(nutritionist.token));
+    const nutritionistView = nutritionistChallenges.body.challenges.find(
+      (challenge) => challenge.id === challengeId,
+    );
+    expect(nutritionistView.participants).toHaveLength(2);
+  });
+
+  it('impede o nutricionista de inscrever pacientes sem vínculo com sua conta', async () => {
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const otherNutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const unlinkedPatient = await createUserWithRole(app, 'PATIENT');
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    const endDate = new Date(startDate);
+    endDate.setUTCDate(endDate.getUTCDate() + 7);
+
+    const created = await request(app)
+      .post('/api/nutritionist/challenges')
+      .set(bearer(nutritionist.token))
+      .send({
+        title: 'Desafio restrito',
+        goalDescription: 'Participacao vinculada',
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+      });
+
+    await app.locals.prisma.patientProfile.create({
+      data: {
+        userId: unlinkedPatient.user.id,
+        nutritionistId: otherNutritionist.user.id,
+      },
+    });
+
+    const response = await request(app)
+      .post(`/api/nutritionist/challenges/${created.body.challenge.id}/participants`)
+      .set(bearer(nutritionist.token))
+      .send({ patientId: unlinkedPatient.user.id });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('impede o nutricionista de incluir pacientes em desafios de outro profissional', async () => {
+    const nutritionist = await createUserWithRole(app, 'NUTRITIONIST');
+    const challengeOwner = await createUserWithRole(app, 'NUTRITIONIST');
+    const patient = await createUserWithRole(app, 'PATIENT');
+    const startDate = new Date();
+    startDate.setUTCHours(0, 0, 0, 0);
+    const endDate = new Date(startDate);
+    endDate.setUTCDate(endDate.getUTCDate() + 7);
+
+    await app.locals.prisma.patientProfile.create({
+      data: {
+        userId: patient.user.id,
+        nutritionistId: challengeOwner.user.id,
+      },
+    });
+
+    const created = await request(app)
+      .post('/api/nutritionist/challenges')
+      .set(bearer(challengeOwner.token))
+      .send({
+        title: 'Desafio de outro profissional',
+        goalDescription: 'Manter o acompanhamento autorizado',
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+      });
+
+    const response = await request(app)
+      .post(`/api/nutritionist/challenges/${created.body.challenge.id}/participants`)
+      .set(bearer(nutritionist.token))
+      .send({ patientId: patient.user.id });
+
+    expect(response.statusCode).toBe(404);
+    expect(await app.locals.prisma.challengeParticipant.findUnique({
+      where: {
+        challengeId_patientId: {
+          challengeId: created.body.challenge.id,
+          patientId: patient.user.id,
+        },
+      },
+    })).toBeNull();
   });
 });

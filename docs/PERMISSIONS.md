@@ -18,8 +18,12 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | Rota | Observação |
 |---|---|
 | `GET /health` | Verificação de saúde da API e do banco |
+| `GET /api/vendor/supabase.js` | Bundle público do cliente JavaScript Supabase; não contém credenciais privadas |
+| `GET /api/auth/config` | Configuração pública do cliente Supabase (URL e chave anon) |
 | `POST /api/auth/register` | Cria apenas `PATIENT` ou `NUTRITIONIST`. Tentar criar `ADMIN` retorna 403 |
 | `POST /api/auth/login` | Retorna o token |
+| `POST /api/auth/password-reset` | Solicita recuperação de senha sem revelar se a conta existe |
+| `POST /api/auth/resend-confirmation` | Reenvia confirmação sem revelar se a conta está pendente |
 | `POST /api/auth/logout` | Revoga o token informado; responde 200 mesmo sem token ou com token expirado |
 
 ## Rotas protegidas
@@ -43,9 +47,14 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `POST /api/patient/weights` | ✅ | ❌ | ❌ | Registra uma pesagem semanal do paciente |
 | `GET /api/nutritionist/patients` | ❌ | ✅ | ❌ | Lista pacientes vinculados ao nutricionista autenticado |
 | `POST /api/nutritionist/link-patient` | ❌ | ✅ | ❌ | Vincula um paciente pelo e-mail dele |
+| `GET /api/nutritionists/patients` | ❌ | ✅ | ❌ | Alias compatível para listar pacientes vinculados |
+| `POST /api/nutritionists/link-patient` | ❌ | ✅ | ❌ | Alias compatível para vincular paciente |
 | `GET /api/nutritionist/foods` | ❌ | ✅ | ❌ | Lista a base de alimentos para montar planos |
 | `GET /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Lista os planos alimentares do nutricionista |
 | `POST /api/nutritionist/meal-plans` | ❌ | ✅ | ❌ | Cria um plano alimentar para paciente vinculado |
+| `GET /api/nutritionists/foods` | ❌ | ✅ | ❌ | Alias compatível para listar alimentos |
+| `GET /api/nutritionists/meal-plans` | ❌ | ✅ | ❌ | Alias compatível para listar planos alimentares |
+| `POST /api/nutritionists/meal-plans` | ❌ | ✅ | ❌ | Alias compatível para criar plano alimentar |
 | `GET /api/nutritionist/challenges` | ❌ | ✅ | ❌ | Lista desafios criados pelo nutricionista autenticado |
 | `POST /api/nutritionist/challenges` | ❌ | ✅ | ❌ | Cria um novo desafio nutricional |
 | `PUT /api/nutritionist/challenges/:challengeId` | ❌ | ✅ | ❌ | Atualiza um desafio de um nutricionista |
