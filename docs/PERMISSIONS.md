@@ -6,14 +6,14 @@ As rotas protegidas usam `authorize('<MÉTODO> <caminho>')`; uma rota sem entrad
 
 ## Como a autorização funciona
 
-1. `authenticate` valida o token (assinatura, expiração e revogação por logout) e confere **no banco** que o usuário existe e está ativo. Resultados:
+1. `authenticate` valida o token no Supabase, exige e-mail confirmado e confere **no banco** que o usuário existe e está ativo. Nutricionistas cadastrados pelo novo fluxo também precisam de uma solicitação `APPROVED`; usuários antigos sem essa exigência mantêm o acesso. Resultados:
    - sem token, token inválido/expirado/revogado ou usuário removido → **401**
    - usuário bloqueado → **403**
 2. `authorize(...)` compara o perfil **atual do banco** (não o gravado no token) com os perfis permitidos para a rota. Perfil não permitido → **403**.
 
 Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administrador).
 
-## Rotas públicas (sem token)
+## Rotas públicas (sem sessão NutriFlow)
 
 | Rota | Observação |
 |---|---|
@@ -22,8 +22,10 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /api/auth/config` | Configuração pública do cliente Supabase (URL e chave anon) |
 | `POST /api/auth/register` | Cria apenas `PATIENT` ou `NUTRITIONIST`. Tentar criar `ADMIN` retorna 403 |
 | `POST /api/auth/login` | Retorna o token |
+| `POST /api/auth/confirm-email` | Exige token Supabase com e-mail confirmado; para nutricionistas, cria/retoma a solicitação pendente |
 | `POST /api/auth/password-reset` | Solicita recuperação de senha sem revelar se a conta existe |
 | `POST /api/auth/resend-confirmation` | Reenvia confirmação sem revelar se a conta está pendente |
+| `POST /api/auth/confirm-email` | Exige token Supabase; valida a confirmação e cria idempotentemente a solicitação administrativa |
 | `POST /api/auth/logout` | Revoga o token informado; responde 200 mesmo sem token ou com token expirado |
 
 ## Rotas protegidas
@@ -90,6 +92,8 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /chat/conversations/:conversationId/messages` | ✅ | ✅ | ❌ | Histórico cronológico paginado; somente participantes vinculados |
 | `GET /api/chat/conversations/:conversationId/messages` | ✅ | ✅ | ❌ | Alias do histórico paginado |
 | `GET /api/admin/users` | ❌ | ❌ | ✅ | Lista usuários (`?role=` e `?search=`) |
+| `GET /api/admin/nutritionist-requests` | ❌ | ❌ | ✅ | Lista solicitações pendentes de nutricionistas com e-mail confirmado |
+| `PATCH /api/admin/nutritionist-requests/:requestId` | ❌ | ❌ | ✅ | Aprova ou recusa uma solicitação pendente, exigindo motivo na recusa |
 | `GET /api/admin/summary` | ❌ | ❌ | ✅ | Exibe o resumo administrativo |
 | `GET /api/admin/foods` | ❌ | ❌ | ✅ | Lista o catálogo global de alimentos |
 | `POST /api/admin/foods` | ❌ | ❌ | ✅ | Cadastra alimento disponível para planos e registros alimentares |

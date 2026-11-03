@@ -8,6 +8,7 @@ const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const loginMessage = document.getElementById('loginMessage');
 const resendLoginConfirmation = document.getElementById('resendLoginConfirmation');
+const submitNutritionistRequest = document.getElementById('submitNutritionistRequest');
 const registerMessage = document.getElementById('registerMessage');
 const authHeading = document.getElementById('authHeading');
 const authSubheading = document.getElementById('authSubheading');
@@ -20,10 +21,40 @@ const registerAge = document.getElementById('registerAge');
 const registerObjective = document.getElementById('registerObjective');
 const registerRestrictions = document.getElementById('registerRestrictions');
 
+document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const input = document.getElementById(button.dataset.togglePassword);
+    if (!input) {
+      return;
+    }
+
+    const isVisible = input.type === 'password';
+    input.type = isVisible ? 'text' : 'password';
+    button.textContent = isVisible ? 'Ocultar' : 'Mostrar';
+    button.setAttribute('aria-label', `${isVisible ? 'Ocultar' : 'Mostrar'} senha`);
+    button.setAttribute('aria-pressed', String(isVisible));
+  });
+});
+
+for (const form of [loginForm, registerForm]) {
+  form?.addEventListener('reset', () => {
+    form.querySelectorAll('[data-toggle-password]').forEach((button) => {
+      const input = document.getElementById(button.dataset.togglePassword);
+      if (input) {
+        input.type = 'password';
+      }
+      button.textContent = 'Mostrar';
+      button.setAttribute('aria-label', 'Mostrar senha');
+      button.setAttribute('aria-pressed', 'false');
+    });
+  });
+}
+
 function resetAuthMessages() {
   loginMessage?.classList.add('hidden');
   registerMessage?.classList.add('hidden');
   resendLoginConfirmation?.classList.add('hidden');
+  submitNutritionistRequest?.classList.add('hidden');
 }
 
 function isValidEmail(email) {
@@ -271,13 +302,19 @@ loginForm?.addEventListener('submit', async (event) => {
       throw new Error('Não foi possível iniciar sua sessão. Tente novamente.');
     }
     saveSession(data);
-    showMessage(loginMessage, `${data.message} Bem-vindo, ${data.user.name}.`);
+    const loginMessageText = data.message === 'Seu cadastro foi aprovado! Agora você já pode acessar o NutriFlow.'
+      ? data.message
+      : `${data.message} Bem-vindo, ${data.user.name}.`;
+    showMessage(loginMessage, loginMessageText);
     resendLoginConfirmation?.classList.add('hidden');
     loginForm.reset();
     handlePostAuthNavigation(data);
   } catch (error) {
     const message = String(error.message || '');
     const requiresConfirmation = message.toLowerCase().includes('confirme seu e-mail');
+    const awaitingAdminApproval = message.includes(
+      'Seu e-mail já foi confirmado, mas seu acesso ainda depende da aprovação do administrador.',
+    );
     showMessage(
       loginMessage,
       requiresConfirmation || message.toLowerCase().includes('not confirmed')
@@ -286,8 +323,39 @@ loginForm?.addEventListener('submit', async (event) => {
       true,
     );
     resendLoginConfirmation?.classList.toggle('hidden', !requiresConfirmation);
+    submitNutritionistRequest?.classList.toggle('hidden', !awaitingAdminApproval);
   } finally {
     setFormBusy(loginForm, false);
+  }
+});
+
+submitNutritionistRequest?.addEventListener('click', async () => {
+  submitNutritionistRequest.disabled = true;
+  try {
+    const client = await window.NutriFlowAuthReady;
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      throw error;
+    }
+    if (!data.session?.access_token) {
+      throw new Error('Abra novamente o link de confirmação enviado para seu e-mail e tente outra vez.');
+    }
+
+    const response = await window.NutriFlowApi.request('/api/auth/confirm-email', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${data.session.access_token}` },
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.message || 'Não foi possível enviar a solicitação. Tente novamente.');
+    }
+
+    showMessage(loginMessage, result.message);
+    submitNutritionistRequest.classList.add('hidden');
+  } catch (error) {
+    showMessage(loginMessage, error.message || 'Não foi possível enviar a solicitação. Tente novamente.', true);
+  } finally {
+    submitNutritionistRequest.disabled = false;
   }
 });
 

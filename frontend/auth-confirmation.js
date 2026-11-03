@@ -1,7 +1,9 @@
 (function handleEmailConfirmation(globalScope) {
   const message = document.getElementById('confirmationMessage');
   const form = document.getElementById('resendConfirmationForm');
+  const retryButton = document.getElementById('retryConfirmationButton');
   const emailInput = document.getElementById('confirmationEmail');
+  let sessionToken = '';
 
   function showError(text) {
     message.textContent = text;
@@ -10,6 +12,32 @@
 
   function validEmail(value) {
     return value.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  async function submitConfirmation() {
+    if (!sessionToken) {
+      showError('Não foi possível validar a confirmação. Solicite um novo link.');
+      return;
+    }
+
+    retryButton.disabled = true;
+    try {
+      const response = await globalScope.NutriFlowApi.request('/api/auth/confirm-email', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || 'Não foi possível encaminhar o cadastro. Tente novamente.');
+      }
+      retryButton.classList.add('hidden');
+      message.textContent = result.message;
+    } catch (error) {
+      showError(error.message || 'Não foi possível encaminhar o cadastro. Tente novamente.');
+      retryButton.classList.remove('hidden');
+    } finally {
+      retryButton.disabled = false;
+    }
   }
 
   async function initialize() {
@@ -29,16 +57,19 @@
     try {
       const client = await globalScope.NutriFlowAuthReady;
       const { data, error } = await client.auth.getSession();
-      if (error || !data.session?.user?.email_confirmed_at) {
+      if (error || !data.session?.access_token) {
         showError('Link inválido ou expirado. Informe seu e-mail para solicitar uma nova confirmação.');
         return;
       }
 
-      message.textContent = 'E-mail confirmado com sucesso. Agora você já pode entrar no NutriFlow.';
+      sessionToken = data.session.access_token;
+      await submitConfirmation();
     } catch (error) {
       showError('Não foi possível verificar o link. Solicite uma nova confirmação.');
     }
   }
+
+  retryButton.addEventListener('click', submitConfirmation);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

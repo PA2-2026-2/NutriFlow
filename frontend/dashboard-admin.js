@@ -88,6 +88,10 @@
 
   const adminUsersList = $('adminUsersList');
   const adminEmptyUsers = $('adminEmptyUsers');
+  const adminNutritionistRequestsList = $('adminNutritionistRequestsList');
+  const adminNutritionistRequestsEmpty = $('adminNutritionistRequestsEmpty');
+  const adminNutritionistRequestsError = $('adminNutritionistRequestsError');
+  const refreshNutritionistRequests = $('refreshNutritionistRequests');
 
   const foodSearch = $('foodSearch');
   const foodsList = $('foodsList');
@@ -149,9 +153,11 @@ const state = {
   summary: null,
 
   users: [],
+  nutritionistRequests: [],
   foods: [],
 
   isLoadingUsers: false,
+  isLoadingNutritionistRequests: false,
   isLoadingFoods: false,
 
   isSavingFood: false,
@@ -1089,6 +1095,84 @@ const state = {
 
     } finally {
       state.isLoadingUsers = false;
+    }
+  }
+
+  async function loadNutritionistRequests() {
+    if (state.isLoadingNutritionistRequests) {
+      return;
+    }
+
+    state.isLoadingNutritionistRequests = true;
+    try {
+      const payload = await apiRequest('/api/admin/nutritionist-requests');
+      state.nutritionistRequests = payload?.requests || [];
+      adminNutritionistRequestsError?.classList.add('hidden');
+      renderNutritionistRequests();
+    } catch (error) {
+      console.error('[NutriFlow Admin] Erro ao carregar solicitações:', error);
+      if (adminNutritionistRequestsError) {
+        adminNutritionistRequestsError.textContent =
+          error?.message || 'Não foi possível carregar as solicitações. Tente atualizar a lista.';
+        adminNutritionistRequestsError.classList.remove('hidden');
+      }
+      showStatus(error?.message || 'Não foi possível carregar as solicitações.', 'error');
+    } finally {
+      state.isLoadingNutritionistRequests = false;
+    }
+  }
+
+  function renderNutritionistRequests() {
+    if (!adminNutritionistRequestsList) {
+      return;
+    }
+
+    const requests = state.nutritionistRequests;
+    setText('adminNutritionistRequestCount', formatNumber(requests.length));
+    setText('adminNutritionistRequestsTotal', formatNumber(requests.length));
+    adminNutritionistRequestsEmpty?.classList.toggle(
+      'hidden',
+      requests.length > 0 || !adminNutritionistRequestsError?.classList.contains('hidden'),
+    );
+
+    adminNutritionistRequestsList.innerHTML = requests.map((request) => `
+      <article class="flex flex-col gap-4 rounded-2xl border border-nutriflow-100 bg-white p-5 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h3 class="font-semibold text-nutriflow-950">${escapeHtml(request.user?.name || 'Nutricionista')}</h3>
+          <p class="mt-1 text-sm text-nutriflow-700">${escapeHtml(request.user?.email || '')}</p>
+          <p class="mt-1 text-xs text-nutriflow-600">Confirmado em ${escapeHtml(formatDate(request.createdAt))}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="rounded-full bg-nutriflow-950 px-4 py-2 text-sm font-semibold text-white" data-approval-action="APPROVED" data-request-id="${escapeHtml(request.id)}">Aprovar</button>
+          <button type="button" class="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-700" data-approval-action="REJECTED" data-request-id="${escapeHtml(request.id)}">Recusar</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  async function decideNutritionistRequest(requestId, status) {
+    const reason = status === 'REJECTED'
+      ? window.prompt('Informe o motivo da recusa:')
+      : '';
+    if (status === 'REJECTED' && !reason?.trim()) {
+      if (reason !== null) {
+        showToast('Informe um motivo para recusar a solicitação.', 'error');
+      }
+      return;
+    }
+
+    try {
+      const result = await apiRequest(
+        `/api/admin/nutritionist-requests/${encodeURIComponent(requestId)}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status, reason: reason?.trim() || '' }),
+        },
+      );
+      showToast(result?.message || 'Solicitação atualizada.');
+      await loadNutritionistRequests();
+    } catch (error) {
+      showToast(error?.message || 'Não foi possível atualizar a solicitação.', 'error');
     }
   }
 
@@ -2969,6 +3053,7 @@ async function toggleUserStatus(user) {
       const screenIds = [
         'visao-geral',
         'usuarios',
+        'solicitacoes',
         'alimentos',
       ];
       const requestedScreen =
@@ -3014,7 +3099,7 @@ async function toggleUserStatus(user) {
     links.forEach((link) => {
       link.addEventListener('click', (event) => {
         const requestedScreen = link.getAttribute('href')?.slice(1);
-        const screenIds = ['visao-geral', 'usuarios', 'alimentos'];
+        const screenIds = ['visao-geral', 'usuarios', 'solicitacoes', 'alimentos'];
 
         if (!screenIds.includes(requestedScreen)) {
           return;
@@ -3022,6 +3107,9 @@ async function toggleUserStatus(user) {
 
         event.preventDefault();
         if (window.history.state?.nutriflowDashboardPage === requestedScreen) {
+          if (requestedScreen === 'solicitacoes') {
+            loadNutritionistRequests();
+          }
           return;
         }
 
@@ -3034,6 +3122,9 @@ async function toggleUserStatus(user) {
           `${window.location.pathname}${window.location.search}`,
         );
         renderAdminPage();
+        if (requestedScreen === 'solicitacoes') {
+          loadNutritionistRequests();
+        }
       });
     });
     window.addEventListener('popstate', renderAdminPage);
@@ -3077,6 +3168,18 @@ async function toggleUserStatus(user) {
       'change',
       renderUsers,
     );
+
+    adminNutritionistRequestsList?.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-approval-action]');
+      if (!button) {
+        return;
+      }
+      decideNutritionistRequest(
+        button.dataset.requestId,
+        button.dataset.approvalAction,
+      );
+    });
+    refreshNutritionistRequests?.addEventListener('click', loadNutritionistRequests);
 
     /*
      * Busca de alimentos
@@ -3240,6 +3343,7 @@ async function toggleUserStatus(user) {
 
     await Promise.allSettled([
       loadUsers(),
+      loadNutritionistRequests(),
       loadFoods(),
     ]);
 

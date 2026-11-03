@@ -13,7 +13,7 @@ function extractToken(request) {
 }
 
 
-function createAuthMiddleware(supabaseAuthClient, userRepository) {
+function createAuthMiddleware(supabaseAuthClient, userRepository, approvalRepository) {
   return async function authenticate(request, response, next) {
     try {
       const token = extractToken(request);
@@ -64,6 +64,25 @@ function createAuthMiddleware(supabaseAuthClient, userRepository) {
           'Sua conta esta bloqueada. Procure o administrador da plataforma.',
           403,
         );
+      }
+
+      if (user.requiresAdminApproval) {
+        const application = await approvalRepository?.findByUserId(user.id);
+        if (application?.status !== 'APPROVED') {
+          if (application?.status === 'REJECTED') {
+            const reason = application.decisionReason
+              ? ` Motivo: ${application.decisionReason}`
+              : '';
+            throw new AppError(
+              `Sua solicitação de cadastro foi recusada. Consulte o motivo informado pela administração.${reason}`,
+              403,
+            );
+          }
+          throw new AppError(
+            'Seu e-mail já foi confirmado, mas seu acesso ainda depende da aprovação do administrador.',
+            403,
+          );
+        }
       }
 
       request.user = {
