@@ -114,7 +114,7 @@ function getAllowedRoles(routeKey) {
 
   if (!roles) {
     throw new Error(
-      `Rota sem permissao declarada na matriz (src/constants/permissions.js): ${routeKey}`,
+      `Rota sem permissão declarada na matriz (src/constants/permissions.js): ${routeKey}`,
     );
   }
 

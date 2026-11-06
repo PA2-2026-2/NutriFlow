@@ -88,7 +88,7 @@
       throw lastError;
     }
 
-    throw new Error('Nao foi possivel conectar com a API do NutriFlow.');
+    throw new Error('Não foi possível conectar à API do NutriFlow.');
   }
 
   globalScope.NutriFlowApi = {

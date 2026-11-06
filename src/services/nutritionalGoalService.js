@@ -29,18 +29,18 @@ function assertObject(payload, message) {
 
 function parseValue(value, label) {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
-    throw new AppError(`${label} deve ser um numero finito maior ou igual a zero.`, 400);
+    throw new AppError(`${label} deve ser um número finito maior ou igual a zero.`, 400);
   }
   return value;
 }
 
 function parseDate(value, label) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new AppError(`${label} invalida. Informe uma data no formato AAAA-MM-DD.`, 400);
+    throw new AppError(`${label} inválida. Informe uma data no formato AAAA-MM-DD.`, 400);
   }
   const date = new Date(`${value}T00:00:00.000Z`);
   if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    throw new AppError(`${label} invalida.`, 400);
+    throw new AppError(`${label} inválida.`, 400);
   }
   return date;
 }
@@ -113,28 +113,28 @@ function validateCreatePayload(payload) {
   assertObject(payload, 'Informe os dados da meta.');
   const allowedFields = new Set(['patientId', ...EDITABLE_FIELDS]);
   const unknown = Object.keys(payload).find((field) => !allowedFields.has(field));
-  if (unknown) throw new AppError(`Campo de meta nao reconhecido: ${unknown}.`, 400);
+  if (unknown) throw new AppError(`Campo de meta não reconhecido: ${unknown}.`, 400);
 
   const title = typeof payload.title === 'string' ? payload.title.trim() : '';
   if (!title || title.length > 120) {
-    throw new AppError('Informe um titulo de ate 120 caracteres.', 400);
+    throw new AppError('Informe um título com até 120 caracteres.', 400);
   }
   const description = typeof payload.description === 'string' ? payload.description.trim() : '';
   if (description.length > 2000) {
-    throw new AppError('A descricao deve ter ate 2000 caracteres.', 400);
+    throw new AppError('A descrição deve ter até 2.000 caracteres.', 400);
   }
   if (!CATEGORIES.includes(payload.category)) {
-    throw new AppError('Informe uma categoria valida para a meta.', 400);
+    throw new AppError('Informe uma categoria válida para a meta.', 400);
   }
   const customCategory = payload.category === 'CUSTOM'
     ? typeof payload.customCategory === 'string' ? payload.customCategory.trim() : ''
     : '';
   if (payload.category === 'CUSTOM' && (!customCategory || customCategory.length > 80)) {
-    throw new AppError('Informe uma categoria personalizada de ate 80 caracteres.', 400);
+    throw new AppError('Informe uma categoria personalizada com até 80 caracteres.', 400);
   }
   const unit = typeof payload.unit === 'string' ? payload.unit.trim() : '';
   if (!unit || unit.length > 32) {
-    throw new AppError('Informe uma unidade de medida de ate 32 caracteres.', 400);
+    throw new AppError('Informe uma unidade de medida com até 32 caracteres.', 400);
   }
   const initialValue = parseValue(payload.initialValue, 'O valor inicial');
   const targetValue = parseValue(payload.targetValue, 'O valor desejado');
@@ -144,7 +144,7 @@ function validateCreatePayload(payload) {
   const startDate = parseDate(payload.startDate, 'A data inicial');
   const endDate = parseDate(payload.endDate, 'A data prevista');
   if (endDate < startDate) {
-    throw new AppError('A data prevista nao pode ser anterior a data inicial.', 400);
+    throw new AppError('A data prevista não pode ser anterior à data inicial.', 400);
   }
   if (typeof payload.patientId !== 'string' || !payload.patientId.trim()) {
     throw new AppError('Informe o paciente da meta.', 400);
@@ -168,7 +168,7 @@ function validateCreatePayload(payload) {
 function validateUpdatePayload(payload, goal) {
   assertObject(payload, 'Informe os dados da meta.');
   const unknown = Object.keys(payload).find((field) => !EDITABLE_FIELDS.includes(field));
-  if (unknown) throw new AppError(`Campo de meta nao reconhecido: ${unknown}.`, 400);
+  if (unknown) throw new AppError(`Campo de meta não reconhecido: ${unknown}.`, 400);
   if (Object.keys(payload).length === 0) {
     throw new AppError('Informe ao menos um campo para atualizar.', 400);
   }
@@ -186,22 +186,22 @@ function validateUpdatePayload(payload, goal) {
     ...payload,
   };
   if (typeof values.title !== 'string' || !values.title.trim() || values.title.trim().length > 120) {
-    throw new AppError('Informe um titulo de ate 120 caracteres.', 400);
+    throw new AppError('Informe um título com até 120 caracteres.', 400);
   }
   if (typeof values.description !== 'string' || values.description.trim().length > 2000) {
-    throw new AppError('A descricao deve ter ate 2000 caracteres.', 400);
+    throw new AppError('A descrição deve ter até 2.000 caracteres.', 400);
   }
   if (!CATEGORIES.includes(values.category)) {
-    throw new AppError('Informe uma categoria valida para a meta.', 400);
+    throw new AppError('Informe uma categoria válida para a meta.', 400);
   }
   const customCategory = values.category === 'CUSTOM'
     ? typeof values.customCategory === 'string' ? values.customCategory.trim() : ''
     : '';
   if (values.category === 'CUSTOM' && (!customCategory || customCategory.length > 80)) {
-    throw new AppError('Informe uma categoria personalizada de ate 80 caracteres.', 400);
+    throw new AppError('Informe uma categoria personalizada com até 80 caracteres.', 400);
   }
   if (typeof values.unit !== 'string' || !values.unit.trim() || values.unit.trim().length > 32) {
-    throw new AppError('Informe uma unidade de medida de ate 32 caracteres.', 400);
+    throw new AppError('Informe uma unidade de medida com até 32 caracteres.', 400);
   }
   const initialValue = parseValue(values.initialValue, 'O valor inicial');
   const targetValue = parseValue(values.targetValue, 'O valor desejado');
@@ -215,7 +215,7 @@ function validateUpdatePayload(payload, goal) {
     ? new Date(goal.endDate)
     : parseDate(payload.endDate, 'A data prevista');
   if (endDate < startDate) {
-    throw new AppError('A data prevista nao pode ser anterior a data inicial.', 400);
+    throw new AppError('A data prevista não pode ser anterior à data inicial.', 400);
   }
   return {
     title: values.title.trim(),
@@ -244,10 +244,10 @@ class NutritionalGoalService {
 
   async listForNutritionist(nutritionistId, filters = {}) {
     if (filters.category && !CATEGORIES.includes(filters.category)) {
-      throw new AppError('Categoria de meta invalida.', 400);
+      throw new AppError('Categoria de meta inválida.', 400);
     }
     if (filters.status && !['ACTIVE', 'COMPLETED', 'CANCELLED', 'EXPIRED'].includes(filters.status)) {
-      throw new AppError('Status de meta invalido.', 400);
+      throw new AppError('Status de meta inválido.', 400);
     }
     const goals = await this.repository.listForNutritionist(nutritionistId, filters);
     return { goals: serializeList(goals, filters.status) };
@@ -259,13 +259,13 @@ class NutritionalGoalService {
 
   async getForNutritionist(nutritionistId, id) {
     const goal = await this.repository.findForNutritionist(id, nutritionistId);
-    if (!goal) throw new AppError('Meta nao encontrada.', 404);
+    if (!goal) throw new AppError('Meta não encontrada.', 404);
     return { goal: serializeGoal(goal) };
   }
 
   async getForPatient(patientId, id) {
     const goal = await this.repository.findForPatient(id, patientId);
-    if (!goal) throw new AppError('Meta nao encontrada.', 404);
+    if (!goal) throw new AppError('Meta não encontrada.', 404);
     return { goal: serializeGoal(goal) };
   }
 
@@ -277,7 +277,7 @@ class NutritionalGoalService {
       patient.user.profile !== 'PATIENT' ||
       patient.nutritionistId !== nutritionistId
     ) {
-      throw new AppError('Este paciente nao esta vinculado ao nutricionista atual.', 403);
+      throw new AppError('Este paciente não está vinculado ao nutricionista atual.', 403);
     }
 
     const goal = await this.repository.create({ ...data, nutritionistId });
@@ -286,7 +286,7 @@ class NutritionalGoalService {
 
   async updateForNutritionist(nutritionistId, id, payload) {
     const goal = await this.repository.findForNutritionist(id, nutritionistId);
-    if (!goal) throw new AppError('Meta nao encontrada.', 404);
+    if (!goal) throw new AppError('Meta não encontrada.', 404);
     if (goal.status !== 'ACTIVE') {
       throw new AppError('Somente metas ativas podem ser editadas.', 409);
     }
@@ -304,12 +304,12 @@ class NutritionalGoalService {
       throw new AppError('O status deve ser ACTIVE ou CANCELLED.', 400);
     }
     const goal = await this.repository.findForNutritionist(id, nutritionistId);
-    if (!goal) throw new AppError('Meta nao encontrada.', 404);
+    if (!goal) throw new AppError('Meta não encontrada.', 404);
     if (goal.status === 'COMPLETED' || effectiveStatus(goal) === 'EXPIRED') {
-      throw new AppError('Uma meta concluida ou expirada nao pode ser reativada ou alterada.', 409);
+      throw new AppError('Uma meta concluída ou expirada não pode ser reativada nem alterada.', 409);
     }
     if (payload.status === 'ACTIVE' && goal.status !== 'ACTIVE') {
-      throw new AppError('Uma meta cancelada nao pode ser reativada.', 409);
+      throw new AppError('Uma meta cancelada não pode ser reativada.', 409);
     }
     const updated = await this.repository.update(id, { status: payload.status });
     return { goal: serializeGoal(updated) };
@@ -319,22 +319,22 @@ class NutritionalGoalService {
     assertObject(payload, 'Informe os dados do progresso.');
     const unknown = Object.keys(payload).find((field) => !['value', 'notes'].includes(field));
     if (unknown) {
-      throw new AppError(`Campo de progresso nao reconhecido: ${unknown}.`, 400);
+      throw new AppError(`Campo de progresso não reconhecido: ${unknown}.`, 400);
     }
     const goal = await this.repository.findForPatient(id, patientId);
-    if (!goal) throw new AppError('Meta nao encontrada.', 404);
+    if (!goal) throw new AppError('Meta não encontrada.', 404);
     if (effectiveStatus(goal) !== 'ACTIVE') {
-      throw new AppError('Somente metas ativas podem receber atualizacoes.', 409);
+      throw new AppError('Somente metas ativas podem receber atualizações.', 409);
     }
     const recordedAt = new Date();
     if (recordedAt < new Date(goal.startDate)) {
-      throw new AppError('A meta ainda nao atingiu a data inicial.', 409);
+      throw new AppError('A meta ainda não atingiu a data inicial.', 409);
     }
     const value = parseValue(payload.value, 'O valor informado');
     let notes = null;
     if (payload.notes !== undefined && payload.notes !== null) {
       if (typeof payload.notes !== 'string' || payload.notes.trim().length > 1000) {
-        throw new AppError('A observacao deve ter ate 1000 caracteres.', 400);
+        throw new AppError('A observação deve ter até 1.000 caracteres.', 400);
       }
       notes = payload.notes.trim() || null;
     }
@@ -347,7 +347,7 @@ class NutritionalGoalService {
       recordedAt,
     }, completed);
     if (!entry) {
-      throw new AppError('A meta nao esta mais ativa para receber atualizacoes.', 409);
+      throw new AppError('A meta não está mais ativa para receber atualizações.', 409);
     }
     const updatedGoal = await this.repository.findForPatient(id, patientId);
     return { progress: { ...entry, value: Number(entry.value) }, goal: serializeGoal(updatedGoal) };

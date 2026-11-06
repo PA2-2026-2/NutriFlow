@@ -24,14 +24,14 @@ function assertPayload(payload, allowedFields, label) {
 
 	const unsupportedField = Object.keys(payload).find((field) => !allowedFields.has(field));
 	if (unsupportedField) {
-		throw new AppError(`O campo "${unsupportedField}" nao pode ser alterado.`, 400);
+		throw new AppError(`O campo "${unsupportedField}" não pode ser alterado.`, 400);
 	}
 }
 
 function parseDateTime(value, fieldName) {
 	const parts = typeof value === 'string' ? value.match(DATE_TIME_PATTERN) : null;
 	if (!parts) {
-		throw new AppError(`Informe ${fieldName} em formato ISO 8601 com fuso horario.`, 400);
+		throw new AppError(`Informe o ${fieldName} no formato ISO 8601, incluindo o fuso horário.`, 400);
 	}
 
 	const [, year, month, day, hour, minute, second = '0', offsetHour = '0', offsetMinute = '0'] =
@@ -65,22 +65,22 @@ function parseDateTime(value, fieldName) {
 		Number(offsetHour) > 23 ||
 		Number(offsetMinute) > 59
 	) {
-		throw new AppError(`Informe uma data valida para ${fieldName}.`, 400);
+		throw new AppError(`Informe uma data e um horário válidos para o ${fieldName}.`, 400);
 	}
 
 	const date = new Date(value);
 	if (!Number.isFinite(date.getTime())) {
-		throw new AppError(`Informe uma data valida para ${fieldName}.`, 400);
+		throw new AppError(`Informe uma data e um horário válidos para o ${fieldName}.`, 400);
 	}
 	return date;
 }
 
 function validateInterval(startAt, endAt) {
 	if (endAt <= startAt) {
-		throw new AppError('O termino deve ser posterior ao inicio da consulta.', 400);
+		throw new AppError('O término deve ser posterior ao início da consulta.', 400);
 	}
 	if (startAt <= new Date()) {
-		throw new AppError('Nao e permitido agendar uma consulta no passado.', 400);
+		throw new AppError('Não é permitido agendar uma consulta no passado.', 400);
 	}
 }
 
@@ -88,15 +88,15 @@ function parseFilters(query) {
 	const filters = {};
 	if (query.status !== undefined) {
 		if (typeof query.status !== 'string' || !APPOINTMENT_STATUSES.has(query.status)) {
-			throw new AppError('Informe um status de consulta valido.', 400);
+			throw new AppError('Informe um status de consulta válido.', 400);
 		}
 		filters.status = query.status;
 	}
 
-	const from = query.from === undefined ? undefined : parseDateTime(query.from, 'from');
-	const to = query.to === undefined ? undefined : parseDateTime(query.to, 'to');
+	const from = query.from === undefined ? undefined : parseDateTime(query.from, 'início do período');
+	const to = query.to === undefined ? undefined : parseDateTime(query.to, 'fim do período');
 	if (from && to && to < from) {
-		throw new AppError('O fim do intervalo deve ser posterior ao inicio.', 400);
+		throw new AppError('O fim do intervalo deve ser posterior ao início.', 400);
 	}
 	if (from || to) {
 		filters.startAt = {
@@ -143,14 +143,14 @@ class AppointmentService {
 
 		const patientProfile = await this.profileRepository.findPatientWithUserByUserId(patientId);
 		if (!patientProfile || patientProfile.user.profile !== 'PATIENT') {
-			throw new AppError('Paciente nao encontrado.', 404);
+			throw new AppError('Paciente não encontrado.', 404);
 		}
 		if (patientProfile.nutritionistId !== nutritionistId) {
-			throw new AppError('Este paciente nao esta vinculado ao nutricionista.', 403);
+			throw new AppError('Este paciente não está vinculado ao nutricionista.', 403);
 		}
 
-		const startAt = parseDateTime(payload.startAt, 'inicio');
-		const endAt = parseDateTime(payload.endAt, 'termino');
+		const startAt = parseDateTime(payload.startAt, 'início da consulta');
+		const endAt = parseDateTime(payload.endAt, 'término da consulta');
 		validateInterval(startAt, endAt);
 		const description = this.validateDescription(payload.description);
 
@@ -167,7 +167,7 @@ class AppointmentService {
 			return { appointment: presentAppointment(appointment) };
 		} catch (error) {
 			if (isScheduleConstraintError(error)) {
-				throw new AppError('Conflito de horario com outra consulta.', 409);
+				throw new AppError('Conflito de horário com outra consulta.', 409);
 			}
 			throw error;
 		}
@@ -181,48 +181,48 @@ class AppointmentService {
 		} else if (role === 'NUTRITIONIST') {
 			appointments = await this.repository.listForNutritionist(userId, filters);
 		} else {
-			throw new AppError('Voce nao tem permissao para acessar este recurso.', 403);
+			throw new AppError('Você não tem permissão para acessar este recurso.', 403);
 		}
 		return { appointments: appointments.map(presentAppointment) };
 	}
 
 	async update(nutritionistId, id, payload) {
-		assertPayload(payload, UPDATE_FIELDS, 'de atualizacao');
+		assertPayload(payload, UPDATE_FIELDS, 'de atualização');
 		if (Object.keys(payload).length === 0) {
 			throw new AppError('Informe ao menos um campo para atualizar.', 400);
 		}
 
 		const current = await this.repository.findByIdAndNutritionistId(id, nutritionistId);
 		if (!current) {
-			throw new AppError('Consulta nao encontrada.', 404);
+			throw new AppError('Consulta não encontrada.', 404);
 		}
 
 		const data = {};
 		const hasStartAt = Object.hasOwn(payload, 'startAt');
 		const hasEndAt = Object.hasOwn(payload, 'endAt');
 		if (hasStartAt !== hasEndAt) {
-			throw new AppError('Informe inicio e termino juntos ao remarcar a consulta.', 400);
+			throw new AppError('Informe o início e o término juntos ao remarcar a consulta.', 400);
 		}
 
 		if (payload.status !== undefined) {
 			if (!['CONFIRMADA', 'CANCELADA', 'CONCLUIDA'].includes(payload.status)) {
-				throw new AppError('Informe um status permitido para atualizacao.', 400);
+				throw new AppError('Informe um status permitido para atualização.', 400);
 			}
 			if (
 				payload.status !== current.status &&
 				!ALLOWED_STATUS_TRANSITIONS[current.status]?.has(payload.status)
 			) {
-				throw new AppError('A transicao de status da consulta nao e permitida.', 400);
+				throw new AppError('A transição de status da consulta não é permitida.', 400);
 			}
 			data.status = payload.status;
 		}
 
 		if (hasStartAt) {
 			if (['CANCELADA', 'CONCLUIDA'].includes(current.status)) {
-				throw new AppError('Consultas canceladas ou concluidas nao podem ser remarcadas.', 400);
+				throw new AppError('Consultas canceladas ou concluídas não podem ser remarcadas.', 400);
 			}
-			const startAt = parseDateTime(payload.startAt, 'inicio');
-			const endAt = parseDateTime(payload.endAt, 'termino');
+			const startAt = parseDateTime(payload.startAt, 'início da consulta');
+			const endAt = parseDateTime(payload.endAt, 'término da consulta');
 			validateInterval(startAt, endAt);
 			data.startAt = startAt;
 			data.endAt = endAt;
@@ -247,7 +247,7 @@ class AppointmentService {
 			return { appointment: presentAppointment(appointment) };
 		} catch (error) {
 			if (isScheduleConstraintError(error)) {
-				throw new AppError('Conflito de horario com outra consulta.', 409);
+				throw new AppError('Conflito de horário com outra consulta.', 409);
 			}
 			throw error;
 		}
@@ -257,7 +257,7 @@ class AppointmentService {
 		const [patientConflict, nutritionistConflict] =
 			await this.repository.findOverlapping(criteria);
 		if (patientConflict || nutritionistConflict) {
-			throw new AppError('Conflito de horario com outra consulta.', 409);
+			throw new AppError('Conflito de horário com outra consulta.', 409);
 		}
 	}
 
@@ -266,7 +266,7 @@ class AppointmentService {
 			return null;
 		}
 		if (typeof value !== 'string' || value.trim().length > 1000) {
-			throw new AppError('A descricao deve ter ate 1000 caracteres.', 400);
+			throw new AppError('A descrição deve ter até 1.000 caracteres.', 400);
 		}
 		return value.trim() || null;
 	}

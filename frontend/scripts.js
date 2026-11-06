@@ -128,7 +128,7 @@ function setAuthView(view) {
       authSubheading.textContent = 'Cadastre-se para iniciar seu acompanhamento nutricional.';
     } else {
       authHeading.textContent = 'Acesse sua area NutriFlow';
-      authSubheading.textContent = 'Faca login para acompanhar metas, refeicoes e evolucao.';
+      authSubheading.textContent = 'Entre para acompanhar metas, refeições e evolução.';
     }
   }
 
@@ -167,11 +167,11 @@ async function sendAuthRequest(url, payload) {
   });
 
   const data = await response.json().catch(() => ({
-    message: 'Resposta invalida do servidor.',
+    message: 'Resposta inválida do servidor.',
   }));
 
   if (!response.ok) {
-    throw new Error(data.message || 'Erro na autenticacao.');
+    throw new Error(data.message || 'Erro na autenticação.');
   }
 
   return data;
@@ -403,12 +403,12 @@ registerForm?.addEventListener('submit', async (event) => {
   }
 
   if (password.length < 8) {
-    showMessage(registerMessage, 'Sua senha precisa ter no minimo 8 caracteres.', true);
+    showMessage(registerMessage, 'A senha deve ter pelo menos 8 caracteres.', true);
     return;
   }
 
   if (password !== confirmPassword) {
-    showMessage(registerMessage, 'As senhas nao conferem. Verifique e tente novamente.', true);
+    showMessage(registerMessage, 'As senhas não conferem. Verifique e tente novamente.', true);
     return;
   }
 
@@ -447,7 +447,7 @@ registerForm?.addEventListener('submit', async (event) => {
 
 contactForm?.addEventListener('submit', (event) => {
   event.preventDefault();
-  contactMessage.textContent = 'Mensagem enviada com sucesso. Agora voce pode integrar este formulario a sua API.';
+  contactMessage.textContent = 'Mensagem enviada com sucesso. A integração deste formulário com a API está disponível.';
   contactMessage.classList.remove('hidden');
   contactForm.reset();
 });

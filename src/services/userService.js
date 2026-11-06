@@ -46,15 +46,15 @@ function normalizeOptionalNumber(value, fieldName, options = {}) {
   const number = Number(value);
 
   if (!Number.isFinite(number)) {
-    throw new AppError(`${fieldName} invalido.`, 400);
+    throw new AppError(`O valor informado para ${fieldName.toLowerCase()} não é válido.`, 400);
   }
 
   if (options.integer && !Number.isInteger(number)) {
-    throw new AppError(`${fieldName} deve ser um numero inteiro.`, 400);
+    throw new AppError(`${fieldName} deve ser um número inteiro.`, 400);
   }
 
   if (options.min !== undefined && number < options.min) {
-    throw new AppError(`${fieldName} invalido.`, 400);
+    throw new AppError(`O valor informado para ${fieldName.toLowerCase()} não é válido.`, 400);
   }
 
   return number;
@@ -72,7 +72,7 @@ class UserService {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
-      throw new AppError('Usuario nao encontrado.', 404);
+      throw new AppError('Usuário não encontrado.', 404);
     }
 
     const publicUser = await presentPhoto(this.photoStorage, toPublicUser(user));
@@ -107,7 +107,7 @@ class UserService {
 
       if (!name || name.length > MAX_NAME_LENGTH) {
         throw new AppError(
-          `Informe um nome valido (ate ${MAX_NAME_LENGTH} caracteres).`,
+          `Informe um nome válido (com até ${MAX_NAME_LENGTH} caracteres).`,
           400,
         );
       }
@@ -120,7 +120,7 @@ class UserService {
 
       if (!phone.valid) {
         throw new AppError(
-          'Telefone invalido. Informe DDD + numero (10 a 13 digitos).',
+          'Telefone inválido. Informe o DDD e o número (de 10 a 13 dígitos).',
           400,
         );
       }
@@ -145,7 +145,7 @@ class UserService {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
-      throw new AppError('Usuario nao encontrado.', 404);
+      throw new AppError('Usuário não encontrado.', 404);
     }
 
     let updated = user;
@@ -157,7 +157,7 @@ class UserService {
     if (hasProfileFields) {
       if (!this.profileRepository) {
         throw new AppError(
-          'Perfil do paciente nao esta configurado.',
+          'O perfil do paciente não está configurado.',
           500,
         );
       }
@@ -233,7 +233,7 @@ class UserService {
   async updatePhoto(userId, buffer) {
     if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
       throw new AppError(
-        'Envie a imagem no corpo da requisicao.',
+        'Envie a imagem no corpo da solicitação.',
         400,
       );
     }
@@ -249,7 +249,7 @@ class UserService {
 
     if (!extension) {
       throw new AppError(
-        'Formato de imagem invalido. Use JPEG, PNG ou WebP.',
+        'Formato de imagem inválido. Use JPEG, PNG ou WebP.',
         415,
       );
     }
@@ -257,7 +257,7 @@ class UserService {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
-      throw new AppError('Usuario nao encontrado.', 404);
+      throw new AppError('Usuário não encontrado.', 404);
     }
 
     const previousPhotoUrl = user.profilePhotoUrl;

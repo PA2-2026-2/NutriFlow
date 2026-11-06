@@ -438,13 +438,13 @@ function createApp(options = {}) {
 
   app.use('/api', (request, response) => {
     response.status(404).json({
-      message: 'Rota da API nao encontrada.',
+      message: 'Rota da API não encontrada.',
     });
   });
 
   app.use((request, response) => {
     response.status(404).json({
-      message: 'Recurso nao encontrado.',
+      message: 'Recurso não encontrado.',
     });
   });
 

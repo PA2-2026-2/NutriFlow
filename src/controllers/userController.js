@@ -25,7 +25,7 @@ class UserController {
   async updatePhoto(request, response) {
     if (request.is(PHOTO_MIME_TYPES) === false) {
       throw new AppError(
-        'Formato nao suportado. Envie JPEG, PNG ou WebP.',
+        'Formato não compatível. Envie uma imagem JPEG, PNG ou WebP.',
         415,
       );
     }

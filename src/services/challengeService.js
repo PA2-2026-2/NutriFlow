@@ -3,7 +3,7 @@ const { AppError } = require('../errors/appError');
 function toDate(value, label) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    throw new AppError(`${label} invalida.`, 400);
+    throw new AppError(`${label} inválida.`, 400);
   }
   return date;
 }
@@ -16,7 +16,7 @@ function toUtcDateOnly(value, label) {
 function normalizeNumber(value, label) {
   const number = Number(value);
   if (!Number.isFinite(number)) {
-    throw new AppError(`${label} invalida.`, 400);
+    throw new AppError(`O campo ${label.toLowerCase()} deve conter um número válido.`, 400);
   }
   return number;
 }
@@ -138,18 +138,18 @@ class ChallengeService {
 
     const title = typeof payload.title === 'string' ? payload.title.trim() : '';
     if (!title) {
-      throw new AppError('Informe o titulo do desafio.', 400);
+      throw new AppError('Informe o título do desafio.', 400);
     }
 
     const goalDescription = typeof payload.goalDescription === 'string' ? payload.goalDescription.trim() : '';
     if (!goalDescription) {
-      throw new AppError('Informe a descricao da meta.', 400);
+      throw new AppError('Informe a descrição da meta.', 400);
     }
 
     const startDate = toDate(payload.startDate, 'Data inicial');
     const endDate = toDate(payload.endDate, 'Data final');
     if (endDate <= startDate) {
-      throw new AppError('A data final deve ser posterior a data inicial.', 400);
+      throw new AppError('A data final deve ser posterior à data inicial.', 400);
     }
 
     const goalTarget = payload.goalTarget == null ? null : normalizeNumber(payload.goalTarget, 'Meta');
@@ -179,10 +179,10 @@ class ChallengeService {
   async updateForNutritionist(nutritionistId, challengeId, payload) {
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
     if (challenge.nutritionistId !== nutritionistId) {
-      throw new AppError('Este desafio nao pertence ao nutricionista atual.', 403);
+      throw new AppError('Este desafio não pertence ao nutricionista atual.', 403);
     }
 
     const nextPayload = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
@@ -195,7 +195,7 @@ class ChallengeService {
     const endDate = toDate(nextPayload.endDate || challenge.endDate, 'Data final');
 
     if (endDate <= startDate) {
-      throw new AppError('A data final deve ser posterior a data inicial.', 400);
+      throw new AppError('A data final deve ser posterior à data inicial.', 400);
     }
 
     const updated = await this.repository.update(challengeId, {
@@ -216,10 +216,10 @@ class ChallengeService {
   async deleteForNutritionist(nutritionistId, challengeId) {
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
     if (challenge.nutritionistId !== nutritionistId) {
-      throw new AppError('Este desafio nao pertence ao nutricionista atual.', 403);
+      throw new AppError('Este desafio não pertence ao nutricionista atual.', 403);
     }
 
     const participantCount = await this.repository.countParticipants(challengeId);
@@ -240,7 +240,7 @@ class ChallengeService {
   async listForPatient(patientId) {
     const profile = await this.profileRepository.findPatientWithNutritionistByUserId(patientId);
     if (!profile || !profile.nutritionistId) {
-      throw new AppError('Voce ainda nao esta vinculado a um nutricionista.', 403);
+      throw new AppError('Você ainda não está vinculado a um nutricionista.', 403);
     }
 
     const challenges = await this.repository.listForPatient(profile.nutritionistId);
@@ -252,14 +252,14 @@ class ChallengeService {
   async enrollPatient(patientId, challengeId, requestingNutritionistId = null) {
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
 
     if (
       requestingNutritionistId &&
       challenge.nutritionistId !== requestingNutritionistId
     ) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
 
     if (typeof patientId !== 'string' || !patientId.trim()) {
@@ -272,15 +272,15 @@ class ChallengeService {
       patientProfile.user.profile !== 'PATIENT' ||
       patientProfile.nutritionistId !== challenge.nutritionistId
     ) {
-      throw new AppError('Este desafio nao pertence ao seu nutricionista.', 403);
+      throw new AppError('Este desafio não pertence ao seu nutricionista.', 403);
     }
     if (new Date(challenge.endDate) < new Date()) {
-      throw new AppError('Este desafio ja foi encerrado.', 400);
+      throw new AppError('Este desafio já foi encerrado.', 400);
     }
 
     const existing = await this.repository.findParticipant(challengeId, patientId);
     if (existing) {
-      throw new AppError('Voce ja esta inscrito neste desafio.', 409);
+      throw new AppError('Você já está inscrito neste desafio.', 409);
     }
 
     const participant = await this.repository.createParticipant({
@@ -304,12 +304,12 @@ class ChallengeService {
   async getCheckInsForPatient(patientId, challengeId) {
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
 
     const participation = await this.repository.findParticipant(challengeId, patientId);
     if (!participation) {
-      throw new AppError('Voce nao esta inscrito neste desafio.', 403);
+      throw new AppError('Você não está inscrito neste desafio.', 403);
     }
 
     const checkIns = await this.repository.listCheckInsForParticipation(participation.id);
@@ -326,19 +326,19 @@ class ChallengeService {
 
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
 
     const participation = await this.repository.findParticipant(challengeId, patientId);
     if (!participation) {
-      throw new AppError('Voce nao esta inscrito neste desafio.', 403);
+      throw new AppError('Você não está inscrito neste desafio.', 403);
     }
 
     const checkInDate = toUtcDateOnly(payload.checkInDate || new Date(), 'Data do check-in');
     const startDate = new Date(challenge.startDate);
     const endDate = new Date(challenge.endDate);
     if (checkInDate < startDate || checkInDate > endDate) {
-      throw new AppError('O check-in deve ser realizado dentro do periodo do desafio.', 400);
+      throw new AppError('O check-in deve ser realizado durante o período do desafio.', 400);
     }
 
     const existing = await this.repository.findCheckInByParticipationAndDate(participation.id, new Date(checkInDate.getTime()));
@@ -377,12 +377,12 @@ class ChallengeService {
   async completeChallenge(patientId, challengeId) {
     const challenge = await this.repository.findById(challengeId);
     if (!challenge || !challenge.isActive) {
-      throw new AppError('Desafio nao encontrado.', 404);
+      throw new AppError('Desafio não encontrado.', 404);
     }
 
     const participation = await this.repository.findParticipant(challengeId, patientId);
     if (!participation) {
-      throw new AppError('Voce nao esta inscrito neste desafio.', 403);
+      throw new AppError('Você não está inscrito neste desafio.', 403);
     }
 
     const updated = await this.repository.updateParticipant(participation.id, {

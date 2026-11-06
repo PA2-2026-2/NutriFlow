@@ -93,7 +93,7 @@ function validateMeasurementPayload(payload, { partial = false } = {}) {
 	);
 
 	if (unknownFields.length) {
-		throw new AppError(`Campo de medida nao reconhecido: ${unknownFields[0]}.`, 400);
+		throw new AppError(`Campo de medida não reconhecido: ${unknownFields[0]}.`, 400);
 	}
 
 	if (partial && Object.keys(payload).length === 0) {
@@ -105,7 +105,7 @@ function validateMeasurementPayload(payload, { partial = false } = {}) {
 	for (const [field, rules] of Object.entries(MEASUREMENT_FIELDS)) {
 		if (!Object.hasOwn(payload, field)) {
 			if (!partial && rules.required) {
-				throw new AppError(`Informe o campo ${field}.`, 400);
+				throw new AppError(`O campo ${MEASUREMENT_LABELS[field].toLowerCase()} é obrigatório.`, 400);
 			}
 			if (!partial) {
 				data[field] = null;
@@ -126,7 +126,7 @@ function validateMeasurementPayload(payload, { partial = false } = {}) {
 			value > rules.max
 		) {
 			throw new AppError(
-				`${field} deve ser um numero entre ${rules.min} e ${rules.max}.`,
+				`O valor de ${MEASUREMENT_LABELS[field].toLowerCase()} deve ser um número entre ${rules.min} e ${rules.max}.`,
 				400,
 			);
 		}
@@ -138,7 +138,7 @@ function validateMeasurementPayload(payload, { partial = false } = {}) {
 		if (payload.notes === null) {
 			data.notes = null;
 		} else if (typeof payload.notes !== 'string' || payload.notes.length > 2000) {
-			throw new AppError('As observacoes devem ser um texto de ate 2000 caracteres.', 400);
+			throw new AppError('As observações devem ser um texto com até 2.000 caracteres.', 400);
 		} else {
 			data.notes = payload.notes.trim() || null;
 		}
@@ -166,23 +166,23 @@ class PatientService {
 	async linkNutritionist(patientId, nutritionistEmail, profileData = {}) {
 		const email = normalizeEmail(nutritionistEmail);
 		if (!email) {
-			throw new AppError('Informe o e-mail do nutricionista responsavel.', 400);
+			throw new AppError('Informe o e-mail do nutricionista responsável.', 400);
 		}
 
 		const nutritionist = await this.userRepository.findByEmail(email);
 		if (!nutritionist || normalizeRole(nutritionist.profile) !== ROLES.NUTRITIONIST) {
-			throw new AppError('Nutricionista nao encontrado.', 404);
+			throw new AppError('Nutricionista não encontrado.', 404);
 		}
 
 		if (!nutritionist.isActive) {
-			throw new AppError('Este nutricionista esta inativo no momento.', 403);
+			throw new AppError('Este nutricionista está inativo no momento.', 403);
 		}
 
 		const profileUpdates = {};
 		if (profileData.age !== undefined && profileData.age !== '') {
 			const age = Number(profileData.age);
 			if (!Number.isInteger(age) || age < 13 || age > 120) {
-				throw new AppError('A idade deve ser um numero inteiro entre 13 e 120.', 400);
+				throw new AppError('A idade deve ser um número inteiro entre 13 e 120 anos.', 400);
 			}
 			profileUpdates.age = age;
 		}
@@ -191,7 +191,7 @@ class PatientService {
 				? profileData.objective.trim()
 				: '';
 			if (objective.length > 120) {
-				throw new AppError('O objetivo deve ter ate 120 caracteres.', 400);
+				throw new AppError('O objetivo deve ter até 120 caracteres.', 400);
 			}
 			profileUpdates.objective = objective || null;
 		}
@@ -200,7 +200,7 @@ class PatientService {
 				? profileData.restrictions.trim()
 				: '';
 			if (restrictions.length > 500) {
-				throw new AppError('As restricoes devem ter ate 500 caracteres.', 400);
+				throw new AppError('As restrições devem ter até 500 caracteres.', 400);
 			}
 			profileUpdates.restrictions = restrictions || null;
 		}
@@ -212,7 +212,7 @@ class PatientService {
 		);
 
 		return {
-			message: 'Vinculo com o nutricionista realizado com sucesso.',
+			message: 'Vínculo com o nutricionista realizado com sucesso.',
 			nutritionist: {
 				id: nutritionist.id,
 				name: nutritionist.name,
@@ -278,13 +278,13 @@ class PatientService {
 		const patient = await this.userRepository.findByEmail(patientEmail);
 
 		if (!patient || patient.profile !== ROLES.PATIENT) {
-			throw new AppError('Paciente nao encontrado.', 404);
+			throw new AppError('Paciente não encontrado.', 404);
 		}
 
 		const age = Number(payload.age);
 
 		if (!Number.isInteger(age) || age < 0) {
-			throw new AppError('Idade invalida.', 400);
+			throw new AppError('Idade inválida.', 400);
 		}
 
 		const objective = String(payload.objective || '').trim();
@@ -315,11 +315,11 @@ class PatientService {
 		const patientProfile = await this.profileRepository.findPatientByUserId(patientId);
 
 		if (!patientProfile) {
-			throw new AppError('Paciente nao encontrado.', 404);
+			throw new AppError('Paciente não encontrado.', 404);
 		}
 
 		if (patientProfile.nutritionistId !== nutritionistId) {
-			throw new AppError('Este paciente nao esta vinculado ao nutricionista.', 403);
+			throw new AppError('Este paciente não está vinculado ao nutricionista.', 403);
 		}
 
 		const data = validateMeasurementPayload(payload);
@@ -336,7 +336,7 @@ class PatientService {
 		);
 
 		if (result.count === 0) {
-			throw new AppError('Medida nao encontrada.', 404);
+			throw new AppError('Medida não encontrada.', 404);
 		}
 
 		const measurement = await this.profileRepository.findMeasurementByIdAndPatientProfileId(
@@ -344,7 +344,7 @@ class PatientService {
 			patientProfile.id,
 		);
 		if (!measurement) {
-			throw new AppError('Medida nao encontrada.', 404);
+			throw new AppError('Medida não encontrada.', 404);
 		}
 
 		return measurement;
@@ -358,7 +358,7 @@ class PatientService {
 		);
 
 		if (result === 0) {
-			throw new AppError('Medida nao encontrada.', 404);
+			throw new AppError('Medida não encontrada.', 404);
 		}
 
 		return { message: 'Medida removida com sucesso.' };
@@ -368,11 +368,11 @@ class PatientService {
 		const patientProfile = await this.profileRepository.findPatientByUserId(patientId);
 
 		if (!patientProfile) {
-			throw new AppError('Paciente nao encontrado.', 404);
+			throw new AppError('Paciente não encontrado.', 404);
 		}
 
 		if (patientProfile.nutritionistId !== nutritionistId) {
-			throw new AppError('Este paciente nao esta vinculado ao nutricionista.', 403);
+			throw new AppError('Este paciente não está vinculado ao nutricionista.', 403);
 		}
 
 		return patientProfile;
@@ -380,7 +380,7 @@ class PatientService {
 
 	async getMeasurements(requesterId, requesterRole, patientId) {
 		if (requesterRole === ROLES.PATIENT && requesterId !== patientId) {
-			throw new AppError('Voce so pode consultar suas proprias medidas.', 403);
+			throw new AppError('Você só pode consultar suas próprias medidas.', 403);
 		}
 
 		const patientProfile = await this.profileRepository.findPatientByUserId(patientId);
@@ -388,14 +388,14 @@ class PatientService {
 			if (requesterRole === ROLES.PATIENT) {
 				return { measurements: [] };
 			}
-			throw new AppError('Paciente nao encontrado.', 404);
+			throw new AppError('Paciente não encontrado.', 404);
 		}
 
 		if (
 			requesterRole === ROLES.NUTRITIONIST &&
 			patientProfile.nutritionistId !== requesterId
 		) {
-			throw new AppError('Este paciente nao esta vinculado ao nutricionista.', 403);
+			throw new AppError('Este paciente não está vinculado ao nutricionista.', 403);
 		}
 
 		return {

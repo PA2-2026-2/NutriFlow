@@ -30,7 +30,7 @@ class ChatService {
 	async getAuthorizedPair(userId, recipientId) {
 		const recipient = await this.repository.findUserById(recipientId);
 		if (!recipient) {
-			throw new AppError('Destinatario nao encontrado.', 404);
+			throw new AppError('Destinatário não encontrado.', 404);
 		}
 
 		const link = await this.repository.findActiveLink(userId, recipientId);
@@ -43,7 +43,7 @@ class ChatService {
 				|| (userId === link.nutritionist.id && recipientId === link.user.id));
 
 		if (!validPair) {
-			throw new AppError('Nao existe vinculo ativo com este destinatario.', 403);
+			throw new AppError('Não há vínculo ativo com este destinatário.', 403);
 		}
 
 		return { recipient, link };
@@ -56,7 +56,7 @@ class ChatService {
 
 		const unexpectedField = Object.keys(payload).find((field) => !MESSAGE_FIELDS.has(field));
 		if (unexpectedField) {
-			throw new AppError(`Campo nao reconhecido: ${unexpectedField}.`, 400);
+			throw new AppError(`Campo não reconhecido: ${unexpectedField}.`, 400);
 		}
 
 		if (typeof payload.recipientId !== 'string' || !payload.recipientId.trim()) {
@@ -72,60 +72,60 @@ class ChatService {
 
 		if (hasAudio) {
 			if (payload.content !== undefined && (typeof payload.content !== 'string' || payload.content.trim())) {
-				throw new AppError('Uma mensagem de voz nao pode conter texto.', 400);
+				throw new AppError('Uma mensagem de voz não pode conter texto.', 400);
 			}
 			if (typeof payload.audioBase64 !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(payload.audioBase64)) {
-				throw new AppError('O arquivo de audio e invalido.', 400);
+				throw new AppError('O arquivo de áudio é inválido.', 400);
 			}
 			audioData = Buffer.from(payload.audioBase64, 'base64');
 			const normalizedBase64 = payload.audioBase64.replace(/=+$/, '');
 			if (!audioData.length
 				|| audioData.toString('base64').replace(/=+$/, '') !== normalizedBase64) {
-				throw new AppError('O arquivo de audio e invalido.', 400);
+				throw new AppError('O arquivo de áudio é inválido.', 400);
 			}
 			if (audioData.length > MAX_AUDIO_BYTES) {
-				throw new AppError(`O audio deve ter no maximo ${MAX_AUDIO_BYTES / 1024} KB.`, 400);
+				throw new AppError(`O áudio deve ter no máximo ${MAX_AUDIO_BYTES / 1024} KB.`, 400);
 			}
 			audioMimeType = typeof payload.audioMimeType === 'string'
 				? payload.audioMimeType.split(';')[0].trim().toLowerCase()
 				: '';
 			if (!ALLOWED_AUDIO_MIME_TYPES.has(audioMimeType)) {
-				throw new AppError('Formato de audio nao suportado.', 400);
+				throw new AppError('Formato de áudio não compatível.', 400);
 			}
 			audioDurationSeconds = payload.audioDurationSeconds;
 			if (!Number.isInteger(audioDurationSeconds)
 				|| audioDurationSeconds < 1
 				|| audioDurationSeconds > MAX_AUDIO_DURATION_SECONDS) {
-				throw new AppError(`O audio deve ter ate ${MAX_AUDIO_DURATION_SECONDS} segundos.`, 400);
+				throw new AppError(`O áudio deve ter até ${MAX_AUDIO_DURATION_SECONDS} segundos.`, 400);
 			}
 			if (payload.transcript !== undefined && typeof payload.transcript !== 'string') {
-				throw new AppError('A transcricao deve ser um texto.', 400);
+				throw new AppError('A transcrição deve ser um texto.', 400);
 			}
 			transcript = payload.transcript?.trim() || null;
 			if (transcript && transcript.length > MAX_MESSAGE_LENGTH) {
-				throw new AppError(`A transcricao deve ter ate ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
+				throw new AppError(`A transcrição deve ter até ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
 			}
 		} else {
 			if (typeof payload.content !== 'string') {
-				throw new AppError('O conteudo da mensagem deve ser um texto.', 400);
+				throw new AppError('O conteúdo da mensagem deve ser um texto.', 400);
 			}
 			content = payload.content.trim();
 			if (!content) {
-				throw new AppError('A mensagem nao pode estar vazia.', 400);
+				throw new AppError('A mensagem não pode estar vazia.', 400);
 			}
 			if (content.length > MAX_MESSAGE_LENGTH) {
-				throw new AppError(`A mensagem deve ter ate ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
+				throw new AppError(`A mensagem deve ter até ${MAX_MESSAGE_LENGTH} caracteres.`, 400);
 			}
 			if (payload.audioMimeType !== undefined
 				|| payload.audioDurationSeconds !== undefined
 				|| payload.transcript !== undefined) {
-				throw new AppError('Metadados de audio exigem uma mensagem de voz.', 400);
+				throw new AppError('Os metadados de áudio exigem uma mensagem de voz.', 400);
 			}
 		}
 
 		const recipientId = payload.recipientId.trim();
 		if (recipientId === senderId) {
-			throw new AppError('Nao e permitido enviar mensagem para si mesmo.', 400);
+			throw new AppError('Não é permitido enviar mensagens para si mesmo.', 400);
 		}
 
 		await this.getAuthorizedPair(senderId, recipientId);
@@ -163,7 +163,7 @@ class ChatService {
 	async listConversations(userId) {
 		const user = await this.repository.findUserById(userId);
 		if (!user || !user.isActive) {
-			throw new AppError('Usuario nao encontrado ou inativo.', 403);
+			throw new AppError('Usuário não encontrado ou inativo.', 403);
 		}
 
 		let patientProfiles;
@@ -175,7 +175,7 @@ class ChatService {
 				? [{ user: user, nutritionistId: profile.nutritionistId }]
 				: [];
 		} else {
-			throw new AppError('Voce nao tem permissao para acessar conversas.', 403);
+			throw new AppError('Você não tem permissão para acessar conversas.', 403);
 		}
 
 		return Promise.all(patientProfiles.map(async (profile) => {
@@ -208,11 +208,11 @@ class ChatService {
 
 	async getConversationMessages(userId, conversationId, query = {}) {
 		if (typeof conversationId !== 'string' || !conversationId.trim()) {
-			throw new AppError('Informe uma conversa valida.', 400);
+			throw new AppError('Informe uma conversa válida.', 400);
 		}
 		const currentUser = await this.repository.findUserById(userId);
 		if (!currentUser || ![ROLES.PATIENT, ROLES.NUTRITIONIST].includes(currentUser.profile)) {
-			throw new AppError('Voce nao tem permissao para acessar conversas.', 403);
+			throw new AppError('Você não tem permissão para acessar conversas.', 403);
 		}
 
 		const patientId = conversationId.trim();
@@ -221,20 +221,20 @@ class ChatService {
 			nutritionistId = userId;
 		} else {
 			if (patientId !== userId) {
-				throw new AppError('Conversa nao encontrada.', 403);
+				throw new AppError('Conversa não encontrada.', 403);
 			}
 			const patientProfile = await this.repository.findPatientProfile(userId);
 			nutritionistId = patientProfile?.nutritionistId;
 		}
 		if (!nutritionistId) {
-			throw new AppError('Conversa nao encontrada.', 403);
+			throw new AppError('Conversa não encontrada.', 403);
 		}
 		await this.getAuthorizedPair(userId, currentUser.profile === ROLES.NUTRITIONIST ? patientId : nutritionistId);
 
 		const page = query.page === undefined ? 1 : Number(query.page);
 		const limit = query.limit === undefined ? 50 : Number(query.limit);
 		if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
-			throw new AppError('Paginacao invalida. Use page >= 1 e limit entre 1 e 100.', 400);
+			throw new AppError('Parâmetros de paginação inválidos. A página deve ser maior ou igual a 1, e o limite deve estar entre 1 e 100.', 400);
 		}
 
 		const [total, unreadCount] = await Promise.all([
@@ -294,12 +294,12 @@ class ChatService {
 			throw new AppError('Informe os dados da mensagem em um objeto.', 400);
 		}
 		if (Object.keys(payload).some((field) => !MESSAGE_FIELDS.has(field) || field === 'recipientId')) {
-			throw new AppError('Campo nao reconhecido no envio da mensagem.', 400);
+			throw new AppError('Campo não reconhecido no envio da mensagem.', 400);
 		}
 
 		const profile = await this.repository.findPatientProfile(patientId);
 		if (!profile?.nutritionistId) {
-			throw new AppError('Conecte sua conta a um nutricionista antes de usar o chat.', 403);
+			throw new AppError('Vincule sua conta a um nutricionista antes de usar o chat.', 403);
 		}
 
 		return this.sendMessage(patientId, {
@@ -310,14 +310,14 @@ class ChatService {
 
 	async getMessageAudio(userId, messageId) {
 		if (typeof messageId !== 'string' || !messageId.trim()) {
-			throw new AppError('Informe uma mensagem valida.', 400);
+			throw new AppError('Informe uma mensagem válida.', 400);
 		}
 		const message = await this.repository.findMessageAudio(messageId.trim());
 		if (!message || !message.audioData || !message.audioMimeType) {
-			throw new AppError('Audio nao encontrado.', 404);
+			throw new AppError('Áudio não encontrado.', 404);
 		}
 		if (message.senderId !== userId && message.recipientId !== userId) {
-			throw new AppError('Conversa nao encontrada.', 403);
+			throw new AppError('Conversa não encontrada.', 403);
 		}
 		await this.getAuthorizedPair(userId, message.senderId === userId
 			? message.recipientId
@@ -330,12 +330,12 @@ class ChatService {
 
 	async getConversation(userId, recipientId) {
 		if (typeof recipientId !== 'string' || !recipientId.trim()) {
-			throw new AppError('Informe o destinatario da conversa.', 400);
+			throw new AppError('Informe o destinatário da conversa.', 400);
 		}
 
 		recipientId = recipientId.trim();
 		if (recipientId === userId) {
-			throw new AppError('Nao e permitido acessar uma conversa consigo mesmo.', 400);
+			throw new AppError('Não é permitido acessar uma conversa consigo mesmo.', 400);
 		}
 
 		const { link } = await this.getAuthorizedPair(userId, recipientId);
