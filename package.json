@@ -38,8 +38,11 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.17.1",
     "jest": "^30.4.2",
     "prisma": "^6.19.3",
+    "prisma-erd-generator": "^3.2.1",
+    "puppeteer": "^25.16.0",
     "supertest": "^7.2.2"
   },
   "engines": {

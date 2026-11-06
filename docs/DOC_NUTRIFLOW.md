@@ -568,6 +568,8 @@ Existem testes automatizados para validar regras e permissões. O script princip
 
 A arquitetura do NutriFlow é organizada em camadas e segue um padrão simples, funcional e previsível.
 
+O diagrama visual dessas camadas e das integrações do projeto está em [Diagrama_Arquitetura_NutriFlow.svg](./Diagrama_Arquitetura_NutriFlow.svg) e também foi incluído como seção 3.4 do documento técnico em PDF.
+
 ### 8.1 Frontend
 
 A interface está em `frontend/` e é servida pelo Express. A aplicação entrega páginas HTML, CSS e JS. Há também rotas internas e aliases para páginas do dashboard.
