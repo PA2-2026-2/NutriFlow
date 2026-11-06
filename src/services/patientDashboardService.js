@@ -178,7 +178,10 @@ class PatientDashboardService {
 	}
 
 	async getDashboard(userId) {
-		const record = await this.repository.findDashboardData(userId);
+		const [record, foods] = await Promise.all([
+			this.repository.findDashboardData(userId),
+			this.repository.listFoods(),
+		]);
 		if (!record || record.profile !== 'PATIENT') {
 			throw new AppError('Perfil do paciente nao encontrado.', 404);
 		}
@@ -239,9 +242,7 @@ class PatientDashboardService {
 			day.calories += entry.calories;
 			historyByDate.set(dateKey, day);
 		}
-
 		const measurements = profile?.measurements || [];
-		const foods = await this.repository.listFoods();
 		const manualWeightEntries = record.weightEntries || [];
 		const latestWeight = [
 			...manualWeightEntries.map((entry) => ({

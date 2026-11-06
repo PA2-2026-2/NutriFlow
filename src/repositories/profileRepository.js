@@ -52,6 +52,28 @@ class ProfileRepository {
     return this.prisma.patientMeasurement.findMany({
       where: { patientProfileId },
       orderBy: [{ recordedAt: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true,
+        recordedAt: true,
+        notes: true,
+        weightKg: true,
+        heightCm: true,
+        bodyFatPercent: true,
+        neckCircumferenceCm: true,
+        chestCircumferenceCm: true,
+        waistCircumferenceCm: true,
+        hipCircumferenceCm: true,
+        armCircumferenceCm: true,
+        thighCircumferenceCm: true,
+        calfCircumferenceCm: true,
+        tricepsSkinfoldMm: true,
+        bicepsSkinfoldMm: true,
+        subscapularSkinfoldMm: true,
+        suprailiacSkinfoldMm: true,
+        abdominalSkinfoldMm: true,
+        thighSkinfoldMm: true,
+        calfSkinfoldMm: true,
+      },
     });
   }
 
@@ -69,10 +91,39 @@ class ProfileRepository {
   findPatientsByNutritionistId(nutritionistId) {
     return this.prisma.patientProfile.findMany({
       where: { nutritionistId },
-      include: {
-        user: true,
+      select: {
+        age: true,
+        weight: true,
+        height: true,
+        objective: true,
+        restrictions: true,
+        user: {
+          select: { id: true, name: true, email: true },
+        },
         measurements: {
           orderBy: { recordedAt: 'desc' },
+          select: {
+            id: true,
+            recordedAt: true,
+            notes: true,
+            weightKg: true,
+            heightCm: true,
+            bodyFatPercent: true,
+            neckCircumferenceCm: true,
+            chestCircumferenceCm: true,
+            waistCircumferenceCm: true,
+            hipCircumferenceCm: true,
+            armCircumferenceCm: true,
+            thighCircumferenceCm: true,
+            calfCircumferenceCm: true,
+            tricepsSkinfoldMm: true,
+            bicepsSkinfoldMm: true,
+            subscapularSkinfoldMm: true,
+            suprailiacSkinfoldMm: true,
+            abdominalSkinfoldMm: true,
+            thighSkinfoldMm: true,
+            calfSkinfoldMm: true,
+          },
         },
       },
       orderBy: { updatedAt: 'desc' },

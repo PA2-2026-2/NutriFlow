@@ -373,6 +373,7 @@ async function fetchDatabaseData() {
       apiRequest('/api/nutritionist/patients'),
       apiRequest('/api/nutritionist/foods'),
       apiRequest('/api/nutritionist/meal-plans'),
+      fetchAppointments(),
     ]);
     state.patients = patientsData.patients || [];
     state.foods = foodsData.foods || [];

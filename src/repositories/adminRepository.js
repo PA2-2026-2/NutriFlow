@@ -81,7 +81,7 @@ class AdminRepository {
   }
 
   async getFoodMetrics() {
-    await this.listFoods();
+    await ensureDefaultFoods(this.prisma);
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfTomorrow = new Date(startOfToday);
@@ -128,6 +128,16 @@ class AdminRepository {
           : {}),
       },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profile: true,
+        isActive: true,
+        phone: true,
+        profilePhotoUrl: true,
+        createdAt: true,
+      },
     });
   }
 

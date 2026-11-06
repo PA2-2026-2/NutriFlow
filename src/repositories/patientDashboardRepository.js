@@ -8,20 +8,87 @@ class PatientDashboardRepository {
 	findDashboardData(userId) {
 		return this.prisma.user.findUnique({
 			where: { id: userId },
-			include: {
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				profile: true,
 				patientProfile: {
-					include: {
+					select: {
+						age: true,
+						weight: true,
+						height: true,
+						objective: true,
+						restrictions: true,
+						nutritionistId: true,
 						nutritionist: {
 							select: { id: true, name: true, email: true },
 						},
-						measurements: { orderBy: { recordedAt: 'asc' } },
+						measurements: {
+							orderBy: { recordedAt: 'asc' },
+							select: {
+								id: true,
+								recordedAt: true,
+								weightKg: true,
+								heightCm: true,
+								bodyFatPercent: true,
+								notes: true,
+								neckCircumferenceCm: true,
+								chestCircumferenceCm: true,
+								waistCircumferenceCm: true,
+								hipCircumferenceCm: true,
+								armCircumferenceCm: true,
+								thighCircumferenceCm: true,
+								calfCircumferenceCm: true,
+								tricepsSkinfoldMm: true,
+								bicepsSkinfoldMm: true,
+								subscapularSkinfoldMm: true,
+								suprailiacSkinfoldMm: true,
+								abdominalSkinfoldMm: true,
+								thighSkinfoldMm: true,
+								calfSkinfoldMm: true,
+							},
+						},
 					},
 				},
-				mealEntries: { orderBy: { loggedAt: 'desc' }, take: 90 },
-				weightEntries: { orderBy: { recordedAt: 'asc' } },
+				mealEntries: {
+					orderBy: { loggedAt: 'desc' },
+					take: 90,
+					select: {
+						id: true,
+						loggedAt: true,
+						mealType: true,
+						title: true,
+						description: true,
+						calories: true,
+						protein: true,
+						carbs: true,
+						fats: true,
+						fiber: true,
+						waterMl: true,
+					},
+				},
+				weightEntries: {
+					orderBy: { recordedAt: 'asc' },
+					select: { weightKg: true, recordedAt: true, note: true },
+				},
 				mealPlansAsPatient: {
 					where: { endDate: { gte: new Date() } },
-					include: { items: { include: { food: true } } },
+					select: {
+						title: true,
+						notes: true,
+						calories: true,
+						protein: true,
+						carbs: true,
+						fats: true,
+						items: {
+							select: {
+								quantity: true,
+								mealTime: true,
+								food: { select: { name: true } },
+							},
+						},
+					},
 					orderBy: { createdAt: 'desc' },
 				},
 			},

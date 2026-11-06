@@ -71,6 +71,8 @@ model PatientProfile {
   nutritionist   User?   @relation("NutritionistPatients", fields: [nutritionistId], references: [id])
 
   measurements PatientMeasurement[]
+
+  @@index([nutritionistId, updatedAt])
 }
 
 model PatientMeasurement {
