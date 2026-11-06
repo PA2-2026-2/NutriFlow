@@ -36,14 +36,14 @@
     try {
       await new Promise((resolve, reject) => {
         image.onload = resolve;
-        image.onerror = () => reject(new Error('Nao foi possivel ler a imagem selecionada.'));
+        image.onerror = () => reject(new Error('Não foi possível ler a imagem selecionada.'));
         image.src = objectUrl;
       });
 
       const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
 
       if (!sourceSize) {
-        throw new Error('A imagem selecionada possui dimensoes invalidas.');
+        throw new Error('A imagem selecionada possui dimensões inválidas.');
       }
 
       const canvas = document.createElement('canvas');
@@ -53,7 +53,7 @@
       const context = canvas.getContext('2d');
 
       if (!context) {
-        throw new Error('Nao foi possivel preparar a imagem para o avatar.');
+        throw new Error('Não foi possível preparar a imagem para o avatar.');
       }
 
       const sourceX = (image.naturalWidth - sourceSize) / 2;
@@ -74,7 +74,7 @@
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new Error('Nao foi possivel preparar a imagem para o avatar.'));
+              reject(new Error('Não foi possível preparar a imagem para o avatar.'));
               return;
             }
 
@@ -194,13 +194,13 @@
       request = window.NutriFlowApi?.request,
       getToken = () => null,
       onUnauthorized = null,
-      invalidResponseMessage = 'Resposta invalida do servidor.',
-      defaultErrorMessage = 'Nao foi possivel concluir a operacao.',
+      invalidResponseMessage = 'Resposta inválida do servidor.',
+      defaultErrorMessage = 'Não foi possível concluir a operação.',
     } = options;
 
     return async function apiRequest(url, requestOptions = {}) {
       if (typeof request !== 'function') {
-        throw new Error('Cliente HTTP indisponivel.');
+        throw new Error('Cliente HTTP indisponível.');
       }
 
       const headers = new Headers(requestOptions.headers || {});
@@ -228,7 +228,7 @@
           onUnauthorized(data.message, response, data);
         }
 
-        throw new Error(data.message || 'Sessao invalida.');
+        throw new Error(data.message || 'Sessão inválida.');
       }
 
       if (!response.ok) {

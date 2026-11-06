@@ -33,6 +33,9 @@ const PROTECTED_ROUTES = Object.freeze({
   'PATCH /api/patients/:id/measurements/:measurementId': NUTRITIONIST_ONLY,
   'DELETE /api/patients/:id/measurements/:measurementId': NUTRITIONIST_ONLY,
   'GET /api/patients/:id/measurements': Object.freeze([ROLES.PATIENT, ROLES.NUTRITIONIST]),
+  'GET /api/patients/goals': PATIENT_ONLY,
+  'GET /api/patients/goals/:goalId': PATIENT_ONLY,
+  'POST /api/patients/goals/:goalId/progress': PATIENT_ONLY,
   'GET /api/patient/dashboard': PATIENT_ONLY,
   'GET /api/patient/chat': PATIENT_ONLY,
   'POST /api/patient/meals': PATIENT_ONLY,
@@ -48,6 +51,16 @@ const PROTECTED_ROUTES = Object.freeze({
   'GET /api/nutritionists/meal-plans': NUTRITIONIST_ONLY,
   'POST /api/nutritionists/meal-plans': NUTRITIONIST_ONLY,
   'POST /api/nutritionists/link-patient': NUTRITIONIST_ONLY,
+  'GET /api/nutritionist/goals': NUTRITIONIST_ONLY,
+  'POST /api/nutritionist/goals': NUTRITIONIST_ONLY,
+  'GET /api/nutritionist/goals/:goalId': NUTRITIONIST_ONLY,
+  'PUT /api/nutritionist/goals/:goalId': NUTRITIONIST_ONLY,
+  'PATCH /api/nutritionist/goals/:goalId/status': NUTRITIONIST_ONLY,
+  'GET /api/nutritionists/goals': NUTRITIONIST_ONLY,
+  'POST /api/nutritionists/goals': NUTRITIONIST_ONLY,
+  'GET /api/nutritionists/goals/:goalId': NUTRITIONIST_ONLY,
+  'PUT /api/nutritionists/goals/:goalId': NUTRITIONIST_ONLY,
+  'PATCH /api/nutritionists/goals/:goalId/status': NUTRITIONIST_ONLY,
   'GET /api/nutritionist/challenges': NUTRITIONIST_ONLY,
   'POST /api/nutritionist/challenges': NUTRITIONIST_ONLY,
   'PUT /api/nutritionist/challenges/:challengeId': NUTRITIONIST_ONLY,
@@ -101,7 +114,7 @@ function getAllowedRoles(routeKey) {
 
   if (!roles) {
     throw new Error(
-      `Rota sem permissao declarada na matriz (src/constants/permissions.js): ${routeKey}`,
+      `Rota sem permissão declarada na matriz (src/constants/permissions.js): ${routeKey}`,
     );
   }
 

@@ -60,7 +60,7 @@ class AdminService {
 		const status = String(payload.status || '').trim().toUpperCase();
 		const decisionReason = normalizeText(payload.reason);
 		if (!['APPROVED', 'REJECTED'].includes(status)) {
-			throw new AppError('Informe status APPROVED ou REJECTED.', 400);
+			throw new AppError('Informe se a solicitação foi aprovada ou recusada.', 400);
 		}
 		if (status === 'REJECTED' && !decisionReason) {
 			throw new AppError('Informe o motivo da recusa.', 400);
@@ -100,7 +100,7 @@ class AdminService {
 
 		if (hasRoleFilter && !role) {
 			throw new AppError(
-				'Perfil invalido. Use PATIENT, NUTRITIONIST ou ADMIN.',
+				'Perfil inválido. Escolha Paciente, Nutricionista ou Administrador.',
 				400,
 			);
 		}
@@ -177,6 +177,12 @@ class AdminService {
 		}
 
 		const nutrientValues = {};
+		const nutrientLabels = {
+			calories: 'calorias',
+			protein: 'proteínas',
+			carbs: 'carboidratos',
+			fat: 'gorduras',
+		};
 		for (const field of ['calories', 'protein', 'carbs', 'fat']) {
 			const value = payload[field];
 			const max = field === 'calories' ? null : 100;
@@ -188,8 +194,8 @@ class AdminService {
 			) {
 				throw new AppError(
 					field === 'calories'
-						? 'calories deve ser um numero maior ou igual a 0 por 100g.'
-						: `${field} deve ser um numero entre 0 e ${max} por 100g.`,
+						? 'Informe um valor válido para calorias (maior ou igual a zero por 100 g).'
+						: `Informe um valor válido para ${nutrientLabels[field]} (entre 0 e ${max} g por 100 g).`,
 					400,
 				);
 			}
@@ -198,7 +204,7 @@ class AdminService {
 
 		const existingFood = await this.adminRepository.findFoodByName(name);
 		if (existingFood?.isAvailable) {
-			throw new AppError('Ja existe um alimento ativo com esse nome.', 409);
+			throw new AppError('Já existe um alimento ativo com esse nome.', 409);
 		}
 		if (existingFood) {
 			const food = await this.adminRepository.restoreFood(existingFood.id, {
@@ -206,7 +212,7 @@ class AdminService {
 				...nutrientValues,
 			});
 			return {
-				message: 'Alimento reativado no catalogo com sucesso.',
+				message: 'Alimento reativado no catálogo com sucesso.',
 				food,
 			};
 		}
@@ -220,7 +226,7 @@ class AdminService {
 			return { message: 'Alimento cadastrado com sucesso.', food };
 		} catch (error) {
 			if (error.code === 'P2002') {
-				throw new AppError('Ja existe um alimento com esse nome ou identificador.', 409);
+				throw new AppError('Já existe um alimento com esse nome ou identificador.', 409);
 			}
 			throw error;
 		}
@@ -229,10 +235,10 @@ class AdminService {
 	async deleteFood(foodId) {
 		const result = await this.adminRepository.deleteFood(foodId);
 		if (!result) {
-			throw new AppError('Alimento nao encontrado.', 404);
+			throw new AppError('Alimento não encontrado.', 404);
 		}
 		return {
-			message: 'Alimento removido do catalogo e dos planos alimentares.',
+			message: 'Alimento removido do catálogo e dos planos alimentares.',
 			food: result.deletedFood,
 			affectedPlanCount: result.affectedPlanCount,
 			deletedPlanCount: result.deletedPlanCount,
@@ -249,7 +255,7 @@ class AdminService {
 		}
 
 		if (!isValidEmail(email)) {
-			throw new AppError('Informe um e-mail valido.', 400);
+			throw new AppError('Informe um e-mail válido.', 400);
 		}
 
 		const data = { name, email };
@@ -259,7 +265,7 @@ class AdminService {
 
 			if (!phone.valid) {
 				throw new AppError(
-					'Telefone invalido. Informe DDD + numero (10 a 13 digitos).',
+					'Telefone inválido. Informe o DDD e o número (de 10 a 13 dígitos).',
 					400,
 				);
 			}
@@ -270,21 +276,21 @@ class AdminService {
 		const user = await this.adminRepository.findUserById(userId);
 
 		if (!user) {
-			throw new AppError('Usuario nao encontrado.', 404);
+			throw new AppError('Usuário não encontrado.', 404);
 		}
 
 		if (email !== user.email) {
 			const existing = await this.adminRepository.findUserByEmail(email);
 
 			if (existing) {
-				throw new AppError('Ja existe uma conta com este e-mail.', 409);
+				throw new AppError('Já existe uma conta com este e-mail.', 409);
 			}
 		}
 
 		const updated = await this.adminRepository.updateUser(userId, data);
 
 		return {
-			message: 'Usuario atualizado com sucesso.',
+			message: 'Usuário atualizado com sucesso.',
 			user: await presentPhoto(this.photoStorage, toManagedUser(updated)),
 		};
 	}
@@ -299,12 +305,12 @@ class AdminService {
 		const user = await this.adminRepository.findUserById(userId);
 
 		if (!user) {
-			throw new AppError('Usuario nao encontrado.', 404);
+			throw new AppError('Usuário não encontrado.', 404);
 		}
 
 		if (user.id === currentAdminId && !payload.isActive) {
 			throw new AppError(
-				'O administrador logado nao pode bloquear a propria conta.',
+				'O administrador conectado não pode bloquear a própria conta.',
 				400,
 			);
 		}
@@ -316,8 +322,8 @@ class AdminService {
 
 		return {
 			message: payload.isActive
-				? 'Usuario reativado com sucesso.'
-				: 'Usuario bloqueado com sucesso.',
+				? 'Usuário reativado com sucesso.'
+				: 'Usuário bloqueado com sucesso.',
 			user: await presentPhoto(this.photoStorage, toManagedUser(updated)),
 		};
 	}
@@ -326,12 +332,12 @@ class AdminService {
 		const user = await this.adminRepository.findUserById(userId);
 
 		if (!user) {
-			throw new AppError('Usuario nao encontrado.', 404);
+			throw new AppError('Usuário não encontrado.', 404);
 		}
 
 		if (user.id === currentAdminId) {
 			throw new AppError(
-				'O administrador logado nao pode remover a propria conta.',
+				'O administrador conectado não pode remover a própria conta.',
 				400,
 			);
 		}
@@ -343,7 +349,7 @@ class AdminService {
 			await this.photoStorage.remove(user.profilePhotoUrl).catch(() => {});
 		}
 
-		return { message: 'Usuario removido com sucesso.' };
+		return { message: 'Usuário removido com sucesso.' };
 	}
 }
 

@@ -73,7 +73,7 @@ class AuthService {
 
 		if (!SELF_REGISTRATION_ROLES.includes(role)) {
 			throw new AppError(
-				'Este perfil nao pode ser criado pelo cadastro. Escolha Paciente ou Nutricionista.',
+				'Este perfil não pode ser criado pelo cadastro. Escolha Paciente ou Nutricionista.',
 				403,
 			);
 		}
@@ -426,7 +426,7 @@ class AuthService {
 		const user = await this.userRepository.findById(userId);
 
 		if (!user) {
-			throw new AppError('Usuario nao encontrado.', 404);
+			throw new AppError('Usuário não encontrado.', 404);
 		}
 
 		return {

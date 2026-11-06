@@ -59,15 +59,15 @@ class MealPlanService {
 
 		const profile = await this.profileRepository.findPatientByUserId(patientId);
 		if (!profile) {
-			throw new AppError('Paciente nao encontrado.', 404);
+			throw new AppError('Paciente não encontrado.', 404);
 		}
 		if (profile.nutritionistId !== nutritionistId) {
-			throw new AppError('Este paciente nao esta vinculado ao nutricionista.', 403);
+			throw new AppError('Este paciente não está vinculado ao nutricionista.', 403);
 		}
 
 		const title = typeof payload.title === 'string' ? payload.title.trim() : '';
 		if (!title || title.length > 120) {
-			throw new AppError('Informe um titulo de ate 120 caracteres.', 400);
+			throw new AppError('Informe um título com até 120 caracteres.', 400);
 		}
 
 		if (!Array.isArray(payload.items) || payload.items.length === 0) {
@@ -75,18 +75,18 @@ class MealPlanService {
 		}
 
 		if (payload.items.length > 100) {
-			throw new AppError('O plano nao pode ter mais de 100 itens.', 400);
+			throw new AppError('O plano não pode ter mais de 100 itens.', 400);
 		}
 
 		const foods = await this.repository.listFoods();
 		const foodsById = new Map(foods.map((food) => [food.id, food]));
 		const items = payload.items.map((item) => {
 			if (!item || typeof item !== 'object' || Array.isArray(item)) {
-				throw new AppError('Item de alimento invalido.', 400);
+				throw new AppError('Item de alimento inválido.', 400);
 			}
 			const food = foodsById.get(item.foodId);
 			if (!food) {
-				throw new AppError('Alimento nao encontrado na base.', 400);
+				throw new AppError('Alimento não encontrado na base.', 400);
 			}
 			if (
 				typeof item.quantity !== 'number' ||
@@ -97,7 +97,7 @@ class MealPlanService {
 				throw new AppError('A quantidade deve estar entre 1 e 2000 gramas.', 400);
 			}
 			if (!MEAL_TIMES.has(item.mealTime)) {
-				throw new AppError('Selecione um horario de refeicao valido.', 400);
+				throw new AppError('Selecione um horário de refeição válido.', 400);
 			}
 
 			return { food, quantity: item.quantity, mealTime: item.mealTime };
@@ -115,7 +115,7 @@ class MealPlanService {
 		const now = new Date();
 		const notes = typeof payload.notes === 'string' ? payload.notes.trim() : '';
 		if (notes.length > 2000) {
-			throw new AppError('As observacoes nao podem exceder 2000 caracteres.', 400);
+			throw new AppError('As observações não podem exceder 2.000 caracteres.', 400);
 		}
 
 		const plan = await this.repository.create(nutritionistId, {

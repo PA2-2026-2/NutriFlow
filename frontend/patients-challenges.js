@@ -73,7 +73,7 @@ function getCurrentParticipation(challenge) {
 function getEmptyState() {
   return `
     <article class="rounded-[28px] border border-dashed border-nutriflow-200 bg-white/80 p-6 text-center text-sm text-nutriflow-600">
-      Nenhum desafio disponível no momento. Aguarde a sua nutricionista publicar uma nova meta ou acompanhe seu painel principal.
+      Nenhum desafio disponível no momento. Aguarde até que sua nutricionista publique um novo desafio ou consulte o painel principal.
     </article>
   `;
 }

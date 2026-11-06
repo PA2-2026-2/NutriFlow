@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NutriFlow | Metas dos pacientes</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { nutriflow: { 50: '#f3f7f1', 100: '#cadbbf', 200: '#a8c297', 300: '#85a96f', 400: '#4f6b3d', 500: '#37482d', 600: '#25331e', 700: '#1c2618', 800: '#11170e', 900: '#000000', 950: '#000000' } }, fontFamily: { sans: ['Manrope', 'sans-serif'] } } } }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dashboard-body text-nutriflow-950 font-sans">
+  <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-4 py-4 md:px-6 xl:gap-6">
+    <aside class="dashboard-sidebar nutritionist-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[280px] shrink-0 overflow-y-auto rounded-[32px] p-5 text-white xl:flex xl:flex-col">
+      <div>
+        <a href="/dashboard-nutricionista" class="flex items-center gap-3">
+          <span class="grid h-[55px] w-[55px] place-items-center rounded-2xl bg-white/12">
+            <img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" />
+          </span>
+          <span><strong class="block text-xl tracking-[-0.05em]">NutriFlow</strong><small class="text-[10px] uppercase text-white/68">Painel da nutricionista</small></span>
+        </a>
+        <div class="mt-8 rounded-[20px] border border-white/12 bg-white/8 p-4">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Metas ativas</p>
+          <p class="mt-2 text-2xl font-bold tracking-[-0.06em]" id="sidebarGoalSummary">0</p>
+        </div>
+        <nav class="mt-6 space-y-1" aria-label="Navegação do painel da nutricionista">
+          <a href="/dashboard-nutricionista#pacientes" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">♙</span><span>Meus pacientes</span>
+          </a>
+          <a href="/dashboard-nutricionista#plano-alimentar" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">▤</span><span>Últimos planos</span>
+          </a>
+          <a href="/dashboard-nutricionista#avaliacoes" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">▧</span><span>Últimas avaliações</span>
+          </a>
+          <a href="/nutritionists/challenges" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">◇</span><span>Desafios ativos</span>
+          </a>
+          <a href="/nutritionists/goals" aria-current="page" class="flex items-center gap-3 rounded-xl bg-white/15 px-3 py-3 text-sm font-bold text-white">
+            <span aria-hidden="true">◎</span><span>Metas nutricionais</span>
+          </a>
+          <a href="/dashboard-nutricionista#agenda" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">◷</span><span>Agenda</span>
+          </a>
+          <a href="/dashboard-nutricionista#conversas" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span class="flex items-center gap-3"><span aria-hidden="true">✉</span><span>Bate-papos</span></span>
+          </a>
+        </nav>
+      </div>
+      <section class="mt-8 border-t border-white/15 pt-5">
+        <h2 class="text-xs font-extrabold uppercase tracking-[.16em] text-white/70">Pacientes vinculados</h2>
+        <div id="linkedPatientSidebar" class="mt-3 space-y-1" aria-live="polite">
+          <p class="text-xs text-white/65">Carregando pacientes...</p>
+        </div>
+      </section>
+    </aside>
+    <div class="min-w-0 flex-1">
+      <header class="dashboard-header dashboard-surface flex flex-col gap-4 rounded-[28px] px-5 py-5 sm:flex-row sm:items-center sm:justify-between md:px-7">
+        <div>
+          <a class="text-sm font-bold text-nutriflow-600" href="/dashboard-nutricionista">← Voltar ao painel</a>
+          <h1 class="mt-3 text-2xl font-extrabold tracking-[-0.06em] md:text-3xl">Metas dos pacientes</h1>
+          <p class="mt-2 text-sm text-nutriflow-700">Defina objetivos mensuráveis e acompanhe o histórico dos pacientes vinculados.</p>
+        </div>
+        <a href="/dashboard-nutricionista#pacientes" class="rounded-xl border border-nutriflow-200 bg-white px-4 py-3 text-center text-sm font-bold text-nutriflow-800">Vincular paciente</a>
+      </header>
+      <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel da nutricionista">
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#pacientes">Meus pacientes</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#plano-alimentar">Últimos planos</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#avaliacoes">Últimas avaliações</a>
+        <a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios ativos</a>
+        <a class="mobile-nav-pill is-active" href="/nutritionists/goals" aria-current="page">Metas nutricionais</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#agenda">Agenda</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#conversas">Bate-papos</a>
+      </nav>
+      <main class="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(300px,.75fr)_minmax(0,1.5fr)]">
+      <section class="dashboard-surface rounded-[26px] p-5 md:p-6">
+        <h2 id="goalFormTitle" class="text-xl font-extrabold">Criar meta</h2>
+        <form id="nutritionistGoalForm" class="mt-4 grid gap-3">
+          <label class="nf-field"><span>Paciente vinculado</span><select name="patientId" id="goalPatientId" required></select></label>
+          <label class="nf-field"><span>Título</span><input name="title" maxlength="120" required /></label>
+          <label class="nf-field"><span>Descrição</span><textarea name="description" rows="2" maxlength="2000"></textarea></label>
+          <label class="nf-field"><span>Categoria</span><select name="category" required>
+            <option value="WATER">Consumo de água</option><option value="PROTEIN">Consumo de proteínas</option>
+            <option value="CALORIES">Consumo de calorias</option><option value="FRUITS_VEGETABLES">Frutas e vegetais</option>
+            <option value="BODY_WEIGHT">Peso corporal</option><option value="MEAL_FREQUENCY">Frequência de refeições</option>
+            <option value="CUSTOM">Personalizada</option>
+          </select></label>
+          <label id="customCategoryField" class="nf-field hidden"><span>Nome da categoria personalizada</span><input name="customCategory" maxlength="80" placeholder="Ex.: consumo de fibras" /></label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="nf-field"><span>Valor inicial</span><input name="initialValue" type="number" min="0" step="any" required /></label>
+            <label class="nf-field"><span>Valor desejado</span><input name="targetValue" type="number" min="0" step="any" required /></label>
+          </div>
+          <label class="nf-field"><span>Unidade (ex.: L/dia, g, kg, refeições/semana)</span><input name="unit" maxlength="32" required /></label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="nf-field"><span>Início</span><input name="startDate" type="date" required /></label>
+            <label class="nf-field"><span>Prazo</span><input name="endDate" type="date" required /></label>
+          </div>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button id="goalSubmitButton" class="rounded-xl bg-nutriflow-950 px-4 py-3 text-sm font-bold text-white" type="submit">Criar meta</button>
+            <button id="goalCancelEdit" class="hidden rounded-xl border border-nutriflow-200 px-4 py-3 text-sm font-bold" type="button">Cancelar edição</button>
+          </div>
+        </form>
+      </section>
+      <section class="min-w-0">
+        <div class="dashboard-surface mb-4 grid gap-3 rounded-[22px] p-4 sm:grid-cols-3">
+          <label class="nf-field"><span>Paciente</span><select id="goalFilterPatient"><option value="">Todos os pacientes</option></select></label>
+          <label class="nf-field"><span>Categoria</span><select id="goalFilterCategory"><option value="">Todas</option>
+            <option value="WATER">Água</option><option value="PROTEIN">Proteínas</option><option value="CALORIES">Calorias</option>
+            <option value="FRUITS_VEGETABLES">Frutas e vegetais</option><option value="BODY_WEIGHT">Peso corporal</option>
+            <option value="MEAL_FREQUENCY">Frequência de refeições</option><option value="CUSTOM">Personalizada</option>
+          </select></label>
+          <label class="nf-field"><span>Status</span><select id="goalFilterStatus"><option value="">Todos</option>
+            <option value="ACTIVE">Ativas</option><option value="COMPLETED">Concluídas</option>
+            <option value="CANCELLED">Canceladas</option><option value="EXPIRED">Expiradas</option>
+          </select></label>
+        </div>
+        <div id="nutritionistGoalList" class="grid gap-4 2xl:grid-cols-2" aria-live="polite"></div>
+      </section>
+      </main>
+    </div>
+  </div>
+  <div id="goalToast" class="nf-toast hidden"></div>
+  <script src="/api.js"></script>
+  <script src="/dashboard-core.js"></script>
+  <script src="/nutritionists-goals.js"></script>
+</body>
+</html>

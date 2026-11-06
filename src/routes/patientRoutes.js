@@ -2,9 +2,24 @@ const express = require('express');
 const { asyncHandler } = require('../middlewares/asyncHandler');
 const { authorize } = require('../middlewares/authMiddleware');
 
-function createPatientRoutes(patientController, challengeController, authenticate) {
+function createPatientRoutes(patientController, challengeController, goalController, authenticate) {
 	const router = express.Router();
 	router.use(authenticate);
+	router.get(
+		'/goals',
+		authorize('GET /api/patients/goals'),
+		asyncHandler(goalController.listForPatient.bind(goalController)),
+	);
+	router.get(
+		'/goals/:goalId',
+		authorize('GET /api/patients/goals/:goalId'),
+		asyncHandler(goalController.getForPatient.bind(goalController)),
+	);
+	router.post(
+		'/goals/:goalId/progress',
+		authorize('POST /api/patients/goals/:goalId/progress'),
+		asyncHandler(goalController.recordProgress.bind(goalController)),
+	);
 	router.post(
 		'/me/nutritionist',
 		authorize('POST /api/patients/me/nutritionist'),

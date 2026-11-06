@@ -373,6 +373,7 @@ async function fetchDatabaseData() {
       apiRequest('/api/nutritionist/patients'),
       apiRequest('/api/nutritionist/foods'),
       apiRequest('/api/nutritionist/meal-plans'),
+      fetchAppointments(),
     ]);
     state.patients = patientsData.patients || [];
     state.foods = foodsData.foods || [];
@@ -612,7 +613,7 @@ function renderPatientProfileModal(patient) {
             </div>
           </div>
         `).join('')
-      : '<p class="text-xs text-nutriflow-500">Sem historico de medidas complementares por enquanto.</p>';
+      : '<p class="text-xs text-nutriflow-500">Ainda não há histórico de medidas complementares.</p>';
   }
 
   const mealsList = document.getElementById('patientProfileMealsList');
@@ -620,9 +621,9 @@ function renderPatientProfileModal(patient) {
     if (patient.mealEntries && patient.mealEntries.length > 0) {
       mealsList.innerHTML = patient.mealEntries.map(meal => `
         <div class="border-b pb-2 mb-2">
-          <p class="text-xs font-bold text-nutriflow-500 uppercase">${meal.mealType} - ${new Date(meal.loggedAt).toLocaleDateString()}</p>
+          <p class="text-xs font-bold text-nutriflow-500 uppercase">${formatMealTimeLabel(meal.mealType)} - ${new Date(meal.loggedAt).toLocaleDateString()}</p>
           <p class="text-sm font-bold text-nutriflow-950">${meal.title}</p>
-          <p class="text-xs text-nutriflow-600">${meal.calories} kcal • ${meal.protein}g Prot • ${meal.carbs}g Carb</p>
+          <p class="text-xs text-nutriflow-600">${meal.calories} kcal • ${meal.protein} g de proteína • ${meal.carbs} g de carboidratos</p>
         </div>
       `).join('');
     } else {
@@ -655,9 +656,18 @@ function buildFoodOptions(selectedFoodId = '') {
   `).join('');
 }
 
+function formatMealTimeLabel(mealTime) {
+  const labels = {
+    'Cafe da manha': 'Café da manhã',
+    'Lanche da manha': 'Lanche da manhã',
+    Almoco: 'Almoço',
+  };
+  return labels[mealTime] || mealTime;
+}
+
 function buildMealTimeOptions(selectedMealTime = 'Almoco') {
   return MEAL_PLAN_MEAL_TIMES.map((mealTime) => `
-    <option value="${mealTime}" ${mealTime === selectedMealTime ? 'selected' : ''}>${mealTime}</option>
+    <option value="${mealTime}" ${mealTime === selectedMealTime ? 'selected' : ''}>${formatMealTimeLabel(mealTime)}</option>
   `).join('');
 }
 
@@ -768,7 +778,7 @@ async function editPatientMeasurement(patientId, measurementId) {
     const measurement = (response.measurements || []).find((entry) => entry.id === measurementId);
 
     if (!measurement) {
-      showToast('Medida nao encontrada no historico.');
+      showToast('Medida não encontrada no histórico.');
       return;
     }
 
@@ -795,12 +805,12 @@ async function editPatientMeasurement(patientId, measurementId) {
 
     openModal('assessment');
   } catch (error) {
-    showToast(error.message || 'Nao foi possivel carregar a medida.');
+    showToast(error.message || 'Não foi possível carregar a medida.');
   }
 }
 
 async function deletePatientMeasurement(patientId, measurementId) {
-  if (!window.confirm('Deseja excluir esta medida do historico de evolucao?')) {
+  if (!window.confirm('Deseja excluir esta medida do histórico de evolução?')) {
     return;
   }
 
@@ -809,11 +819,11 @@ async function deletePatientMeasurement(patientId, measurementId) {
       `/api/patients/${encodeURIComponent(patientId)}/measurements/${encodeURIComponent(measurementId)}`,
       { method: 'DELETE' },
     );
-    showToast('Medida removida do historico.');
+    showToast('Medida removida do histórico.');
     await fetchDatabaseData();
     renderPatientProfileModal(state.patients.find((patient) => patient.id === patientId));
   } catch (error) {
-    showToast(error.message || 'Nao foi possivel excluir a medida.');
+    showToast(error.message || 'Não foi possível excluir a medida.');
   }
 }
 
@@ -1445,7 +1455,7 @@ document.getElementById('assessmentForm')?.addEventListener('submit', async (e) 
   e.preventDefault();
   const measurements = getAssessmentMeasurementsPayload({ allowIncomplete: true });
   if (!measurements) {
-    showToast('Complete as medidas adicionadas e nao repita o mesmo tipo.');
+    showToast('Preencha as medidas adicionadas e não repita o mesmo tipo.');
     return;
   }
 

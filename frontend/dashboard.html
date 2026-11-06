@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>NutriFlow | Dashboard do paciente</title>
+  <title>NutriFlow | Painel do paciente</title>
   <link rel="icon" type="image/png" href="/favicon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -54,7 +54,7 @@
           </span>
           <div>
             <p class="text-2xl font-extrabold tracking-[-0.05em]">NutriFlow</p>
-            <p class="text-xs text-white/70">Paciente dashboard</p>
+            <p class="text-xs text-white/70">Painel do paciente</p>
           </div>
         </a>
 
@@ -81,6 +81,7 @@
           <a class="sidebar-link" href="#medidas"><span>Medidas corporais</span></a>
           <a class="sidebar-link" href="#peso"><span>Evolução de peso</span></a>
           <a class="sidebar-link" href="/patients/challenges"><span>Desafios</span></a>
+          <a class="sidebar-link" href="/patients/goals"><span>Metas nutricionais</span></a>
           <a class="sidebar-link" href="#consultas"><span>Consultas</span></a>
         </nav>
       </div>
@@ -138,6 +139,7 @@
         <a class="mobile-nav-pill" href="#medidas">Medidas</a>
         <a class="mobile-nav-pill" href="#peso">Peso</a>
         <a class="mobile-nav-pill" href="/patients/challenges">Desafios</a>
+        <a class="mobile-nav-pill" href="/patients/goals">Metas</a>
         <a class="mobile-nav-pill" href="#consultas">Consultas</a>
       </nav>
 
@@ -146,7 +148,7 @@
           <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <span class="glass-pill">Dashboard de calorias</span>
+                <span class="glass-pill">Resumo de calorias</span>
                 <h2 class="mt-4 text-2xl font-bold tracking-[-0.05em] md:text-3xl">Resumo nutricional</h2>
                 <p class="mt-3 max-w-2xl text-sm leading-7 text-nutriflow-700">Acompanhe seu progresso e consistência diária.</p>
               </div>
@@ -278,14 +280,14 @@
             <article class="dashboard-surface dashboard-card rounded-[30px] p-6 md:p-7">
               <div class="flex items-center justify-between gap-4">
                 <div>
-                  <span class="glass-pill">Avaliacao corporal</span>
+                  <span class="glass-pill">Avaliação corporal</span>
                   <h2 class="mt-4 text-2xl font-bold tracking-[-0.05em]">Medidas corporais</h2>
                 </div>
               </div>
               <div id="bodyMeasurementsSummary" class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
               <div class="mt-5 overflow-hidden rounded-[22px] border border-nutriflow-200 bg-white">
                 <div class="bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
-                  Historico por avaliacao
+                  Histórico por avaliação
                 </div>
                 <div id="bodyMeasurementsHistoryList" class="divide-y divide-nutriflow-100 text-sm font-medium"></div>
               </div>
@@ -318,7 +320,7 @@
               </div>
               <div class="mt-5 overflow-x-auto rounded-[22px] border border-nutriflow-200 bg-white">
                 <div class="grid min-w-[640px] grid-cols-[.9fr_.7fr_.7fr_1.4fr] bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
-                  <span>Data</span><span>Peso</span><span>Variacao</span><span>Observacao</span>
+                  <span>Data</span><span>Peso</span><span>Variação</span><span>Observação</span>
                 </div>
                 <div id="weightHistoryList" class="divide-y divide-nutriflow-100 text-sm font-medium"></div>
               </div>
@@ -417,12 +419,12 @@
 
         <label class="nf-field">
           <span>Objetivo Nutricional</span>
-          <input id="profileObjectiveInput" type="text" placeholder="Ex: Emagrecimento, Hipertrofia..." class="font-bold" required />
+          <input id="profileObjectiveInput" type="text" placeholder="Ex.: emagrecimento, hipertrofia..." class="font-bold" required />
         </label>
 
         <label class="nf-field">
           <span>Restrições ou Alergias</span>
-          <textarea id="profileRestrictionsInput" rows="2" placeholder="Ex: Intolerância à lactose, não como frutos do mar..." class="font-bold"></textarea>
+          <textarea id="profileRestrictionsInput" rows="2" placeholder="Ex.: intolerância à lactose, não consumo frutos do mar..." class="font-bold"></textarea>
         </label>
 
         <div class="flex justify-end gap-3 mt-4">
@@ -438,8 +440,8 @@
       <div class="flex items-start justify-between gap-4">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.16em] text-nutriflow-500">Registro diario</p>
-          <h3 class="mt-2 text-2xl font-bold tracking-[-0.05em]">Nova refeicao</h3>
-          <p class="mt-2 text-sm text-nutriflow-700">Registre horario, descricao e macros para deixar o acompanhamento mais preciso.</p>
+          <h3 class="mt-2 text-2xl font-bold tracking-[-0.05em]">Nova refeição</h3>
+          <p class="mt-2 text-sm text-nutriflow-700">Registre o horário, a descrição e os macronutrientes para um acompanhamento mais preciso.</p>
         </div>
         <button class="nf-modal-close" type="button" data-close-meal-modal>x</button>
       </div>
@@ -449,37 +451,37 @@
           <p class="text-xs font-semibold uppercase tracking-[0.14em] text-nutriflow-500">Preenchimento rapido</p>
           <div class="mt-3 flex flex-wrap gap-2">
             <button class="meal-template-chip" type="button" data-meal-template="lanche-rapido">Lanche rapido</button>
-            <button class="meal-template-chip" type="button" data-meal-template="refeicao-completa">Refeicao completa</button>
+            <button class="meal-template-chip" type="button" data-meal-template="refeicao-completa">Refeição completa</button>
             <button class="meal-template-chip" type="button" data-meal-template="pos-treino">Pos-treino</button>
           </div>
         </div>
 
         <div class="grid gap-4 md:grid-cols-2">
           <label class="nf-field">
-            <span>Tipo de refeicao</span>
+            <span>Tipo de refeição</span>
             <select id="mealTypeInput" required>
-              <option value="Cafe da manha">Cafe da manha</option>
+              <option value="Cafe da manha">Café da manhã</option>
               <option value="Lanche da manha">Lanche da manha</option>
-              <option value="Almoco">Almoco</option>
+              <option value="Almoco">Almoço</option>
               <option value="Lanche da tarde" selected>Lanche da tarde</option>
               <option value="Jantar">Jantar</option>
               <option value="Ceia">Ceia</option>
             </select>
           </label>
           <label class="nf-field">
-            <span>Horario</span>
+            <span>Horário</span>
             <input id="mealLoggedAtInput" type="datetime-local" required />
           </label>
         </div>
 
         <label class="nf-field">
-          <span>Titulo da refeicao</span>
-          <input id="mealTitleInput" type="text" maxlength="80" placeholder="Ex: Iogurte com frutas e aveia" required />
+          <span>Título da refeição</span>
+          <input id="mealTitleInput" type="text" maxlength="80" placeholder="Ex.: iogurte com frutas e aveia" required />
         </label>
 
         <label class="nf-field">
-          <span>Descricao</span>
-          <textarea id="mealDescriptionInput" rows="3" maxlength="280" placeholder="Descreva os alimentos, preparo ou observacoes do horario."></textarea>
+          <span>Descrição</span>
+          <textarea id="mealDescriptionInput" rows="3" maxlength="280" placeholder="Descreva os alimentos, o preparo ou as observações do horário."></textarea>
         </label>
 
         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -515,7 +517,7 @@
 
         <div class="flex justify-end gap-3">
           <button class="rounded-2xl border border-nutriflow-200 bg-white px-4 py-3 text-sm font-semibold text-nutriflow-900" type="button" data-close-meal-modal>Cancelar</button>
-          <button id="mealSubmitButton" class="rounded-2xl bg-nutriflow-950 px-5 py-3 text-sm font-semibold text-white" type="submit">Salvar refeicao</button>
+          <button id="mealSubmitButton" class="rounded-2xl bg-nutriflow-950 px-5 py-3 text-sm font-semibold text-white" type="submit">Salvar refeição</button>
         </div>
       </form>
     </div>
@@ -544,8 +546,8 @@
           </label>
         </div>
         <label class="nf-field">
-          <span>Observacao</span>
-          <textarea id="weightNoteInput" rows="2" maxlength="180" placeholder="Ex: pesagem em jejum, semana com viagem, retencao ou treino pesado."></textarea>
+          <span>Observação</span>
+          <textarea id="weightNoteInput" rows="2" maxlength="180" placeholder="Ex.: pesagem em jejum, semana com viagem, retenção de líquidos ou treino intenso."></textarea>
         </label>
 
         <p id="weightFormError" class="meal-form-error hidden" role="alert"></p>

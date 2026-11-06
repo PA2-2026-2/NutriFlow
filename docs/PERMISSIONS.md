@@ -42,6 +42,9 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `PATCH /api/patients/:id/measurements/:measurementId` | ❌ | ✅ | ❌ | Atualiza parcialmente a medida; campos opcionais podem ser limpos com `null` |
 | `DELETE /api/patients/:id/measurements/:measurementId` | ❌ | ✅ | ❌ | Remove a medida do histórico de evolução do paciente vinculado |
 | `GET /api/patients/:id/measurements` | ✅ | ✅ | ❌ | Lista medidas em ordem cronológica; paciente consulta apenas as próprias e nutricionista apenas pacientes vinculados |
+| `GET /api/patients/goals` | ✅ | ❌ | ❌ | Lista as metas do paciente autenticado e seu histórico |
+| `GET /api/patients/goals/:goalId` | ✅ | ❌ | ❌ | Consulta somente uma meta do próprio paciente |
+| `POST /api/patients/goals/:goalId/progress` | ✅ | ❌ | ❌ | Registra um novo valor no histórico da meta do paciente autenticado |
 | `GET /api/patient/dashboard` | ✅ | ❌ | ❌ | Carrega dados, plano alimentar e históricos do paciente |
 | `GET /api/patient/chat` | ✅ | ❌ | ❌ | Alias compatível para carregar a conversa do paciente vinculado |
 | `POST /api/patient/meals` | ✅ | ❌ | ❌ | Registra uma refeição do paciente |
@@ -57,6 +60,16 @@ Perfis: `PATIENT` (Paciente), `NUTRITIONIST` (Nutricionista), `ADMIN` (Administr
 | `GET /api/nutritionists/foods` | ❌ | ✅ | ❌ | Alias compatível para listar alimentos |
 | `GET /api/nutritionists/meal-plans` | ❌ | ✅ | ❌ | Alias compatível para listar planos alimentares |
 | `POST /api/nutritionists/meal-plans` | ❌ | ✅ | ❌ | Alias compatível para criar plano alimentar |
+| `GET /api/nutritionist/goals` | ❌ | ✅ | ❌ | Lista metas dos pacientes vinculados, com filtros opcionais |
+| `POST /api/nutritionist/goals` | ❌ | ✅ | ❌ | Cria meta para paciente vinculado |
+| `GET /api/nutritionist/goals/:goalId` | ❌ | ✅ | ❌ | Consulta meta criada pelo nutricionista autenticado |
+| `PUT /api/nutritionist/goals/:goalId` | ❌ | ✅ | ❌ | Edita os dados principais de meta ativa própria |
+| `PATCH /api/nutritionist/goals/:goalId/status` | ❌ | ✅ | ❌ | Cancela meta ativa; metas canceladas, concluídas ou expiradas não podem ser reativadas |
+| `GET /api/nutritionists/goals` | ❌ | ✅ | ❌ | Alias compatível para listar metas dos pacientes vinculados |
+| `POST /api/nutritionists/goals` | ❌ | ✅ | ❌ | Alias compatível para criar meta |
+| `GET /api/nutritionists/goals/:goalId` | ❌ | ✅ | ❌ | Alias compatível para consultar meta própria |
+| `PUT /api/nutritionists/goals/:goalId` | ❌ | ✅ | ❌ | Alias compatível para editar meta |
+| `PATCH /api/nutritionists/goals/:goalId/status` | ❌ | ✅ | ❌ | Alias compatível para cancelar meta ativa |
 | `GET /api/nutritionist/challenges` | ❌ | ✅ | ❌ | Lista desafios criados pelo nutricionista autenticado |
 | `POST /api/nutritionist/challenges` | ❌ | ✅ | ❌ | Cria um novo desafio nutricional |
 | `PUT /api/nutritionist/challenges/:challengeId` | ❌ | ✅ | ❌ | Atualiza um desafio de um nutricionista |

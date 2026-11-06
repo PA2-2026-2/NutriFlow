@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>NutriFlow | Dashboard do Nutricionista</title>
+  <title>NutriFlow | Painel da nutricionista</title>
   <link rel="icon" type="image/png" href="/favicon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -18,20 +18,23 @@
   <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1720px] gap-4 px-4 py-4 md:px-6 xl:gap-6">
     <aside class="dashboard-sidebar nutritionist-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[280px] shrink-0 rounded-[32px] p-5 text-white xl:flex xl:flex-col overflow-y-auto">
       <div>
-        <a href="/dashboard-nutricionista" class="flex items-center gap-3"><span class="grid h-[55px] w-[55px] place-items-center rounded-2xl bg-white/12"><img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" /></span><div><p class="text-xl font-extrabold tracking-[-0.05em]">NutriFlow</p><p class="text-[10px] text-white/68 uppercase">Workspace Nutri</p></div></a>
+        <a href="/dashboard-nutricionista" class="flex items-center gap-3"><span class="grid h-[55px] w-[55px] place-items-center rounded-2xl bg-white/12"><img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" /></span><div><p class="text-xl font-extrabold tracking-[-0.05em]">NutriFlow</p><p class="text-[10px] text-white/68 uppercase">Painel da nutricionista</p></div></a>
         <div class="mt-8 rounded-[20px] border border-white/12 bg-white/8 p-4"><p class="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Painel de hoje</p><p class="mt-2 text-2xl font-bold tracking-[-0.06em]" data-sidebar-date>06 Mar</p></div>
-        <nav class="mt-6 space-y-1">
+        <nav class="mt-6 space-y-1" aria-label="Navegação do painel da nutricionista">
           <a href="#pacientes" data-dashboard-page="patients" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
-            <span aria-hidden="true">♙</span><span>Meus Pacientes</span>
+            <span aria-hidden="true">♙</span><span>Meus pacientes</span>
           </a>
           <a href="#plano-alimentar" data-dashboard-page="plans" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
-            <span aria-hidden="true">▤</span><span>Últimos Planos</span>
+            <span aria-hidden="true">▤</span><span>Últimos planos</span>
           </a>
           <a href="#avaliacoes" data-dashboard-page="assessments" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
-            <span aria-hidden="true">▧</span><span>Últimas Avaliações</span>
+            <span aria-hidden="true">▧</span><span>Últimas avaliações</span>
           </a>
           <a href="/nutritionists/challenges" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
-            <span aria-hidden="true">◇</span><span>Desafios Ativos</span>
+            <span aria-hidden="true">◇</span><span>Desafios ativos</span>
+          </a>
+          <a href="/nutritionists/goals" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">◎</span><span>Metas nutricionais</span>
           </a>
           <a href="#agenda" data-dashboard-page="agenda" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span aria-hidden="true">◷</span><span>Agenda</span>
@@ -87,11 +90,12 @@
 </header>
 
       <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel da nutricionista">
-        <a class="mobile-nav-pill is-active" href="#pacientes" data-dashboard-page="patients">Meus Pacientes</a>
-        <a class="mobile-nav-pill" href="#plano-alimentar" data-dashboard-page="plans">Últimos Planos</a>
-        <a class="mobile-nav-pill" href="#avaliacoes" data-dashboard-page="assessments">Últimas Avaliações</a>
+        <a class="mobile-nav-pill is-active" href="#pacientes" data-dashboard-page="patients">Meus pacientes</a>
+        <a class="mobile-nav-pill" href="#plano-alimentar" data-dashboard-page="plans">Últimos planos</a>
+        <a class="mobile-nav-pill" href="#avaliacoes" data-dashboard-page="assessments">Últimas avaliações</a>
+        <a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios ativos</a>
+        <a class="mobile-nav-pill" href="/nutritionists/goals">Metas nutricionais</a>
         <a class="mobile-nav-pill" href="#agenda" data-dashboard-page="agenda">Agenda</a>
-        <a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios Ativos</a>
         <a class="mobile-nav-pill" href="#conversas" data-dashboard-page="conversations">Bate-papos</a>
       </nav>
 
@@ -99,7 +103,7 @@
         <section id="pacientes" class="dashboard-view grid gap-6 2xl:grid-cols-[1.3fr_.7fr]" data-dashboard-view>
           <article class="dashboard-surface rounded-[24px] p-5">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-bold">Meus Pacientes</h2>
+              <h2 class="text-lg font-bold">Meus pacientes</h2>
               <div class="flex gap-2">
                 <button id="btnOpenLinkPatient" class="rounded-lg bg-nutriflow-200 px-3 py-2 text-xs font-bold text-nutriflow-950 border border-nutriflow-400 hover:bg-nutriflow-300 transition">+ Vincular Paciente</button>
                 <button id="btnOpenMealPlan" class="rounded-lg bg-nutriflow-950 px-3 py-2 text-xs font-bold text-white">Novo Plano</button>
@@ -162,14 +166,14 @@
 
         <section id="plano-alimentar" class="dashboard-view hidden" data-dashboard-view>
           <article class="dashboard-surface rounded-[24px] p-5">
-            <h2 class="text-lg font-bold mb-4">Últimos Planos</h2>
+            <h2 class="text-lg font-bold mb-4">Últimos planos</h2>
             <div id="latestMealPlans" class="max-h-[284px] space-y-3 overflow-y-auto pr-2"></div>
           </article>
         </section>
 
         <section id="avaliacoes" class="dashboard-view hidden" data-dashboard-view>
           <article class="dashboard-surface rounded-[24px] p-5">
-            <h2 class="text-lg font-bold mb-4">Últimas Avaliações</h2>
+            <h2 class="text-lg font-bold mb-4">Últimas avaliações</h2>
             <div id="latestAssessments" class="max-h-[284px] space-y-3 overflow-y-auto pr-2"></div>
           </article>
         </section>
@@ -231,10 +235,10 @@
       <form id="linkPatientForm" class="mt-4 grid gap-3">
         <label class="nf-field"><span>E-mail do Paciente *</span><input id="linkPatientEmail" type="email" class="font-bold" placeholder="paciente@email.com" required /></label>
         <div class="grid grid-cols-2 gap-3">
-           <label class="nf-field"><span>Idade *</span><input id="linkPatientAge" type="number" class="font-bold" placeholder="Ex: 30" required /></label>
-           <label class="nf-field"><span>Objetivo *</span><input id="linkPatientObjective" type="text" class="font-bold" placeholder="Ex: Emagrecimento" required /></label>
+           <label class="nf-field"><span>Idade *</span><input id="linkPatientAge" type="number" class="font-bold" placeholder="Ex.: 30" required /></label>
+           <label class="nf-field"><span>Objetivo *</span><input id="linkPatientObjective" type="text" class="font-bold" placeholder="Ex.: emagrecimento" required /></label>
         </div>
-        <label class="nf-field"><span>Restrições Alimentares</span><input id="linkPatientRestrictions" type="text" class="font-bold" placeholder="Ex: Nenhuma" /></label>
+        <label class="nf-field"><span>Restrições alimentares</span><input id="linkPatientRestrictions" type="text" class="font-bold" placeholder="Ex.: nenhuma" /></label>
         <div class="flex justify-end gap-2 mt-2">
           <button class="rounded-lg border px-4 py-2 text-sm font-bold" type="button" data-close="linkPatient">Cancelar</button>
           <button id="linkSubmitBtn" class="rounded-lg bg-nutriflow-950 px-4 py-2 text-sm font-bold text-white" type="submit">Vincular</button>
@@ -254,13 +258,13 @@
         <div>
           <div class="grid gap-4 mb-4">
             <div class="bg-nutriflow-50 border border-nutriflow-200 rounded-xl p-4"><p class="text-xs font-bold uppercase text-nutriflow-600 mb-1">Plano Atual</p><p id="patientProfilePlanTitle" class="text-lg font-bold text-nutriflow-950">--</p></div>
-            <div class="bg-nutriflow-50 border border-nutriflow-200 rounded-xl p-4"><p class="text-xs font-bold uppercase text-nutriflow-600 mb-1">Historico de Peso (Clinico)</p><div id="patientProfileWeightHistory" class="flex flex-wrap gap-2 mt-1"></div></div>
+            <div class="bg-nutriflow-50 border border-nutriflow-200 rounded-xl p-4"><p class="text-xs font-bold uppercase text-nutriflow-600 mb-1">Histórico de peso (clínico)</p><div id="patientProfileWeightHistory" class="flex flex-wrap gap-2 mt-1"></div></div>
             <div class="bg-white border border-nutriflow-200 rounded-xl p-4">
               <p class="text-xs font-bold uppercase text-nutriflow-600 mb-1">Medidas Corporais Recentes</p>
               <div id="patientProfileBodyMeasurements" class="mt-3 grid gap-2 sm:grid-cols-2"></div>
             </div>
             <div class="bg-white border border-nutriflow-200 rounded-xl p-4">
-              <p class="text-xs font-bold uppercase text-nutriflow-600 mb-1">Historico de Medidas</p>
+              <p class="text-xs font-bold uppercase text-nutriflow-600 mb-1">Histórico de medidas</p>
               <div id="patientProfileBodyMeasurementHistory" class="mt-3 space-y-3"></div>
             </div>
           </div>
@@ -270,7 +274,7 @@
           </div>
         </div>
         <div class="bg-white border border-nutriflow-200 rounded-xl p-4 h-80 overflow-y-auto shadow-inner">
-          <p class="text-sm font-bold uppercase text-nutriflow-600 mb-3">Refeições do Paciente (Direto do Banco)</p>
+          <p class="text-sm font-bold uppercase text-nutriflow-600 mb-3">Refeições do paciente</p>
           <div id="patientProfileMealsList" class="space-y-3"><p class="text-xs text-nutriflow-500">Nenhum registro recente.</p></div>
         </div>
       </div>
@@ -283,7 +287,7 @@
       <form id="mealPlanForm" class="mt-4 grid gap-3">
         <label class="nf-field"><span>Paciente</span><select id="mealPlanPatient" class="font-bold"></select></label>
         <label class="nf-field"><span>Título do plano</span><input id="mealPlanTitle" type="text" class="font-bold" required /></label>
-        <label class="nf-field"><span>Observacoes</span><textarea id="mealPlanNotes" rows="2" class="font-bold" placeholder="Estrategia, substituicoes e orientacoes do plano"></textarea></label>
+        <label class="nf-field"><span>Observações</span><textarea id="mealPlanNotes" rows="2" class="font-bold" placeholder="Estratégia, substituições e orientações do plano"></textarea></label>
         <div class="rounded-xl border border-nutriflow-200 bg-nutriflow-50 p-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -296,7 +300,7 @@
         </div>
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <label class="nf-field"><span>Calorias</span><input id="mealPlanCalories" type="number" class="font-bold" readonly /></label>
-          <label class="nf-field"><span>Proteinas (g)</span><input id="mealPlanProtein" type="number" class="font-bold" readonly /></label>
+          <label class="nf-field"><span>Proteínas (g)</span><input id="mealPlanProtein" type="number" class="font-bold" readonly /></label>
           <label class="nf-field"><span>Carboidratos (g)</span><input id="mealPlanCarbs" type="number" class="font-bold" readonly /></label>
           <label class="nf-field"><span>Gorduras (g)</span><input id="mealPlanFats" type="number" class="font-bold" readonly /></label>
         </div>
@@ -320,18 +324,18 @@
           <label class="nf-field"><span>Altura (cm)</span><input id="assessmentHeight" type="number" min="30" max="300" step="0.1" class="font-bold" required/></label>
           <label class="nf-field"><span>% Gordura</span><input id="assessmentBodyFat" type="number" min="1" max="75" step="0.1" class="font-bold"/></label>
         </div>
-        <label class="nf-field"><span>Observacoes</span><textarea id="assessmentNotes" rows="2" class="font-bold" placeholder="Ex: cintura reduziu, adesao boa e composicao corporal evoluindo."></textarea></label>
+        <label class="nf-field"><span>Observações</span><textarea id="assessmentNotes" rows="2" class="font-bold" placeholder="Ex.: redução da cintura, boa adesão e evolução da composição corporal."></textarea></label>
         <div class="rounded-xl border border-nutriflow-200 bg-nutriflow-50 p-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p class="text-xs font-bold uppercase tracking-[0.16em] text-nutriflow-600">Medidas Complementares</p>
-              <p class="text-xs text-nutriflow-600">Adicione circunferencias em cm ou dobras cutaneas em mm.</p>
+              <p class="text-xs text-nutriflow-600">Adicione circunferências em cm ou dobras cutâneas em mm.</p>
             </div>
             <button id="btnAddAssessmentMeasurement" class="rounded-lg bg-white px-3 py-2 text-xs font-bold text-nutriflow-950 shadow-sm" type="button">Adicionar Medida</button>
           </div>
           <div id="assessmentMeasurementsList" class="mt-3 grid gap-2"></div>
         </div>
-        <p class="text-xs text-nutriflow-600">A data e registrada automaticamente ao salvar.</p>
+        <p class="text-xs text-nutriflow-600">A data é registrada automaticamente ao salvar.</p>
         <div class="flex justify-end gap-2 mt-2">
           <button class="rounded-lg border px-4 py-2 text-sm font-bold" type="button" data-close="assessment">Cancelar</button>
           <button id="assessmentSubmitButton" class="rounded-lg bg-nutriflow-950 px-4 py-2 text-sm font-bold text-white" type="submit">Salvar no Banco</button>
@@ -391,7 +395,7 @@
         <label class="nf-field"><span>Título</span><input id="challengeTitle" type="text" class="font-bold" required/></label>
         <label class="nf-field"><span>Paciente (Opcional)</span><select id="challengePatient" class="font-bold"><option value="">Todos os pacientes</option></select></label>
         <label class="nf-field"><span>Meta a ser atingida</span><textarea id="challengeTarget" rows="2" class="font-bold" required></textarea></label>
-        <label class="nf-field"><span>Prêmio / Recompensa</span><input id="challengePrize" type="text" class="font-bold" placeholder="Ex: 1 Refeição Livre Extra"/></label>
+        <label class="nf-field"><span>Prêmio ou recompensa</span><input id="challengePrize" type="text" class="font-bold" placeholder="Ex.: uma refeição livre extra"/></label>
         <div class="flex justify-end gap-2 mt-2">
           <button class="rounded-lg border px-4 py-2 text-sm font-bold" type="button" data-close="challenge">Cancelar</button>
           <button class="rounded-lg bg-nutriflow-950 px-4 py-2 text-sm font-bold text-white" type="submit">Salvar no Banco</button>

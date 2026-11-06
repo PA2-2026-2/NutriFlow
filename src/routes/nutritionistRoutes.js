@@ -6,6 +6,7 @@ function createNutritionistRoutes(
 	patientController,
 	mealPlanController,
 	challengeController,
+	goalController,
 	authenticate,
 	routePrefix = '/api/nutritionist',
 ) {
@@ -76,6 +77,32 @@ function createNutritionistRoutes(
 		'/challenges/:challengeId/participants',
 		authorize(`POST ${routePrefix}/challenges/:challengeId/participants`),
 		asyncHandler(challengeController.addParticipant.bind(challengeController)),
+	);
+
+	router.get(
+		'/goals',
+		authorize(`GET ${routePrefix}/goals`),
+		asyncHandler(goalController.listForNutritionist.bind(goalController)),
+	);
+	router.post(
+		'/goals',
+		authorize(`POST ${routePrefix}/goals`),
+		asyncHandler(goalController.create.bind(goalController)),
+	);
+	router.get(
+		'/goals/:goalId',
+		authorize(`GET ${routePrefix}/goals/:goalId`),
+		asyncHandler(goalController.getForNutritionist.bind(goalController)),
+	);
+	router.put(
+		'/goals/:goalId',
+		authorize(`PUT ${routePrefix}/goals/:goalId`),
+		asyncHandler(goalController.update.bind(goalController)),
+	);
+	router.patch(
+		'/goals/:goalId/status',
+		authorize(`PATCH ${routePrefix}/goals/:goalId/status`),
+		asyncHandler(goalController.updateStatus.bind(goalController)),
 	);
 
 	return router;

@@ -19,7 +19,7 @@ function createAuthMiddleware(supabaseAuthClient, userRepository, approvalReposi
       const token = extractToken(request);
 
       if (!token) {
-        throw new AppError('Token de acesso nao informado.', 401);
+        throw new AppError('Token de acesso não informado.', 401);
       }
 
       if (!supabaseAuthClient) {
@@ -29,7 +29,7 @@ function createAuthMiddleware(supabaseAuthClient, userRepository, approvalReposi
       const { data, error } = await supabaseAuthClient.auth.getUser(token);
       if (error) {
         if ([401, 403].includes(error.status)) {
-          throw new AppError('Token invalido ou expirado.', 401);
+          throw new AppError('Token inválido ou expirado.', 401);
         }
 
         const status = Number(error.status);
@@ -101,12 +101,12 @@ function createAuthMiddleware(supabaseAuthClient, userRepository, approvalReposi
 function requireRole(...allowedRoles) {
   return function authorize(request, response, next) {
     if (!request.user) {
-      next(new AppError('Token de acesso nao informado.', 401));
+      next(new AppError('Token de acesso não informado.', 401));
       return;
     }
 
     if (!allowedRoles.includes(request.user.profile)) {
-      next(new AppError('Voce nao tem permissao para acessar este recurso.', 403));
+      next(new AppError('Você não tem permissão para acessar este recurso.', 403));
       return;
     }
 

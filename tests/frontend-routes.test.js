@@ -9,7 +9,7 @@ describe('rotas do frontend', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.headers.location).toBeUndefined();
-    expect(response.text).toContain('<title>NutriFlow | Dashboard do paciente</title>');
+    expect(response.text).toContain('<title>NutriFlow | Painel do paciente</title>');
     expect(response.text).toContain('src="dashboard.js"');
     expect(response.text).toContain('<a class="mobile-nav-pill" href="/patients/challenges">Desafios</a>');
   });
@@ -25,6 +25,43 @@ describe('rotas do frontend', () => {
     expect(response.text).toContain('href="/dashboard#peso"');
     expect(response.text).toContain('href="/dashboard#consultas"');
     expect(response.text).toContain('aria-label="Navegação do painel do paciente"');
+  });
+
+  it('serve as telas de metas nutricionais para os dois perfis', async () => {
+    const patient = await request(app).get('/patients/goals');
+    const nutritionist = await request(app).get('/nutritionists/goals');
+
+    expect(patient.statusCode).toBe(200);
+    expect(patient.text).toContain('Minhas metas nutricionais');
+    expect(patient.text).toContain('src="/patients-goals.js"');
+    expect(nutritionist.statusCode).toBe(200);
+    expect(nutritionist.text).toContain('Metas dos pacientes');
+    expect(nutritionist.text).toContain('src="/nutritionists-goals.js"');
+  });
+
+  it('mostra navegação lateral, pacientes vinculados e campo de categoria personalizada', async () => {
+    const response = await request(app).get('/nutritionists/goals');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toContain('aria-label="Navegação do painel da nutricionista"');
+    expect(response.text).toContain('xl:flex xl:flex-col');
+    expect(response.text).not.toContain('Meu painel');
+    expect(response.text).toContain('href="/nutritionists/challenges" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75');
+    expect(response.text).toContain('<span aria-hidden="true">◇</span><span>Desafios ativos</span>');
+    expect(response.text).toContain('href="/nutritionists/goals" aria-current="page"');
+    expect(response.text).toContain('id="linkedPatientSidebar"');
+    expect(response.text).toContain('id="customCategoryField"');
+    expect(response.text).toContain('name="customCategory"');
+  });
+
+  it('mantém a sidebar do paciente nas metas com a navegação padrão', async () => {
+    const response = await request(app).get('/patients/goals');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toContain('aria-label="Navegação do painel do paciente"');
+    expect(response.text).toContain('href="/patients/challenges"');
+    expect(response.text).toContain('href="/patients/goals" aria-current="page"');
+    expect(response.text).toContain('xl:flex xl:flex-col');
   });
 
   it('mantém a raiz da página no diretório do frontend para recursos relativos', async () => {
@@ -56,10 +93,40 @@ describe('rotas do frontend', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.headers.location).toBeUndefined();
-    expect(response.text).toContain('<title>NutriFlow | Dashboard do Nutricionista</title>');
+    expect(response.text).toContain('<title>NutriFlow | Painel da nutricionista</title>');
     expect(response.text).toContain('src="dashboard-nutricionista.js"');
-    expect(response.text).toContain('<a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios Ativos</a>');
-    expect(response.text).not.toContain('aria-disabled="true">Desafios Ativos');
+    expect(response.text).toContain('<a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios ativos</a>');
+    expect(response.text).toContain('href="/nutritionists/goals">Metas nutricionais</a>');
+    expect(response.text).not.toContain('aria-disabled="true">Desafios ativos');
+  });
+
+  it('mantém a mesma ordem e os mesmos destinos da sidebar nutricionista nas telas principais', async () => {
+    const pages = await Promise.all([
+      request(app).get('/dashboard-nutricionista'),
+      request(app).get('/nutritionists/challenges'),
+      request(app).get('/nutritionists/goals'),
+    ]);
+    const expectedOrder = [
+      'Meus pacientes',
+      'Últimos planos',
+      'Últimas avaliações',
+      'Desafios ativos',
+      'Metas nutricionais',
+      'Agenda',
+      'Bate-papos',
+    ];
+
+    for (const response of pages) {
+      expect(response.statusCode).toBe(200);
+      const sidebar = response.text.match(
+        /<nav[^>]*aria-label="Navegação do painel da nutricionista"[^>]*>([\s\S]*?)<\/nav>/,
+      )?.[1];
+      expect(sidebar).toBeDefined();
+      const positions = expectedOrder.map((label) => sidebar.indexOf(label));
+      expect(positions.every((position) => position >= 0)).toBe(true);
+      expect(positions).toEqual([...positions].sort((first, second) => first - second));
+      expect(sidebar).not.toContain('Meu painel');
+    }
   });
 
   it('redireciona a URL antiga do painel da nutricionista para a rota limpa', async () => {

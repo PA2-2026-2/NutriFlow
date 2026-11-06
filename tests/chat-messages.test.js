@@ -141,7 +141,7 @@ describe('POST /chat/messages', () => {
 			.set(bearer(nutritionist.token));
 
 		expect(response.statusCode).toBe(404);
-		expect(response.body.message).toContain('Audio nao encontrado');
+		expect(response.body.message).toContain('Áudio não encontrado');
 	});
 
 	it('rejeita áudio vazio, grande ou com metadados inválidos', async () => {

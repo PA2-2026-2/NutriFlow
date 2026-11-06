@@ -11,7 +11,7 @@ function errorHandler(error, request, response, next) {
 		error.type === 'entity.parse.failed'
 	) {
 		response.status(400).json({
-			message: 'JSON invalido.',
+			message: 'JSON inválido.',
 		});
 
 		return;
@@ -19,7 +19,7 @@ function errorHandler(error, request, response, next) {
 
 	if (error?.type === 'entity.too.large') {
 		response.status(413).json({
-			message: 'Corpo da requisicao maior que o limite permitido.',
+			message: 'O corpo da requisição excede o limite permitido.',
 		});
 
 		return;
@@ -35,7 +35,7 @@ function errorHandler(error, request, response, next) {
 
 	if (error?.code === 'P2025') {
 		response.status(404).json({
-			message: 'Registro nao encontrado.',
+			message: 'Registro não encontrado.',
 		});
 
 		return;
@@ -48,7 +48,7 @@ function errorHandler(error, request, response, next) {
 		console.error('Erro interno do servidor.', {
 			name: error.name || 'Error',
 			code: error.code || 'UNKNOWN',
-			stack: error.stack || 'Stack trace indisponivel.',
+			stack: error.stack || 'Stack trace indisponível.',
 		});
 	}
 

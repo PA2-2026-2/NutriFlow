@@ -178,9 +178,12 @@ class PatientDashboardService {
 	}
 
 	async getDashboard(userId) {
-		const record = await this.repository.findDashboardData(userId);
+		const [record, foods] = await Promise.all([
+			this.repository.findDashboardData(userId),
+			this.repository.listFoods(),
+		]);
 		if (!record || record.profile !== 'PATIENT') {
-			throw new AppError('Perfil do paciente nao encontrado.', 404);
+			throw new AppError('Perfil do paciente não encontrado.', 404);
 		}
 
 		const profile = record.patientProfile;
@@ -239,9 +242,7 @@ class PatientDashboardService {
 			day.calories += entry.calories;
 			historyByDate.set(dateKey, day);
 		}
-
 		const measurements = profile?.measurements || [];
-		const foods = await this.repository.listFoods();
 		const manualWeightEntries = record.weightEntries || [];
 		const latestWeight = [
 			...manualWeightEntries.map((entry) => ({
@@ -279,7 +280,7 @@ class PatientDashboardService {
 				fiber: totals.fiber,
 				waterLiters: Number((totals.waterMl / 1000).toFixed(1)),
 				macros: [
-					{ label: 'Proteinas', value: totals.protein, progress: percent(totals.protein, targets.protein), note: targets.protein ? `de ${Math.round(targets.protein)}g` : 'Sem meta definida' },
+					{ label: 'Proteínas', value: totals.protein, progress: percent(totals.protein, targets.protein), note: targets.protein ? `de ${Math.round(targets.protein)} g` : 'Sem meta definida' },
 					{ label: 'Carboidratos', value: totals.carbs, progress: percent(totals.carbs, targets.carbs), note: targets.carbs ? `de ${Math.round(targets.carbs)}g` : 'Sem meta definida' },
 					{ label: 'Gorduras', value: totals.fats, progress: percent(totals.fats, targets.fats), note: targets.fats ? `de ${Math.round(targets.fats)}g` : 'Sem meta definida' },
 				],
@@ -290,7 +291,7 @@ class PatientDashboardService {
 					? [{ label: 'Meta diária de calorias', valueLabel: `${Math.round(targets.calories)} kcal`, percent: percent(totals.calories, targets.calories) }]
 					: [],
 				focusTitle: profile?.objective ? `Foco atual: ${profile.objective}` : 'Defina um objetivo com sua nutricionista.',
-				observationNote: profile?.restrictions || 'Sem observacoes clinicas registradas ate o momento.',
+				observationNote: profile?.restrictions || 'Sem observações clínicas registradas até o momento.',
 			},
 			meals,
 			history: [...historyByDate.entries()]
@@ -314,7 +315,7 @@ class PatientDashboardService {
 					: 'Converse com sua nutricionista para definir seu foco.',
 			},
 			chat: {
-				responseTimeLabel: profile?.nutritionist ? 'Chat disponivel' : 'Sem nutricionista vinculada',
+				responseTimeLabel: profile?.nutritionist ? 'Chat disponível' : 'Sem nutricionista associada',
 				quickReplies: [],
 				messages: [],
 			},
@@ -323,33 +324,33 @@ class PatientDashboardService {
 
 	async createMeal(userId, payload) {
 		if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-			throw new AppError('Informe os dados da refeicao.', 400);
+			throw new AppError('Informe os dados da refeição.', 400);
 		}
 		const profile = await this.repository.findPatientProfile(userId);
 		if (!profile?.nutritionistId) {
-			throw new AppError('Conecte sua conta a um nutricionista antes de registrar refeicoes.', 403);
+			throw new AppError('Vincule sua conta a um nutricionista antes de registrar refeições.', 403);
 		}
 
 		const title = typeof payload.title === 'string' ? payload.title.trim() : '';
 		const description = typeof payload.description === 'string' ? payload.description.trim() : '';
 		const loggedAt = new Date(payload.loggedAt);
 		if (!MEAL_TYPES.has(payload.mealType)) {
-			throw new AppError('Selecione um tipo de refeicao valido.', 400);
+			throw new AppError('Selecione um tipo de refeição válido.', 400);
 		}
 		if (title.length < 3 || title.length > 80) {
-			throw new AppError('Informe um titulo com 3 a 80 caracteres.', 400);
+			throw new AppError('Informe um título com 3 a 80 caracteres.', 400);
 		}
 		if (description.length > 280) {
-			throw new AppError('A descricao da refeicao deve ter ate 280 caracteres.', 400);
+			throw new AppError('A descrição da refeição deve ter até 280 caracteres.', 400);
 		}
 		if (Number.isNaN(loggedAt.getTime()) || loggedAt.getTime() > Date.now() + 5 * 60000) {
-			throw new AppError('Horario invalido para o registro da refeicao.', 400);
+			throw new AppError('Horário inválido para o registro da refeição.', 400);
 		}
 
 		const data = { calories: 2500, protein: 250, carbs: 350, fats: 180, fiber: 80, waterMl: 2000 };
 		for (const [field, max] of Object.entries(data)) {
 			if (!Number.isInteger(payload[field]) || payload[field] < 0 || payload[field] > max) {
-				throw new AppError(`${field} deve ser um numero inteiro entre 0 e ${max}.`, 400);
+				throw new AppError(`${field} deve ser um número inteiro entre 0 e ${max}.`, 400);
 			}
 			data[field] = payload[field];
 		}
@@ -361,13 +362,13 @@ class PatientDashboardService {
 			loggedAt,
 			...data,
 		});
-		return { message: 'Refeicao registrada com sucesso.' };
+		return { message: 'Refeição registrada com sucesso.' };
 	}
 
 	async createWeight(userId, payload) {
 		const profile = await this.repository.findPatientProfile(userId);
 		if (!profile?.nutritionistId) {
-			throw new AppError('Conecte sua conta a um nutricionista antes de registrar peso.', 403);
+			throw new AppError('Vincule sua conta a um nutricionista antes de registrar o peso.', 403);
 		}
 		const weightKg = Number(payload?.weight);
 		const recordedAt = new Date(payload?.recordedAt);
@@ -376,10 +377,10 @@ class PatientDashboardService {
 			throw new AppError('O peso precisa ficar entre 20kg e 350kg.', 400);
 		}
 		if (Number.isNaN(recordedAt.getTime()) || recordedAt.getTime() > Date.now() + 5 * 60000) {
-			throw new AppError('Data invalida para o registro de peso.', 400);
+			throw new AppError('Data inválida para o registro de peso.', 400);
 		}
 		if (note.length > 180) {
-			throw new AppError('A observacao deve ter ate 180 caracteres.', 400);
+			throw new AppError('A observação deve ter até 180 caracteres.', 400);
 		}
 		await this.repository.createWeightEntry(userId, { weightKg, recordedAt, note });
 		return { message: 'Peso semanal registrado com sucesso.' };
