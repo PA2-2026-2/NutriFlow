@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="920" viewBox="0 0 1400 920" role="img" aria-labelledby="title description">
+  <title id="title">Diagrama de arquitetura do NutriFlow</title>
+  <desc id="description">Fluxo entre os perfis de usuário, a interface web, a API Express, as camadas da aplicação, o Prisma, os bancos SQLite e PostgreSQL e os serviços Supabase Auth e Storage.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M1 1 L11 6 L1 11 Z" fill="#46633f"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M1 1 L11 6 L1 11 Z" fill="#315b9b"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #202820; }
+      .title { font-size: 34px; font-weight: 700; }
+      .subtitle { font-size: 17px; fill: #59665a; }
+      .section { font-size: 17px; font-weight: 700; letter-spacing: 1.2px; fill: #526250; }
+      .box { fill: #fff; stroke: #72816e; stroke-width: 2; }
+      .box-green { fill: #eff5ed; stroke: #637d5a; stroke-width: 2; }
+      .box-blue { fill: #eef3fb; stroke: #46679c; stroke-width: 2; }
+      .box-purple { fill: #f3effa; stroke: #806b9c; stroke-width: 2; }
+      .box-sand { fill: #fbf5e9; stroke: #9a8151; stroke-width: 2; }
+      .node-title { font-size: 21px; font-weight: 700; }
+      .node-copy { font-size: 16px; }
+      .small { font-size: 14px; fill: #526052; }
+      .arrow { fill: none; stroke: #46633f; stroke-width: 3; marker-end: url(#arrow); }
+      .arrow-blue { fill: none; stroke: #315b9b; stroke-width: 3; marker-end: url(#arrow-blue); }
+      .optional { fill: none; stroke: #315b9b; stroke-width: 2.5; stroke-dasharray: 9 7; marker-end: url(#arrow-blue); }
+      .rule { stroke: #c6cec3; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="920" fill="#f8faf7"/>
+  <text class="title" x="64" y="72">Arquitetura do Projeto NutriFlow</text>
+  <text class="subtitle" x="64" y="105">Aplicação web em camadas, serviços externos e persistência por ambiente</text>
+
+  <text class="section" x="64" y="158">USUÁRIOS E APRESENTAÇÃO</text>
+  <line class="rule" x1="370" y1="153" x2="1336" y2="153"/>
+
+  <rect class="box-sand" x="64" y="185" width="215" height="158" rx="14"/>
+  <text class="node-title" x="88" y="222">Perfis de acesso</text>
+  <text class="node-copy" x="88" y="258">Paciente</text>
+  <text class="node-copy" x="88" y="287">Nutricionista</text>
+  <text class="node-copy" x="88" y="316">Administrador</text>
+
+  <rect class="box" x="347" y="185" width="287" height="158" rx="14"/>
+  <text class="node-title" x="372" y="222">Navegador web</text>
+  <text class="node-copy" x="372" y="258">HTML · CSS · JavaScript</text>
+  <text class="node-copy" x="372" y="286">Páginas e painéis por perfil</text>
+  <text class="node-copy" x="372" y="314">Fetch API · requisições HTTP</text>
+
+  <path class="arrow" d="M279 264 H337"/>
+
+  <rect class="box-green" x="694" y="185" width="302" height="158" rx="14"/>
+  <text class="node-title" x="719" y="222">Servidor web e API</text>
+  <text class="node-copy" x="719" y="258">Node.js · Express 5</text>
+  <text class="node-copy" x="719" y="286">API REST · conteúdo estático</text>
+  <text class="node-copy" x="719" y="314">Vercel / execução local</text>
+
+  <path class="arrow" d="M634 264 H684"/>
+
+  <rect class="box-blue" x="1060" y="185" width="276" height="158" rx="14"/>
+  <text class="node-title" x="1084" y="222">Supabase Auth</text>
+  <text class="node-copy" x="1084" y="258">Cadastro e confirmação</text>
+  <text class="node-copy" x="1084" y="286">Login e recuperação</text>
+  <text class="node-copy" x="1084" y="314">Validação de token</text>
+
+  <path class="optional" d="M1195 343 V390 H422 V440"/>
+  <text class="small" x="780" y="383">autenticação externa</text>
+
+  <text class="section" x="64" y="421">CAMADAS DA APLICAÇÃO E DADOS</text>
+  <line class="rule" x1="420" y1="416" x2="1336" y2="416"/>
+
+  <rect class="box" x="64" y="451" width="213" height="179" rx="14"/>
+  <text class="node-title" x="87" y="491">Rotas</text>
+  <text class="node-copy" x="87" y="527">Auth · usuários</text>
+  <text class="node-copy" x="87" y="555">Pacientes · planos</text>
+  <text class="node-copy" x="87" y="583">Consultas · chat</text>
+  <text class="node-copy" x="87" y="611">Desafios · admin</text>
+
+  <rect class="box" x="315" y="451" width="213" height="179" rx="14"/>
+  <text class="node-title" x="338" y="491">Middlewares</text>
+  <text class="node-copy" x="338" y="527">Autenticação</text>
+  <text class="node-copy" x="338" y="555">Autorização por perfil</text>
+  <text class="node-copy" x="338" y="583">Validações e erros</text>
+  <text class="node-copy" x="338" y="611">CORS configurado</text>
+
+  <rect class="box" x="566" y="451" width="213" height="179" rx="14"/>
+  <text class="node-title" x="589" y="491">Controllers</text>
+  <text class="node-copy" x="589" y="527">Recebem requisições</text>
+  <text class="node-copy" x="589" y="555">Encaminham operações</text>
+  <text class="node-copy" x="589" y="583">Produzem respostas</text>
+
+  <rect class="box-green" x="817" y="451" width="213" height="179" rx="14"/>
+  <text class="node-title" x="840" y="491">Services</text>
+  <text class="node-copy" x="840" y="527">Regras de negócio</text>
+  <text class="node-copy" x="840" y="555">Acesso por vínculo</text>
+  <text class="node-copy" x="840" y="583">Validação de dados</text>
+
+  <rect class="box-green" x="1068" y="451" width="268" height="179" rx="14"/>
+  <text class="node-title" x="1091" y="491">Repositories · Prisma</text>
+  <text class="node-copy" x="1091" y="527">Acesso e persistência</text>
+  <text class="node-copy" x="1091" y="555">Consultas ao banco</text>
+  <text class="node-copy" x="1091" y="583">Transações e relações</text>
+
+  <path class="arrow" d="M277 540 H305"/>
+  <path class="arrow" d="M528 540 H556"/>
+  <path class="arrow" d="M779 540 H807"/>
+  <path class="arrow" d="M1030 540 H1058"/>
+
+  <path class="arrow-blue" d="M1202 630 V675 H714 V689"/>
+  <text class="small" x="908" y="669">Prisma Client</text>
+
+  <rect class="box-purple" x="497" y="691" width="435" height="145" rx="14"/>
+  <text class="node-title" x="523" y="731">Banco relacional</text>
+  <text class="node-copy" x="523" y="769">SQLite · desenvolvimento local</text>
+  <text class="node-copy" x="523" y="799">PostgreSQL · produção</text>
+
+  <rect class="box-blue" x="64" y="691" width="361" height="145" rx="14"/>
+  <text class="node-title" x="88" y="731">Fotos de perfil</text>
+  <text class="node-copy" x="88" y="769">Armazenamento local no desenvolvimento</text>
+  <text class="node-copy" x="88" y="799">Supabase Storage ou desativado em produção</text>
+  <path class="optional" d="M694 343 H40 V763 H54"/>
+  <text class="small" x="47" y="374">armazenamento de fotos (configurável)</text>
+
+  <rect class="box-sand" x="1004" y="691" width="332" height="145" rx="14"/>
+  <text class="node-title" x="1028" y="731">Domínios do sistema</text>
+  <text class="node-copy" x="1028" y="769">Usuários · pacientes · refeições</text>
+  <text class="node-copy" x="1028" y="799">Planos · consultas · desafios · chat</text>
+  <path class="arrow-blue" d="M932 763 H994"/>
+
+  <text class="small" x="64" y="882">Fluxo principal: navegador → Express → rotas e middlewares → controllers → services → repositories → Prisma → banco de dados.</text>
+</svg>
