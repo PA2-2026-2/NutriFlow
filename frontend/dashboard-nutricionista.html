@@ -20,7 +20,7 @@
       <div>
         <a href="/dashboard-nutricionista" class="flex items-center gap-3"><span class="grid h-[55px] w-[55px] place-items-center rounded-2xl bg-white/12"><img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" /></span><div><p class="text-xl font-extrabold tracking-[-0.05em]">NutriFlow</p><p class="text-[10px] text-white/68 uppercase">Workspace Nutri</p></div></a>
         <div class="mt-8 rounded-[20px] border border-white/12 bg-white/8 p-4"><p class="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Painel de hoje</p><p class="mt-2 text-2xl font-bold tracking-[-0.06em]" data-sidebar-date>06 Mar</p></div>
-        <nav class="mt-6 space-y-1">
+        <nav class="mt-6 space-y-1" aria-label="Navegação do painel da nutricionista">
           <a href="#pacientes" data-dashboard-page="patients" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span aria-hidden="true">♙</span><span>Meus Pacientes</span>
           </a>
@@ -32,6 +32,9 @@
           </a>
           <a href="/nutritionists/challenges" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span aria-hidden="true">◇</span><span>Desafios Ativos</span>
+          </a>
+          <a href="/nutritionists/goals" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">◎</span><span>Metas Nutricionais</span>
           </a>
           <a href="#agenda" data-dashboard-page="agenda" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span aria-hidden="true">◷</span><span>Agenda</span>
@@ -90,8 +93,9 @@
         <a class="mobile-nav-pill is-active" href="#pacientes" data-dashboard-page="patients">Meus Pacientes</a>
         <a class="mobile-nav-pill" href="#plano-alimentar" data-dashboard-page="plans">Últimos Planos</a>
         <a class="mobile-nav-pill" href="#avaliacoes" data-dashboard-page="assessments">Últimas Avaliações</a>
-        <a class="mobile-nav-pill" href="#agenda" data-dashboard-page="agenda">Agenda</a>
         <a class="mobile-nav-pill" href="/nutritionists/challenges">Desafios Ativos</a>
+        <a class="mobile-nav-pill" href="/nutritionists/goals">Metas Nutricionais</a>
+        <a class="mobile-nav-pill" href="#agenda" data-dashboard-page="agenda">Agenda</a>
         <a class="mobile-nav-pill" href="#conversas" data-dashboard-page="conversations">Bate-papos</a>
       </nav>
 

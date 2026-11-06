@@ -16,6 +16,7 @@ const { MealPlanController } = require('./controllers/mealPlanController');
 const { ChallengeController } = require('./controllers/challengeController');
 const { ChatController } = require('./controllers/chatController');
 const { AppointmentController } = require('./controllers/appointmentController');
+const { NutritionalGoalController } = require('./controllers/nutritionalGoalController');
 const { UserRepository } = require('./repositories/userRepository');
 const { AdminRepository } = require('./repositories/adminRepository');
 const { NutritionistApprovalRepository } = require('./repositories/nutritionistApprovalRepository');
@@ -25,6 +26,7 @@ const { MealPlanRepository } = require('./repositories/mealPlanRepository');
 const { ChallengeRepository } = require('./repositories/challengeRepository');
 const { ChatRepository } = require('./repositories/chatRepository');
 const { AppointmentRepository } = require('./repositories/appointmentRepository');
+const { NutritionalGoalRepository } = require('./repositories/nutritionalGoalRepository');
 
 const { AuthService } = require('./services/authService');
 const { AdminService } = require('./services/adminService');
@@ -35,6 +37,7 @@ const { MealPlanService } = require('./services/mealPlanService');
 const { ChallengeService } = require('./services/challengeService');
 const { ChatService } = require('./services/chatService');
 const { AppointmentService } = require('./services/appointmentService');
+const { NutritionalGoalService } = require('./services/nutritionalGoalService');
 
 const { createAuthRoutes } = require('./routes/authRoutes');
 const { createAdminRoutes } = require('./routes/adminRoutes');
@@ -75,6 +78,12 @@ const FRONTEND_ROUTE_ALIASES = new Map([
   ['/patients/challenges', '/patients-challenges.html'],
   ['/patients/challenges/', '/patients-challenges.html'],
   ['/patients/challenges.html', '/patients-challenges.html'],
+  ['/patients/goals', '/patients-goals.html'],
+  ['/patients/goals/', '/patients-goals.html'],
+  ['/patients/goals.html', '/patients-goals.html'],
+  ['/nutritionists/goals', '/nutritionists-goals.html'],
+  ['/nutritionists/goals/', '/nutritionists-goals.html'],
+  ['/nutritionists/goals.html', '/nutritionists-goals.html'],
 ]);
 
 function createCorsMiddleware(appConfig) {
@@ -169,7 +178,9 @@ function frontendAliases(frontendDir) {
       alias === '/auth-confirmation.html' ||
       alias === '/reset-password.html' ||
       alias === '/nutritionists-challenges.html' ||
-      alias === '/patients-challenges.html'
+      alias === '/patients-challenges.html' ||
+      alias === '/patients-goals.html' ||
+      alias === '/nutritionists-goals.html'
     ) {
       return response.sendFile(path.join(frontendDir, alias.slice(1)));
     }
@@ -246,6 +257,10 @@ function createDependencies(appConfig, overrides = {}) {
     new AppointmentRepository(prisma),
     profileRepository,
   );
+  const nutritionalGoalService = new NutritionalGoalService(
+    new NutritionalGoalRepository(prisma),
+    profileRepository,
+  );
 
   return {
     prisma,
@@ -259,6 +274,7 @@ function createDependencies(appConfig, overrides = {}) {
     challengeController: new ChallengeController(challengeService),
     chatController: new ChatController(chatService),
     appointmentController: new AppointmentController(appointmentService),
+    nutritionalGoalController: new NutritionalGoalController(nutritionalGoalService),
     authenticate: createAuthMiddleware(supabaseAuthClient, repository, approvalRepository),
   };
 }
@@ -280,6 +296,7 @@ function createApp(options = {}) {
     challengeController,
     chatController,
     appointmentController,
+    nutritionalGoalController,
     authenticate,
     supabaseAuthClient,
   } = createDependencies(appConfig, options);
@@ -351,7 +368,7 @@ function createApp(options = {}) {
 
   app.use(
     '/api/patients',
-    createPatientRoutes(patientController, challengeController, authenticate)
+    createPatientRoutes(patientController, challengeController, nutritionalGoalController, authenticate)
   );
 
   app.use(
@@ -365,6 +382,7 @@ function createApp(options = {}) {
       patientController,
       mealPlanController,
       challengeController,
+      nutritionalGoalController,
       authenticate,
       '/api/nutritionist',
     )
@@ -376,6 +394,7 @@ function createApp(options = {}) {
       patientController,
       mealPlanController,
       challengeController,
+      nutritionalGoalController,
       authenticate,
       '/api/nutritionists',
     )

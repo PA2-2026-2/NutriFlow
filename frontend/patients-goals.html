@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NutriFlow | Minhas metas nutricionais</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { nutriflow: { 50: '#f3f7f1', 100: '#cadbbf', 200: '#a8c297', 300: '#85a96f', 400: '#4f6b3d', 500: '#37482d', 600: '#25331e', 700: '#1c2618', 800: '#11170e', 900: '#000000', 950: '#000000' } }, fontFamily: { sans: ['Manrope', 'sans-serif'] } } } }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dashboard-body text-nutriflow-950 font-sans">
+  <div class="dashboard-layout relative mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 px-4 py-4 md:gap-6 md:px-6 lg:px-8">
+    <aside class="dashboard-sidebar dashboard-surface sticky top-4 hidden h-[calc(100vh-2rem)] w-[290px] shrink-0 overflow-y-auto rounded-[32px] p-5 text-white xl:flex xl:flex-col">
+      <div>
+        <a href="/dashboard" class="flex items-center gap-3">
+          <span class="grid h-[55px] w-[55px] place-items-center rounded-full bg-white/12 shadow-lg shadow-black/10">
+            <img src="/favicon.png" alt="" class="h-[55px] w-[55px] object-contain mix-blend-screen" />
+          </span>
+          <span>
+            <strong class="block text-2xl tracking-[-0.05em]">NutriFlow</strong>
+            <small class="text-xs text-white/70">Paciente dashboard</small>
+          </span>
+        </a>
+        <div class="mt-8 rounded-[24px] border border-white/12 bg-white/8 p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Acompanhamento</p>
+          <p class="mt-2 text-lg font-bold">Metas nutricionais</p>
+        </div>
+        <nav class="mt-8 space-y-2" aria-label="Navegação do painel do paciente">
+          <a class="sidebar-link" href="/dashboard#visao-geral"><span>Visão geral</span></a>
+          <a class="sidebar-link" href="/dashboard#refeicoes"><span>Refeições</span></a>
+          <a class="sidebar-link" href="/dashboard#historico"><span>Histórico</span></a>
+          <a class="sidebar-link" href="/dashboard#plano"><span>Plano alimentar</span></a>
+          <a class="sidebar-link" href="/dashboard#medidas"><span>Medidas corporais</span></a>
+          <a class="sidebar-link" href="/dashboard#peso"><span>Evolução de peso</span></a>
+          <a class="sidebar-link" href="/patients/challenges"><span>Desafios</span></a>
+          <a class="sidebar-link is-active" href="/patients/goals" aria-current="page"><span>Metas nutricionais</span></a>
+          <a class="sidebar-link" href="/dashboard#consultas"><span>Consultas</span></a>
+        </nav>
+      </div>
+    </aside>
+    <div class="min-w-0 flex-1">
+      <header class="dashboard-header dashboard-surface flex flex-col gap-4 rounded-[28px] px-5 py-5 sm:flex-row sm:items-center sm:justify-between md:px-7">
+        <div>
+          <a href="/dashboard" class="dashboard-mobile-brand xl:hidden">
+            <img src="/favicon.png" alt="" class="h-10 w-10 object-contain" />
+            <span>NutriFlow</span>
+          </a>
+          <h1 class="mt-2 text-2xl font-extrabold tracking-[-0.06em] md:text-3xl">Minhas metas nutricionais</h1>
+          <p class="mt-2 text-sm text-nutriflow-700">Acompanhe seus valores e consulte cada atualização registrada.</p>
+        </div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label class="nf-field min-w-48"><span>Exibir metas</span>
+            <select id="patientGoalStatusFilter" aria-label="Filtrar metas por status">
+              <option value="">Todas</option><option value="ACTIVE">Ativas</option>
+              <option value="COMPLETED">Concluídas</option><option value="CANCELLED">Canceladas</option>
+              <option value="EXPIRED">Expiradas</option>
+            </select>
+          </label>
+          <a href="/dashboard" class="rounded-xl bg-nutriflow-950 px-4 py-3 text-center text-sm font-bold text-white">Voltar ao painel</a>
+        </div>
+      </header>
+      <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel do paciente">
+        <a class="mobile-nav-pill" href="/dashboard">Visão geral</a>
+        <a class="mobile-nav-pill" href="/dashboard#refeicoes">Refeições</a>
+        <a class="mobile-nav-pill" href="/dashboard#plano">Plano alimentar</a>
+        <a class="mobile-nav-pill" href="/dashboard#peso">Peso</a>
+        <a class="mobile-nav-pill" href="/patients/challenges">Desafios</a>
+        <a class="mobile-nav-pill is-active" href="/patients/goals">Metas</a>
+      </nav>
+      <main class="mt-6">
+        <section id="patientGoalList" class="grid gap-4 lg:grid-cols-2" aria-live="polite"></section>
+      </main>
+    </div>
+  </div>
+  <div id="goalToast" class="nf-toast hidden"></div>
+  <script src="/api.js"></script>
+  <script src="/dashboard-core.js"></script>
+  <script src="/patients-goals.js"></script>
+</body>
+</html>

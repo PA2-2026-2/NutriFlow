@@ -54,10 +54,7 @@
           <p class="mt-2 text-2xl font-bold tracking-[-0.06em]" id="sidebarSummary">0</p>
         </div>
 
-        <nav class="mt-6 space-y-1">
-          <a href="/dashboard-nutricionista" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
-            <span aria-hidden="true">♙</span><span>Meu painel</span>
-          </a>
+        <nav class="mt-6 space-y-1" aria-label="Navegação do painel da nutricionista">
           <a href="/dashboard-nutricionista#pacientes" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span aria-hidden="true">♙</span><span>Meus Pacientes</span>
           </a>
@@ -69,6 +66,9 @@
           </a>
           <a href="/nutritionists/challenges" aria-current="page" class="flex items-center gap-3 rounded-xl bg-white/12 px-3 py-3 text-sm font-bold text-white transition">
             <span aria-hidden="true">◇</span><span>Desafios Ativos</span>
+          </a>
+          <a href="/nutritionists/goals" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
+            <span aria-hidden="true">◎</span><span>Metas Nutricionais</span>
           </a>
           <a href="/dashboard-nutricionista#agenda" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-white/75 transition hover:bg-white/12 hover:text-white">
             <span aria-hidden="true">◷</span><span>Agenda</span>
@@ -99,6 +99,16 @@
           </div>
         </div>
       </header>
+
+      <nav class="mobile-dashboard-nav mt-4 flex gap-2 overflow-x-auto xl:hidden" aria-label="Navegação do painel da nutricionista">
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#pacientes">Meus Pacientes</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#plano-alimentar">Últimos Planos</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#avaliacoes">Últimas Avaliações</a>
+        <a class="mobile-nav-pill is-active" href="/nutritionists/challenges" aria-current="page">Desafios Ativos</a>
+        <a class="mobile-nav-pill" href="/nutritionists/goals">Metas Nutricionais</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#agenda">Agenda</a>
+        <a class="mobile-nav-pill" href="/dashboard-nutricionista#conversas">Bate-papos</a>
+      </nav>
 
       <main class="mt-6 space-y-6">
         <section class="dashboard-surface rounded-[28px] p-5 md:p-6">
