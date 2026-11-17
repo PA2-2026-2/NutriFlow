@@ -98,7 +98,15 @@ class ProfileRepository {
         objective: true,
         restrictions: true,
         user: {
-          select: { id: true, name: true, email: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            weightEntries: {
+              orderBy: { recordedAt: 'asc' },
+              select: { weightKg: true, recordedAt: true, note: true },
+            },
+          },
         },
         measurements: {
           orderBy: { recordedAt: 'desc' },

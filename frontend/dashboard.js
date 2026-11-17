@@ -1462,6 +1462,36 @@ function renderBodyMeasurements() {
   }
 }
 
+function renderBmi() {
+  const bmi = state.dashboard?.bmi || { current: {}, history: [] };
+  const current = bmi.current || {};
+  const currentValue = document.getElementById('bmiCurrentValue');
+  const currentClassification = document.getElementById('bmiCurrentClassification');
+  const currentDate = document.getElementById('bmiCurrentDate');
+  const historyList = document.getElementById('bmiHistoryList');
+
+  if (currentValue) currentValue.textContent = current.valueLabel || '--';
+  if (currentClassification) {
+    currentClassification.textContent = current.classification
+      || (current.value !== null && current.value !== undefined
+        ? 'Classificação adulta indisponível sem idade adulta confirmada.'
+        : 'Sem dados válidos de peso e altura.');
+  }
+  if (currentDate) currentDate.textContent = current.dateLabel ? `Último cálculo: ${current.dateLabel}` : '';
+  if (historyList) {
+    historyList.innerHTML = bmi.history?.length
+      ? bmi.history.map((entry) => `
+          <div class="grid min-w-[560px] grid-cols-4 px-3 py-3">
+            <span>${escapeHtml(entry.dateLabel)}</span>
+            <span>${escapeHtml(Number(entry.weightKg).toLocaleString('pt-BR', { maximumFractionDigits: 1 }))} kg</span>
+            <span class="font-bold">${escapeHtml(entry.valueLabel)}</span>
+            <span>${escapeHtml(entry.classification || 'Não aplicada')}</span>
+          </div>
+        `).join('')
+      : '<p class="px-3 py-3 text-sm text-nutriflow-600">Nenhum cálculo de IMC disponível.</p>';
+  }
+}
+
 function renderWeightChart(labels, values) {
   const svg = document.getElementById('weightChart');
   const labelsContainer = document.getElementById('weightChartLabels');
@@ -1711,6 +1741,7 @@ function renderDashboard() {
   renderHistory();
   renderPlan();
   renderBodyMeasurements();
+  renderBmi();
   renderWeight();
   renderChat();
   renderClinical();

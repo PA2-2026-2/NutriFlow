@@ -1,4 +1,5 @@
 const request = require('supertest');
+const { calculateBmi, classifyAdultBmi } = require('../src/utils/bmi');
 const { createApp } = require('../src/app');
 const {
   createUserWithRole,
@@ -7,6 +8,32 @@ const {
 } = require('./helpers');
 
 const MISSING_MEASUREMENT_ID = '00000000-0000-0000-0000-000000000000';
+
+describe('calculo do IMC', () => {
+  it('calcula o resultado com duas casas e classifica adultos', () => {
+    expect(calculateBmi(70, 1.75, 30)).toEqual({
+      value: 22.86,
+      valueLabel: '22,86 kg/m²',
+      classification: 'Peso adequado',
+    });
+  });
+
+  it('aplica os limites das classificacoes e omite classificacao para menores', () => {
+    expect(classifyAdultBmi(18.49)).toBe('Baixo peso');
+    expect(classifyAdultBmi(18.5)).toBe('Peso adequado');
+    expect(classifyAdultBmi(25)).toBe('Sobrepeso');
+    expect(classifyAdultBmi(30)).toBe('Obesidade grau I');
+    expect(classifyAdultBmi(35)).toBe('Obesidade grau II');
+    expect(classifyAdultBmi(40)).toBe('Obesidade grau III');
+    expect(calculateBmi(70, 1.75, 17).classification).toBeNull();
+  });
+
+  it('nao calcula com peso ou altura invalido', () => {
+    expect(calculateBmi(0, 1.75, 30).value).toBeNull();
+    expect(calculateBmi(70, 0, 30).value).toBeNull();
+    expect(calculateBmi(70, 301, 30).value).toBeNull();
+  });
+});
 
 describe('POST /api/patients/:id/measurements', () => {
   let app;
@@ -203,6 +230,10 @@ describe('POST /api/patients/:id/measurements', () => {
           }),
         ],
       },
+    });
+    expect(patientsResponse.body.patients[0].bmi.current).toMatchObject({
+      value: 23.67,
+      classification: 'Peso adequado',
     });
   });
 

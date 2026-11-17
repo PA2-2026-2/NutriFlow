@@ -1,5 +1,6 @@
 const { AppError } = require('../errors/appError');
 const { normalizeRole, ROLES } = require('../constants/roles');
+const { buildBmiSummary } = require('../utils/bmi');
 
 function normalizeEmail(email) {
 	return String(email || '').trim().toLowerCase();
@@ -234,6 +235,16 @@ class PatientService {
 			patients: profiles.map(({ user, measurements = [], ...profile }) => {
 				const entries = measurements.map(presentMeasurement);
 				const latest = entries[0];
+				const bmiEntries = [
+					...measurements,
+					...(user.weightEntries || []),
+				];
+				const bmi = buildBmiSummary(
+					bmiEntries,
+					profile.age,
+					profile.weight,
+					profile.height,
+				);
 
 				return {
 					id: user.id,
@@ -248,12 +259,19 @@ class PatientService {
 						?? null,
 					objective: profile.objective,
 					restrictions: profile.restrictions,
-					weightEntries: entries
+					weightEntries: [
+						...entries
 						.filter((entry) => entry.items.some((item) => item.label === MEASUREMENT_LABELS.weightKg))
 						.map((entry) => ({
 							weight: entry.items.find((item) => item.label === MEASUREMENT_LABELS.weightKg).value,
 							date: entry.dateLabel,
 						})),
+						...(user.weightEntries || []).map((entry) => ({
+							weight: entry.weightKg,
+							date: new Date(entry.recordedAt).toLocaleDateString('pt-BR'),
+						})),
+					],
+					bmi,
 					bodyMeasurements: {
 						latest: latest?.items || [],
 						history: entries.map(({ id, date, dateLabel, items }) => ({

@@ -532,6 +532,7 @@ function renderSelectedPatient() {
     document.getElementById('selectedPatientName').textContent = 'Nenhum selecionado';
     document.getElementById('selectedPatientWeight').textContent = '--';
     document.getElementById('selectedPatientHeight').textContent = '--';
+    document.getElementById('selectedPatientBmi').textContent = '--';
     document.getElementById('selectedPatientBodyFat').textContent = '--';
     document.getElementById('selectedPatientViewButton').onclick = null;
     document.getElementById('btnClearSelection')?.classList.add('hidden');
@@ -545,6 +546,7 @@ function renderSelectedPatient() {
     ? `${patientHeight}${patientHeight <= 3 ? 'm' : 'cm'}`
     : '--';
   document.getElementById('selectedPatientHeight').textContent = patientHeightLabel;
+  document.getElementById('selectedPatientBmi').textContent = patient.bmi?.current?.valueLabel || '--';
   document.getElementById('selectedPatientBodyFat').textContent = patient.bodyFat ? `${patient.bodyFat}%` : '--';
   document.getElementById('selectedPatientViewButton').onclick = () => window.openPatientProfile(patient.id);
 
@@ -566,6 +568,25 @@ function renderPatientProfileModal(patient) {
   
   const patientPlans = state.mealPlans.filter(p => p.patientId === patient.id);
   document.getElementById('patientProfilePlanTitle').textContent = patientPlans[0]?.title || 'Sem plano ativo';
+
+  const bmiCurrent = patient.bmi?.current || {};
+  document.getElementById('patientProfileBmiCurrent').textContent = bmiCurrent.valueLabel || '--';
+  document.getElementById('patientProfileBmiClassification').textContent = bmiCurrent.classification
+    || (bmiCurrent.value !== null && bmiCurrent.value !== undefined
+      ? 'Classificação adulta indisponível sem idade adulta confirmada.'
+      : 'Sem dados válidos de peso e altura.');
+  const bmiHistoryContainer = document.getElementById('patientProfileBmiHistory');
+  if (bmiHistoryContainer) {
+    bmiHistoryContainer.innerHTML = patient.bmi?.history?.length
+      ? patient.bmi.history.map((entry) => `
+          <div class="grid grid-cols-3 gap-2 border-t border-nutriflow-200 py-2 text-xs">
+            <span>${escapeHtml(entry.dateLabel)}</span>
+            <span class="font-bold">${escapeHtml(entry.valueLabel)}</span>
+            <span>${escapeHtml(entry.classification || 'Não aplicada')}</span>
+          </div>
+        `).join('')
+      : '<p class="text-xs text-nutriflow-500">Nenhum cálculo de IMC disponível.</p>';
+  }
 
   const historyContainer = document.getElementById('patientProfileWeightHistory');
   const patientAssessments = state.assessments.filter(a => a.patientId === patient.id);

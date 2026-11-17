@@ -284,6 +284,22 @@
                   <h2 class="mt-4 text-2xl font-bold tracking-[-0.05em]">Medidas corporais</h2>
                 </div>
               </div>
+              <section class="mt-6 rounded-[22px] border border-nutriflow-200 bg-nutriflow-50 p-5" aria-labelledby="bmiHeading">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p class="text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">Acompanhamento</p>
+                    <h3 id="bmiHeading" class="mt-1 text-xl font-bold text-nutriflow-950">Índice de massa corporal</h3>
+                  </div>
+                  <p id="bmiCurrentValue" class="text-2xl font-extrabold text-nutriflow-950">--</p>
+                </div>
+                <p id="bmiCurrentClassification" class="mt-1 text-sm font-semibold text-nutriflow-700">Sem dados válidos de peso e altura.</p>
+                <p id="bmiCurrentDate" class="mt-1 text-xs text-nutriflow-600"></p>
+                <p class="mt-3 text-xs leading-5 text-nutriflow-600">Classificação de referência para adultos; não se aplica automaticamente a menores, gestantes ou pessoas que necessitem de critérios específicos. O IMC não substitui avaliação clínica ou nutricional.</p>
+                <div class="mt-4 overflow-x-auto rounded-xl border border-nutriflow-200 bg-white">
+                  <div class="grid min-w-[560px] grid-cols-4 bg-white px-3 py-2 text-xs font-bold uppercase text-nutriflow-600"><span>Data</span><span>Peso</span><span>IMC</span><span>Classificação</span></div>
+                  <div id="bmiHistoryList" class="divide-y divide-nutriflow-100 text-sm"></div>
+                </div>
+              </section>
               <div id="bodyMeasurementsSummary" class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
               <div class="mt-5 overflow-hidden rounded-[22px] border border-nutriflow-200 bg-white">
                 <div class="bg-nutriflow-50 px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-nutriflow-600">
