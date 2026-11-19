@@ -1,12 +1,15 @@
 {
   "version": 2,
   "buildCommand": "npm run vercel-build",
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "**": false
+    }
+  },
   "functions": {
     "api/index.js": {
-      "includeFiles": [
-        "frontend/**",
-        "node_modules/@supabase/supabase-js/dist/umd/supabase.js"
-      ]
+      "includeFiles": "{frontend/**,node_modules/@supabase/supabase-js/dist/umd/supabase.js}"
     }
   },
   "routes": [
