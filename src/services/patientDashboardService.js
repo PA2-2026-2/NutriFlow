@@ -1,4 +1,5 @@
 const { AppError } = require('../errors/appError');
+const { buildBmiSummary } = require('../utils/bmi');
 
 const MEAL_TYPES = new Set([
 	'Cafe da manha',
@@ -256,6 +257,15 @@ class PatientDashboardService {
 					weightKg: entry.weightKg,
 				})),
 		].sort((first, second) => second.recordedAt - first.recordedAt)[0];
+		const latestMeasurementHeight = [...measurements]
+			.reverse()
+			.find((entry) => entry.heightCm !== null && entry.heightCm !== undefined)?.heightCm;
+		const bmi = buildBmiSummary([
+			...(record.weightEntries || []),
+			...measurements
+				.filter((entry) => entry.weightKg !== null && entry.weightKg !== undefined)
+				.map((entry) => ({ ...entry, height: entry.heightCm })),
+		], profile?.age, profile?.weight, profile?.height);
 
 		return {
 			setupRequired: !profile?.nutritionistId,
@@ -307,6 +317,7 @@ class PatientDashboardService {
 			plan: buildPlan(activePlan),
 			bodyMeasurements: presentMeasurements(measurements),
 			weight: buildWeightSummary(profile, record.weightEntries || [], measurements),
+			bmi,
 			clinical: {
 				nextAppointment: null,
 				checklist: [],

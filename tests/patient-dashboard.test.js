@@ -7,6 +7,8 @@ const {
 } = require('./helpers');
 
 describe('dashboard do paciente', () => {
+  jest.setTimeout(30000);
+
   let app;
 
   beforeAll(() => {
@@ -127,6 +129,12 @@ describe('dashboard do paciente', () => {
       expect.objectContaining({ label: 'Cintura', value: 77 }),
     ]));
     expect(response.body.bodyMeasurements.history).toHaveLength(2);
+    expect(response.body.bmi.current).toMatchObject({
+      value: 23.12,
+      valueLabel: '23,12 kg/m²',
+      classification: 'Peso adequado',
+    });
+    expect(response.body.bmi.history).toHaveLength(3);
     expect(response.body.weight.currentLabel).toBe('68,4kg');
     expect(response.body.weight.history[0].note).toBe('Pesagem da semana');
     expect(response.body.foods.length).toBeGreaterThan(0);

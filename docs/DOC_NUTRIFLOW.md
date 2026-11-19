@@ -227,6 +227,12 @@ Funções:
 - paciente pode registrar medidas e peso;
 - o profissional acompanha histórico e evolução.
 
+#### Cálculo e acompanhamento do IMC
+
+O IMC é derivado dos registros existentes, sem criar um histórico duplicado. O peso das avaliações e das pesagens do paciente é dividido pela altura ao quadrado; alturas de avaliação são registradas em centímetros e convertidas para metros. Pesagens sem altura própria usam a última altura registrada até aquela data. Valores fora dos limites válidos não geram cálculo.
+
+O dashboard do paciente e a lista/perfil do nutricionista exibem o valor com duas casas decimais e o histórico datado. A classificação por faixas é exibida somente quando há idade adulta registrada e serve como referência, não como avaliação clínica. Menores de 18 anos não recebem classificação adulta. Gestação e outras condições que exigem critérios específicos não são representadas atualmente no perfil; nesses casos, a classificação adulta não deve ser utilizada e requer avaliação profissional.
+
 ### 4.3 Planos alimentares
 
 A base de alimentos é cadastrada e gerenciada, com nutrientes como calorias, proteínas, carboidratos e gordura.
