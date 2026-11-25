@@ -158,23 +158,34 @@ function frontendAliases(frontendDir) {
       ? request.originalUrl.slice(request.originalUrl.indexOf('?'))
       : '';
 
-    if (request.path === '/dashboard/' || request.path === '/dashboard-nutricionista/') {
+    if (
+      request.path === '/dashboard/' ||
+      request.path === '/dashboard-nutricionista/' ||
+      request.path === '/dashboard-admin/'
+    ) {
       return response.redirect(308, `${request.path.slice(0, -1)}${query}`);
     }
 
     if (
       request.path === '/dashboard.html' ||
       (alias === '/dashboard-nutricionista.html' &&
-        request.path !== '/dashboard-nutricionista')
+        request.path !== '/dashboard-nutricionista') ||
+      (alias === '/dashboard-admin.html' &&
+        request.path !== '/dashboard-admin')
     ) {
       const cleanPath =
-        request.path === '/dashboard.html' ? '/dashboard' : '/dashboard-nutricionista';
+        request.path === '/dashboard.html'
+          ? '/dashboard'
+          : request.path === '/dashboard-admin.html'
+            ? '/dashboard-admin'
+            : '/dashboard-nutricionista';
       return response.redirect(308, `${cleanPath}${query}`);
     }
 
     if (
       alias === '/dashboard.html' ||
       alias === '/dashboard-nutricionista.html' ||
+      alias === '/dashboard-admin.html' ||
       alias === '/auth-confirmation.html' ||
       alias === '/reset-password.html' ||
       alias === '/nutritionists-challenges.html' ||

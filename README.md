@@ -16,6 +16,9 @@ entre os perfis.
 - **Administradores:** painel para consultar e administrar usuários.
 - **Contas e perfis:** cadastro e autenticação integrados ao Supabase Auth,
   com permissões definidas pelo perfil do usuário.
+- **Acessibilidade e navegação:** link para o conteúdo principal, indicador
+  de foco, botão de voltar ao topo e alternância persistente entre modos claro
+  e escuro.
 
 ## Tecnologias
 

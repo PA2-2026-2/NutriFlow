@@ -174,4 +174,33 @@ describe('rotas do frontend', () => {
     expect(response.type).toContain('javascript');
     expect(response.text).toContain('createClient');
   });
+
+  it('inclui recursos compartilhados de acessibilidade e navegação nas páginas principais', async () => {
+    const pages = await Promise.all([
+      request(app).get('/index.html'),
+      request(app).get('/dashboard'),
+      request(app).get('/dashboard-nutricionista'),
+      request(app).get('/dashboard-admin'),
+      request(app).get('/patients/challenges'),
+      request(app).get('/nutritionists/goals'),
+    ]);
+
+    for (const response of pages) {
+      expect(response.statusCode).toBe(200);
+      expect(response.text).toMatch(/src=["']\/?ui\.js["']/);
+    }
+
+    const uiScript = await request(app).get('/ui.js');
+    expect(uiScript.statusCode).toBe(200);
+    expect(uiScript.text).toContain('setupThemeToggle');
+    expect(uiScript.text).toContain('setupBackToTop');
+    expect(uiScript.text).toContain('setupSkipLink');
+    expect(uiScript.text).toContain("backToTopButton");
+
+    const stylesheet = await request(app).get('/styles.css');
+    expect(stylesheet.statusCode).toBe(200);
+    expect(stylesheet.text).toContain(".nf-skip-link");
+    expect(stylesheet.text).toContain(".nf-theme-toggle");
+    expect(stylesheet.text).toContain(".nf-back-to-top");
+  });
 });
